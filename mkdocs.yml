@@ -1,0 +1,20 @@
+site_name: Python implementation of the Abstract Workflow Language (AWL / AWL-LD)
+site_url: https://oo-ld.github.io/awl-python/
+
+plugins:
+- search
+- autorefs
+- mkdocstrings:
+    handlers:
+      python:
+        paths: [src]  # search packages in the src folder
+        options:
+          docstring_style: numpy
+
+nav:
+    - Home: index.md
+    - awl.md
+    - Development: dev.md
+
+theme:
+  name: "material"

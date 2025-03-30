@@ -63,11 +63,3 @@ qres = g.query(
 possible_values = [row[0].toPython() for row in qres]
 assert possible_values == [1, "test"]
 ```
-
-## Development
-
-```bash
-git clone https://github.com/OO-LD/awl-python
-cd awl-python
-pip install -e .[dev,testing]
-```
