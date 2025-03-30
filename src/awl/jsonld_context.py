@@ -27,12 +27,33 @@ awl_context = {
                     "value": "awl:HasValue",
                 },
             },
-            "args": "awl:HasArgument",
+            "FunctionDef": {
+                "@id": "awl:FunctionDef",
+                "@context": {"@base": "https://example.org/", "name": "@id"},
+            },
+            "args": {
+                "@id": "awl:HasArgumentList",
+                "@context": {
+                    "args": {
+                        "@id": "awl:HasPart",
+                        "@context": {
+                            "_type:": None,
+                            # "arg": "awl:HasKey",
+                            "value": "awl:HasValue",
+                            "annotation": "awl:HasType",
+                        },
+                    }
+                },
+            },
             "keywords": {
                 "@id": "awl:HasKeywordArgument",
-                "@context": {"value": "awl:HasValue"},
+                "@context": {
+                    "value": "awl:HasValue",
+                    "annotation": "awl:HasAnnotation",
+                },
             },
             "arg": "awl:HasKey",
+            "returns": "awl:HasReturnType",
         }
     ]
 }
