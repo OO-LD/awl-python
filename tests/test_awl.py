@@ -80,7 +80,7 @@ else:
     # query for all possible values of b
     qres = g.query(
         """
-        PREFIX awl: <https://oo-ld.github.io/awl-schema/>
+        PREFIX awl: <https://w3id.org/awl/schema/>
         PREFIX ex: <https://example.org/>
         SELECT ?v
         WHERE {

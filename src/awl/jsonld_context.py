@@ -1,9 +1,9 @@
 awl_context = {
     "@context": [
         {
-            "awl": "https://oo-ld.github.io/awl-schema/",
+            "awl": "https://w3id.org/awl/schema/",
             "ex": "https://example.org/",
-            "@base": "https://oo-ld.github.io/awl-schema/",
+            "@base": "https://w3id.org/awl/schema/",
             "_type": "@type",
             "id": "@id",
             "body": "awl:HasPart",
