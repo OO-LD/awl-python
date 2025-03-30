@@ -1,3 +1,8 @@
+[![DOI](https://zenodo.org/badge/957336610.svg)](https://doi.org/10.5281/zenodo.15108186)
+[![PyPI-Server](https://img.shields.io/pypi/v/awl.svg)](https://pypi.org/project/awl/)
+[![Coveralls](https://img.shields.io/coveralls/github/OO-LD/awl-python/main.svg)](https://coveralls.io/r/<USER>/awl)
+[![Project generated with PyScaffold](https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold)](https://pyscaffold.org/)
+
 # awl-python
 Python implementation of the [Abstract Workflow Language (AWL / AWL-LD)](https://github.com/OO-LD/awl-schema)
 
