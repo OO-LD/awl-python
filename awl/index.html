@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.4af4bdda.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.342714a4.min.css">
       
       
 
@@ -114,11 +114,13 @@
     
     
     
-      <label class="md-header__button md-icon" for="__search">
-        
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
-      </label>
-      <div class="md-search" data-md-component="search" role="dialog">
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
@@ -150,6 +152,7 @@
     </div>
   </div>
 </div>
+      
     
     
   </nav>
@@ -198,6 +201,7 @@
       <a href=".." class="md-nav__link">
         
   
+  
   <span class="md-ellipsis">
     Home
     
@@ -228,6 +232,7 @@
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
   
+  
   <span class="md-ellipsis">
     Awl
     
@@ -239,6 +244,7 @@
       
       <a href="./" class="md-nav__link md-nav__link--active">
         
+  
   
   <span class="md-ellipsis">
     Awl
@@ -272,6 +278,33 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#awl.AstSerialization.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __init__
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#awl.AstSerialization.annotate_ast" class="md-nav__link">
+    <span class="md-ellipsis">
+      annotate_ast
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#awl.AstSerialization.slim_notation" class="md-nav__link">
+    <span class="md-ellipsis">
+      slim_notation
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -289,6 +322,7 @@
     <li class="md-nav__item">
       <a href="../dev/" class="md-nav__link">
         
+  
   
   <span class="md-ellipsis">
     Development
@@ -336,6 +370,33 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#awl.AstSerialization.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __init__
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#awl.AstSerialization.annotate_ast" class="md-nav__link">
+    <span class="md-ellipsis">
+      annotate_ast
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#awl.AstSerialization.slim_notation" class="md-nav__link">
+    <span class="md-ellipsis">
+      slim_notation
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -372,74 +433,254 @@
 
               <details class="quote">
                 <summary>Source code in <code>src/awl/core.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">11</span>
-<span class="normal">12</span>
-<span class="normal">13</span>
-<span class="normal">14</span>
-<span class="normal">15</span>
-<span class="normal">16</span>
-<span class="normal">17</span>
-<span class="normal">18</span>
-<span class="normal">19</span>
-<span class="normal">20</span>
-<span class="normal">21</span>
-<span class="normal">22</span>
-<span class="normal">23</span>
-<span class="normal">24</span>
-<span class="normal">25</span>
-<span class="normal">26</span>
-<span class="normal">27</span>
-<span class="normal">28</span>
-<span class="normal">29</span>
-<span class="normal">30</span>
-<span class="normal">31</span>
-<span class="normal">32</span>
-<span class="normal">33</span>
-<span class="normal">34</span>
-<span class="normal">35</span>
-<span class="normal">36</span>
-<span class="normal">37</span>
-<span class="normal">38</span>
-<span class="normal">39</span>
-<span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span>
-<span class="normal">50</span>
-<span class="normal">51</span>
-<span class="normal">52</span>
-<span class="normal">53</span>
-<span class="normal">54</span>
-<span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span>
-<span class="normal">60</span>
-<span class="normal">61</span>
-<span class="normal">62</span>
-<span class="normal">63</span>
-<span class="normal">64</span>
-<span class="normal">65</span>
-<span class="normal">66</span>
-<span class="normal">67</span>
-<span class="normal">68</span>
-<span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span>
-<span class="normal">72</span>
-<span class="normal">73</span>
-<span class="normal">74</span>
-<span class="normal">75</span>
-<span class="normal">76</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AstSerialization</span><span class="p">:</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 15</span>
+<span class="normal"> 16</span>
+<span class="normal"> 17</span>
+<span class="normal"> 18</span>
+<span class="normal"> 19</span>
+<span class="normal"> 20</span>
+<span class="normal"> 21</span>
+<span class="normal"> 22</span>
+<span class="normal"> 23</span>
+<span class="normal"> 24</span>
+<span class="normal"> 25</span>
+<span class="normal"> 26</span>
+<span class="normal"> 27</span>
+<span class="normal"> 28</span>
+<span class="normal"> 29</span>
+<span class="normal"> 30</span>
+<span class="normal"> 31</span>
+<span class="normal"> 32</span>
+<span class="normal"> 33</span>
+<span class="normal"> 34</span>
+<span class="normal"> 35</span>
+<span class="normal"> 36</span>
+<span class="normal"> 37</span>
+<span class="normal"> 38</span>
+<span class="normal"> 39</span>
+<span class="normal"> 40</span>
+<span class="normal"> 41</span>
+<span class="normal"> 42</span>
+<span class="normal"> 43</span>
+<span class="normal"> 44</span>
+<span class="normal"> 45</span>
+<span class="normal"> 46</span>
+<span class="normal"> 47</span>
+<span class="normal"> 48</span>
+<span class="normal"> 49</span>
+<span class="normal"> 50</span>
+<span class="normal"> 51</span>
+<span class="normal"> 52</span>
+<span class="normal"> 53</span>
+<span class="normal"> 54</span>
+<span class="normal"> 55</span>
+<span class="normal"> 56</span>
+<span class="normal"> 57</span>
+<span class="normal"> 58</span>
+<span class="normal"> 59</span>
+<span class="normal"> 60</span>
+<span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">AstSerialization</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">annotate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">backparsable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes AstSerialization with parser options.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        annotate : bool, default False</span>
+<span class="sd">            If ``True``, annotates the AST tree</span>
+<span class="sd">        backparsable : bool, default False</span>
+<span class="sd">            If ``True``, AST tree is unparsable via self.unparse</span>
+<span class="sd">            If ``False``, Annotations deletes that are required for unparsing,</span>
+<span class="sd">             resulting in a neat tree</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">annotate</span> <span class="o">=</span> <span class="n">annotate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">backparsable</span> <span class="o">=</span> <span class="n">backparsable</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">del_keys</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
@@ -484,6 +725,10 @@
 
         <span class="n">ast_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">del_keys</span><span class="p">(</span><span class="n">ast_dict</span><span class="p">,</span> <span class="n">rm_keywords</span><span class="p">)</span>  <span class="c1"># remove annotations</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ast_dict</span> <span class="o">=</span> <span class="n">ast_dict</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotate</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">annotate_ast</span><span class="p">()</span>
+
         <span class="k">return</span> <span class="n">ast_dict</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">unparse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ast_dict</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -499,6 +744,156 @@
         <span class="k">elif</span> <span class="nb">format</span> <span class="o">==</span> <span class="s2">&quot;yaml&quot;</span><span class="p">:</span>
             <span class="n">res</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ast_dict</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">res</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">annotate_ast</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the root node and start annotation walk.</span>
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ASTNotAModule</span>
+<span class="sd">            If the parsed tree does **not** start with an ``ast.Module`` node.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># todo add further veryfication</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ast_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;_type&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;Module&quot;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ASTNotAModule</span><span class="p">(</span><span class="s2">&quot;root node is not a Module&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_walk_json_ast</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ast_dict</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_walk_json_ast</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">object</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Depth‑first traversal of *node* while keeping track of *path*.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        node</span>
+<span class="sd">            Current AST sub‑node (``dict``, ``list`` or scalar).</span>
+<span class="sd">        path</span>
+<span class="sd">            Accumulated list of keys / indices leading from the root to *node*.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># ------------------------------------------------------------------ #</span>
+        <span class="c1"># 1.Recursive walk</span>
+        <span class="c1"># ------------------------------------------------------------------ #</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="c1"># print(f&quot;Path: {path}&quot;)</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_walk_json_ast</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">path</span> <span class="o">+</span> <span class="p">[</span><span class="n">index</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="c1"># print(f&quot;Path: {path}&quot;)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_walk_json_ast</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">path</span> <span class="o">+</span> <span class="p">[</span><span class="n">key</span><span class="p">])</span>
+
+        <span class="c1"># Primitive leaf – nothing to do</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># print(f&quot;Path: {path} -&gt; Value: {node}&quot;)</span>
+            <span class="k">pass</span>
+
+        <span class="c1"># ------------------------------------------------------------------ #</span>
+        <span class="c1"># 2.Collapse handles the replacement logic to from leaf to &quot;stem&quot;</span>
+        <span class="c1"># ------------------------------------------------------------------ #</span>
+
+        <span class="c1"># This checks for the class constructor syntax in AST</span>
+        <span class="c1"># e.g &quot;value&quot;:</span>
+        <span class="c1"># {&quot;_type&quot;: &quot;Call&quot;,&quot;args&quot;: [],&quot;func&quot;: {&quot;_type&quot;: &quot;Name&quot;,&quot;id&quot;: &quot;ClassA&quot;}</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;_type&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;Call&quot;</span>  <span class="c1"># A Constructor is a call</span>
+                <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;func&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;_type&quot;</span><span class="p">)</span>
+                <span class="o">==</span> <span class="s2">&quot;Name&quot;</span>  <span class="c1"># A Constructor is a call of type Name</span>
+                <span class="ow">and</span> <span class="p">(</span>
+                    <span class="n">fid</span> <span class="o">:=</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;func&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span>
+                <span class="p">)</span>  <span class="c1"># fid is None if the path is missing and hence False</span>
+                <span class="ow">and</span> <span class="n">fid</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isupper</span><span class="p">()</span>  <span class="c1"># only runs if fid is truthy,</span>
+                <span class="c1"># wont give TypeError/IndexError</span>
+            <span class="p">):</span>
+                <span class="n">ctor_node</span> <span class="o">=</span> <span class="n">AstSerialization</span><span class="o">.</span><span class="n">_get_from_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ast_dict</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+
+                <span class="n">ctor_node</span><span class="p">[</span><span class="s2">&quot;__class_name__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fid</span>
+                <span class="c1"># self.ast_dict[&quot;__class_name__&quot;] = fid</span>
+                <span class="c1"># print (fid)</span>
+
+                <span class="k">for</span> <span class="n">kw_node</span> <span class="ow">in</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;keywords&quot;</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kw_node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">kw_node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;_type&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;keyword&quot;</span><span class="p">:</span>
+                            <span class="n">ctor_node</span><span class="p">[</span><span class="n">kw_node</span><span class="p">[</span><span class="s2">&quot;arg&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val</span><span class="p">(</span><span class="n">kw_node</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">backparsable</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                    <span class="c1"># slim notation</span>
+                    <span class="n">ctor_node</span> <span class="o">=</span> <span class="n">AstSerialization</span><span class="o">.</span><span class="n">slim_notation</span><span class="p">(</span><span class="n">ctor_node</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_val</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert AST *value* nodes into primitives or nested constructor annotations.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        object | None</span>
+<span class="sd">            * ``int``, ``str`` … for ``Constant`` nodes;</span>
+<span class="sd">            * dotted ``str`` for ``Attribute`` chains;</span>
+<span class="sd">            * nested constructor annotations (dict) for embedded calls;</span>
+<span class="sd">            * ``None`` for values that are irrelevant / not serialisable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="c1"># todo currently f(a=t) and f(a=&quot;t&quot;) have same annotation,</span>
+            <span class="c1">#  think about if this can lead to problems</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;_type&quot;</span><span class="p">)</span>
+            <span class="n">ctor</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;__class_name__&quot;</span><span class="p">)</span>
+            <span class="c1"># f(a=1) :&quot;value&quot;: {&quot;_type&quot;: &quot;Constant&quot;,&quot;value&quot;: 1}</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="s2">&quot;Constant&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
+            <span class="c1"># f(a=t) : &quot;value&quot;: {&quot;_type&quot;: &quot;Name&quot;,&quot;id&quot;: &quot;t&quot;}</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="s2">&quot;Name&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span>
+            <span class="c1"># f(a = U.V) : &quot;value&quot;:</span>
+            <span class="c1"># {&quot;_type&quot;: &quot;Attribute&quot;,&quot;attr&quot;: &quot;V&quot;,&quot;value&quot;: {&quot;_type&quot;: &quot;Name&quot;,&quot;id&quot;: &quot;U&quot;}}</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="s2">&quot;Attribute&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">AstSerialization</span><span class="o">.</span><span class="n">_attr_to_str</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ctor</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">AstSerialization</span><span class="o">.</span><span class="n">slim_notation</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># ------------------------------------------------------------------ #</span>
+    <span class="c1"># Attribute -&gt; dotted string</span>
+    <span class="c1"># ------------------------------------------------------------------ #</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_attr_to_str</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Flatten a chain of ``Attribute``/``Name`` nodes into ``&quot;U.V&quot;``.&quot;&quot;&quot;</span>
+        <span class="c1"># f(a = U.V) : &quot;value&quot;:</span>
+        <span class="c1"># {&quot;_type&quot;: &quot;Attribute&quot;,&quot;attr&quot;: &quot;V&quot;,&quot;value&quot;: {&quot;_type&quot;: &quot;Name&quot;,&quot;id&quot;: &quot;U&quot;}}</span>
+        <span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">walk</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">n</span><span class="p">[</span><span class="s2">&quot;_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Attribute&quot;</span><span class="p">:</span>
+                <span class="n">walk</span><span class="p">(</span><span class="n">n</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">])</span>
+                <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">[</span><span class="s2">&quot;attr&quot;</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="n">n</span><span class="p">[</span><span class="s2">&quot;_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Name&quot;</span><span class="p">:</span>
+                <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
+
+        <span class="n">walk</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_from_path</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">object</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">object</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the sub‑node referenced by *path*.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">node</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_dump_from_path</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">object</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Pretty JSON dump of the sub‑node at *path* (debug helper).&quot;&quot;&quot;</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">AstSerialization</span><span class="o">.</span><span class="n">_get_from_path</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">slim_notation</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">object</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;pops the unnecessary parameters of a constructor</span>
+<span class="sd">        and returns slim notation node&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;_type&quot;</span><span class="p">,</span> <span class="s2">&quot;args&quot;</span><span class="p">,</span> <span class="s2">&quot;func&quot;</span><span class="p">,</span> <span class="s2">&quot;keywords&quot;</span><span class="p">):</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">to_jsonld</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
         <span class="n">res</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;@context&quot;</span><span class="p">:</span> <span class="n">jsonld_context</span><span class="o">.</span><span class="n">awl_context</span><span class="p">[</span><span class="s2">&quot;@context&quot;</span><span class="p">],</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">ast_dict</span><span class="p">}</span>
@@ -517,6 +912,212 @@
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="awl.AstSerialization.__init__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">annotate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">backparsable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Initializes AstSerialization with parser options.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>annotate</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>True</code>, annotates the AST tree</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>backparsable</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If <code>True</code>, AST tree is unparsable via self.unparse
+If <code>False</code>, Annotations deletes that are required for unparsing,
+ resulting in a neat tree</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>src/awl/core.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">annotate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">backparsable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Initializes AstSerialization with parser options.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    annotate : bool, default False</span>
+<span class="sd">        If ``True``, annotates the AST tree</span>
+<span class="sd">    backparsable : bool, default False</span>
+<span class="sd">        If ``True``, AST tree is unparsable via self.unparse</span>
+<span class="sd">        If ``False``, Annotations deletes that are required for unparsing,</span>
+<span class="sd">         resulting in a neat tree</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">annotate</span> <span class="o">=</span> <span class="n">annotate</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">backparsable</span> <span class="o">=</span> <span class="n">backparsable</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="awl.AstSerialization.annotate_ast" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">annotate_ast</span><span class="p">()</span></code>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Validate the root node and start annotation walk.</p>
+
+
+<p><span class="doc-section-title">Raises:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="awl.core.ASTNotAModule">ASTNotAModule</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>If the parsed tree does <strong>not</strong> start with an <code>ast.Module</code> node.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>src/awl/core.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">annotate_ast</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the root node and start annotation walk.</span>
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ASTNotAModule</span>
+<span class="sd">        If the parsed tree does **not** start with an ``ast.Module`` node.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># todo add further veryfication</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ast_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;_type&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;Module&quot;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ASTNotAModule</span><span class="p">(</span><span class="s2">&quot;root node is not a Module&quot;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_walk_json_ast</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ast_dict</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h2 id="awl.AstSerialization.slim_notation" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">slim_notation</span><span class="p">(</span><span class="n">node</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+
+        <p>pops the unnecessary parameters of a constructor
+and returns slim notation node</p>
+
+
+            <details class="quote">
+              <summary>Source code in <code>src/awl/core.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">slim_notation</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">object</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;pops the unnecessary parameters of a constructor</span>
+<span class="sd">    and returns slim notation node&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;_type&quot;</span><span class="p">,</span> <span class="s2">&quot;args&quot;</span><span class="p">,</span> <span class="s2">&quot;func&quot;</span><span class="p">,</span> <span class="s2">&quot;keywords&quot;</span><span class="p">):</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">node</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
 
 
 
@@ -571,10 +1172,12 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.c8b220af.min.js"></script>
+      <script src="../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
     
   </body>
