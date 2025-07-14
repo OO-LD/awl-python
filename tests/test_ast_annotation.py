@@ -1,14 +1,23 @@
 # from awl import AstSerialization
 # import json
+import pytest
 
-from awl import AstAnnotation
+from awl import ASTNotAModule, AstSerialization
 
 
 def test_ast_annotation():
     # ------------------------------------------------------------------ #
+    # Check that trying to annotate something that is not
+    # ------------------------------------------------------------------ #
+    ast_annotation = AstSerialization(annotate=True, backparsable=True)
+    ast_annotation.ast_dict = {}
+    with pytest.raises(ASTNotAModule):
+        ast_annotation.annotate_ast()
+
+    # ------------------------------------------------------------------ #
     # Check that annotation doesnt effect unparsing
     # ------------------------------------------------------------------ #
-    ast_annotation = AstAnnotation(parsable=True)
+    ast_annotation = AstSerialization(annotate=True, backparsable=True)
 
     source = """while i < 3:
     a = ClassA(a=1, b='b', c=ClassB(d=False))
@@ -22,9 +31,11 @@ def test_ast_annotation():
     # print(json.dumps(ast_dict, indent=4))
     src_code = ast_annotation.unparse(ast_dict)
     assert src_code == source
-
-    ast_annotation = AstAnnotation(parsable=False)
-    source = """ClassA(a=1, b='b', c=ClassB(d=False), e=A.B)"""
+    # ------------------------------------------------------------------ #
+    # Check the annotation
+    # ------------------------------------------------------------------ #
+    ast_annotation = AstSerialization(annotate=True, backparsable=False)
+    source = """ClassA(a=1, b='b', c=ClassB(d=False), d=t, e=A.B)"""
     ast_dict = ast_annotation.parse(source)
     ast_dumps = ast_annotation.dumps("json")
     print(ast_dumps)
@@ -43,12 +54,20 @@ def test_ast_annotation():
                     "__class_name__": "ClassB",
                     "d": false
                 },
+                "d": "t",
                 "e": "A.B"
             }
         }
     ],
     "type_ignores": []
 }"""
+    )
+
+    example_path = ["body", 0, "value", "__class_name__"]
+    print(ast_annotation._dump_from_path(ast_annotation.ast_dict, example_path))
+    assert (
+        ast_annotation._dump_from_path(ast_annotation.ast_dict, example_path)
+        == '"ClassA"'
     )
 
 
