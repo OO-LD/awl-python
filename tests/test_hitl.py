@@ -1,3 +1,4 @@
+import asyncio
 from enum import Enum
 from typing import Any
 
@@ -58,7 +59,18 @@ def workflow():
     archive_data(result_evaluation)  # runs automatically
 
 
+@entry_point(gui=True)
+async def workflow_async():
+    machine_params = set_machine_params()  # prompts user
+    result_evaluation = document_result()  # prompts user
+    print("Machine parameters: ", machine_params)
+    print("Result evaluation: ", result_evaluation)
+    archive_data(machine_params)  # runs automatically
+    archive_data(result_evaluation)  # runs automatically
+
+
 if __name__ == "__main__":
     # print(json.dumps(MachineParams.model_json_schema(), indent=2))
     # print(json.dumps(ProcessDocumentation.model_json_schema(), indent=2))
     workflow()
+    asyncio.run(workflow_async())
