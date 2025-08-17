@@ -10,7 +10,7 @@ import panel as pn
 
 from oold.model import LinkedBaseModel
 from oold.model.v1 import LinkedBaseModel as LinkedBaseModel_v1
-from oold.ui.panel.anywidget_vite.jsoneditor import OswEditor
+from oold.ui.panel import OoldEditor
 
 jupyterlite = False
 if sys.platform == "emscripten":
@@ -27,7 +27,7 @@ class HitlApp(pn.viewable.Viewer):
             """This is a human-in-the-loop application.
             Please fill in the required fields and click 'Save' to proceed."""  # noqa
         )
-        self.jsoneditor = OswEditor(max_height=500, max_width=800)
+        self.jsoneditor = OoldEditor(max_height=500, max_width=800)
 
         self.start_btn = pn.widgets.Button(
             css_classes=["start_btn"], name="Start", button_type="primary"
