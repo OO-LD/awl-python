@@ -146,6 +146,9 @@ jobs:
       pull-requests: write
     env:
       BENCHER_PROJECT: awl-python
+      # The secrets context is not available in a step-level `if`, so the token
+      # is promoted to an env var here and the steps gate on that instead.
+      BENCHER_API_TOKEN: ${{ secrets.BENCHER_API_TOKEN }}
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -157,15 +160,15 @@ jobs:
         run: make bench
 
       - name: Track benchmarks with Bencher
-        if: ${{ secrets.BENCHER_API_TOKEN != '' }}
+        if: env.BENCHER_API_TOKEN != ''
         uses: bencherdev/bencher@main
 
       - name: Upload results to Bencher
-        if: ${{ secrets.BENCHER_API_TOKEN != '' }}
+        if: env.BENCHER_API_TOKEN != ''
         run: |
           bencher run \
             --project "$BENCHER_PROJECT" \
-            --token "${{ secrets.BENCHER_API_TOKEN }}" \
+            --token "$BENCHER_API_TOKEN" \
             --branch "$GITHUB_HEAD_REF" \
             --start-point "$GITHUB_BASE_REF" \
             --start-point-hash "${{ github.event.pull_request.base.sha }}" \
