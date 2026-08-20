@@ -1,5 +1,6 @@
 import ast
 import json
+from typing import Any
 
 import yaml
 from ast2json import ast2json
@@ -28,13 +29,13 @@ class AstSerialization:
         """
         self.annotate = annotate
         self.backparsable = backparsable
+        self.ast_dict: dict = {}
 
     @staticmethod
     def del_keys(d: dict, keys: list) -> dict:
         for key in keys:
-            if key in d:
-                del d[key]
-        for key, value in d.items():
+            d.pop(key, None)
+        for value in d.values():
             if isinstance(value, dict):
                 AstSerialization.del_keys(value, keys)
             elif isinstance(value, list):
@@ -46,7 +47,7 @@ class AstSerialization:
     @staticmethod
     def add_key(d: dict, k: str, v) -> dict:
         d[k] = v
-        for key, value in d.items():
+        for value in d.values():
             if isinstance(value, dict):
                 AstSerialization.add_key(value, k, v)
             elif isinstance(value, list):
@@ -78,13 +79,15 @@ class AstSerialization:
 
         return ast_dict
 
-    def unparse(self, ast_dict: dict = None) -> str:
+    def unparse(self, ast_dict: dict | None = None) -> str:
+        if ast_dict is None:
+            ast_dict = self.ast_dict
         ast_dict = self.add_key(ast_dict, "lineno", 0)  # needed to unparse
         ast_tree = json2ast(ast_dict)
         source = ast.unparse(ast_tree)
         return source
 
-    def dumps(self, format="yaml") -> str:
+    def dumps(self, format="yaml") -> str:  # noqa: A002 - public API, renaming would break callers
         res = ""
         if format == "json":
             res = json.dumps(self.ast_dict, indent=4)
@@ -104,13 +107,13 @@ class AstSerialization:
             raise ASTNotAModule("root node is not a Module")
         self._walk_json_ast(self.ast_dict, path=None)
 
-    def _walk_json_ast(self, node: list | dict | object, path: list) -> None:
-        """Depth‑first traversal of *node* while keeping track of *path*.
+    def _walk_json_ast(self, node: list | dict | object, path: list | None) -> None:
+        """Depth-first traversal of *node* while keeping track of *path*.
 
         Parameters
         ----------
         node
-            Current AST sub‑node (``dict``, ``list`` or scalar).
+            Current AST sub-node (``dict``, ``list`` or scalar).
         path
             Accumulated list of keys / indices leading from the root to *node*.
         """
@@ -123,14 +126,14 @@ class AstSerialization:
         elif isinstance(node, list):
             # print(f"Path: {path}")
             for index, item in enumerate(node):
-                self._walk_json_ast(item, path + [index])
+                self._walk_json_ast(item, [*path, index])
 
         if isinstance(node, dict):
             # print(f"Path: {path}")
             for key, value in node.items():
-                self._walk_json_ast(value, path + [key])
+                self._walk_json_ast(value, [*path, key])
 
-        # Primitive leaf – nothing to do
+        # Primitive leaf - nothing to do
         else:
             # print(f"Path: {path} -> Value: {node}")
             pass
@@ -142,31 +145,23 @@ class AstSerialization:
         # This checks for the class constructor syntax in AST
         # e.g "value":
         # {"_type": "Call","args": [],"func": {"_type": "Name","id": "ClassA"}
-        if isinstance(node, dict):
-            if (
-                node.get("_type") == "Call"  # A Constructor is a call
-                and node.get("func", {}).get("_type")
-                == "Name"  # A Constructor is a call of type Name
-                and (
-                    fid := node.get("func", {}).get("id")
-                )  # fid is None if the path is missing and hence False
-                and fid[0].isupper()  # only runs if fid is truthy,
-                # wont give TypeError/IndexError
-            ):
-                ctor_node = AstSerialization._get_from_path(self.ast_dict, path)
+        if (
+            isinstance(node, dict)
+            and node.get("_type") == "Call"  # A Constructor is a call
+            and node.get("func", {}).get("_type") == "Name"  # A Constructor is a call of type Name
+            and (fid := node.get("func", {}).get("id"))  # fid is None if the path is missing and hence False
+            and fid[0].isupper()  # only runs if fid is truthy, wont give TypeError/IndexError
+        ):
+            ctor_node = AstSerialization._get_from_path(self.ast_dict, path)
+            ctor_node["__class_name__"] = fid
 
-                ctor_node["__class_name__"] = fid
-                # self.ast_dict["__class_name__"] = fid
-                # print (fid)
+            for kw_node in node["keywords"]:
+                if isinstance(kw_node, dict) and kw_node.get("_type") == "keyword":
+                    ctor_node[kw_node["arg"]] = self._val(kw_node["value"])
 
-                for kw_node in node["keywords"]:
-                    if isinstance(kw_node, dict):
-                        if kw_node.get("_type") == "keyword":
-                            ctor_node[kw_node["arg"]] = self._val(kw_node["value"])
-
-                if self.backparsable is False:
-                    # slim notation
-                    ctor_node = AstSerialization.slim_notation(ctor_node)
+            if self.backparsable is False:
+                # slim notation
+                ctor_node = AstSerialization.slim_notation(ctor_node)
 
     @staticmethod
     def _val(node: list | dict | object) -> object | None:
@@ -221,21 +216,21 @@ class AstSerialization:
         return ".".join(parts)
 
     @staticmethod
-    def _get_from_path(node: list | dict | object, path: list) -> list | dict | object:
-        """Return the sub‑node referenced by *path*."""
+    def _get_from_path(node: Any, path: list) -> Any:
+        """Return the sub-node referenced by *path*."""
         for key in path:
             node = node[key]
         return node
 
     @staticmethod
     def _dump_from_path(node: list | dict | object, path: list) -> str:
-        """Pretty JSON dump of the sub‑node at *path* (debug helper)."""
+        """Pretty JSON dump of the sub-node at *path* (debug helper)."""
         node = AstSerialization._get_from_path(node, path)
         res = json.dumps(node, indent=4)
         return res
 
     @staticmethod
-    def slim_notation(node: list | dict | object) -> list | dict | object:
+    def slim_notation(node: dict) -> dict:
         """pops the unnecessary parameters of a constructor
         and returns slim notation node"""
         for k in ("_type", "args", "func", "keywords"):

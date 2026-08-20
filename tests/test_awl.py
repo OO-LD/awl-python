@@ -1,3 +1,5 @@
+import json
+
 from awl import AstSerialization
 
 
@@ -72,7 +74,7 @@ else:
     from rdflib import Graph
 
     g = Graph()
-    g.parse(data=jsonld_doc, format="json-ld")
+    g.parse(data=json.dumps(jsonld_doc), format="json-ld")
 
     # dump graph as turtle
     print(g.serialize(format="turtle"))

@@ -65,10 +65,7 @@ def test_ast_annotation():
 
     example_path = ["body", 0, "value", "__class_name__"]
     print(ast_annotation._dump_from_path(ast_annotation.ast_dict, example_path))
-    assert (
-        ast_annotation._dump_from_path(ast_annotation.ast_dict, example_path)
-        == '"ClassA"'
-    )
+    assert ast_annotation._dump_from_path(ast_annotation.ast_dict, example_path) == '"ClassA"'
 
 
 if __name__ == "__main__":

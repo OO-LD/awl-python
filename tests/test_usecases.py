@@ -1,3 +1,5 @@
+import json
+
 import rdflib
 
 from awl.core import AstSerialization
@@ -14,7 +16,7 @@ def MyProcess(input: MyInput) -> MyOutput:
 
     # add to graph
     g = rdflib.Graph()
-    g.parse(data=ast_serialization.to_jsonld(), format="json-ld")
+    g.parse(data=json.dumps(ast_serialization.to_jsonld()), format="json-ld")
     print(g.serialize(format="turtle"))
 
     # query all awl:FunctionDef

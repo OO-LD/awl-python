@@ -1,1 +1,1 @@
-from awl.core import ASTNotAModule, AstSerialization  # noqa
+from awl.core import ASTNotAModule, AstSerialization  # noqa: F401
