@@ -81,6 +81,10 @@ edit = [
 hitl = [
     { name = "oold", extra = ["ui-panel"] },
 ]
+validate = [
+    { name = "jsonschema" },
+    { name = "referencing" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -94,6 +98,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-playwright" },
     { name = "python-semantic-release" },
+    { name = "referencing" },
     { name = "ty" },
     { name = "zensical" },
 ]
@@ -103,18 +108,20 @@ requires-dist = [
     { name = "ast2json" },
     { name = "asttokens" },
     { name = "json2ast" },
+    { name = "jsonschema", marker = "extra == 'validate'", specifier = ">=4.18.0" },
     { name = "libcst", marker = "extra == 'edit'" },
     { name = "oold", specifier = ">=0.8.0" },
     { name = "oold", extras = ["ui-panel"], marker = "extra == 'hitl'" },
     { name = "pyld" },
     { name = "pyyaml" },
     { name = "rdflib" },
+    { name = "referencing", marker = "extra == 'validate'" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "deptry", specifier = ">=0.25.0" },
-    { name = "jsonschema", specifier = ">=4.0.0" },
+    { name = "jsonschema", specifier = ">=4.18.0" },
     { name = "mike", git = "https://github.com/squidfunk/mike.git?rev=2.2.0%2Bzensical-0.1.0" },
     { name = "mkdocstrings-python", specifier = ">=1.0.3" },
     { name = "pre-commit", specifier = ">=4.0.0" },
@@ -123,6 +130,7 @@ dev = [
     { name = "pytest-cov", specifier = ">=6.0.0" },
     { name = "pytest-playwright" },
     { name = "python-semantic-release", specifier = ">=10.0.0" },
+    { name = "referencing" },
     { name = "ty", specifier = ">=0.0.1a21" },
     { name = "zensical", specifier = ">=0.0.46" },
 ]

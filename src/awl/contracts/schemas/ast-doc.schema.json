@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://w3id.org/awl/contracts/ast-doc.schema.json",
+  "@context": {
+    "awl": "https://w3id.org/awl/schema/",
+    "@vocab": "https://w3id.org/awl/schema/"
+  },
+  "x-oold-version": "0.1.0",
+  "title": "AstDoc",
+  "description": "The AST as a document. Deliberately permissive: node types are not enumerated, because pinning them would version AWL-LD against the CPython grammar and defeat the language-agnostic objective.",
+  "type": "object",
+  "properties": {
+    "_type": {
+      "type": "string",
+      "description": "Node type as emitted by the frontend."
+    },
+    "parserTypeName": {
+      "type": "string",
+      "description": "Raw frontend label, preserved as a property so a neutral node type can still round-trip."
+    }
+  },
+  "required": [
+    "_type"
+  ],
+  "additionalProperties": true
+}

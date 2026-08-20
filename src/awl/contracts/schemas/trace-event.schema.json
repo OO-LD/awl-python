@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://w3id.org/awl/contracts/trace-event.schema.json",
+  "@context": {
+    "awl": "https://w3id.org/awl/schema/",
+    "@vocab": "https://w3id.org/awl/schema/"
+  },
+  "x-oold-version": "0.1.0",
+  "title": "TraceEvent",
+  "description": "One runtime event, attributed to an AST node by span. Records the branch actually taken and the iteration actually run, which no surveyed system does.",
+  "type": "object",
+  "properties": {
+    "kind": {
+      "enum": [
+        "call",
+        "line",
+        "return",
+        "branch",
+        "c_call",
+        "c_return"
+      ]
+    },
+    "span": {
+      "$ref": "https://w3id.org/awl/contracts/source-span.schema.json"
+    },
+    "identity": {
+      "$ref": "https://w3id.org/awl/contracts/identity.schema.json"
+    },
+    "iteration": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "Loop ordinal. PROV has no loop counter, so it is carried here."
+    },
+    "index": {
+      "type": "integer",
+      "description": "Position in the event sequence: the query surface for order."
+    },
+    "locals": {
+      "type": "object",
+      "description": "Variable state at this event. Typed members serialize as typed nodes, not repr()."
+    },
+    "timestamp": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "kind",
+    "index"
+  ]
+}

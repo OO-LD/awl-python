@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://w3id.org/awl/contracts/symbol-facts.schema.json",
+  "@context": {
+    "awl": "https://w3id.org/awl/schema/",
+    "@vocab": "https://w3id.org/awl/schema/"
+  },
+  "x-oold-version": "0.1.0",
+  "title": "SymbolFacts",
+  "description": "Observation only: what M3 saw in the source, with no inference applied. M4 turns these into ResolvedNames.",
+  "type": "object",
+  "properties": {
+    "file": {
+      "type": "string"
+    },
+    "declarations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "imports": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "aliases": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "exports": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "uses": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "types": {
+      "type": "array",
+      "items": {
+        "$ref": "https://w3id.org/awl/contracts/type-info.schema.json"
+      }
+    }
+  },
+  "required": [
+    "file"
+  ]
+}

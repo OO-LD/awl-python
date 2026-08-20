@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://w3id.org/awl/contracts/compact-doc.schema.json",
+  "@context": {
+    "awl": "https://w3id.org/awl/schema/",
+    "@vocab": "https://w3id.org/awl/schema/"
+  },
+  "x-oold-version": "0.1.0",
+  "title": "CompactDoc",
+  "description": "The compact AST encoding used as the editor model. Three node forms: a typed node, a literal, and a name. Required fields are reconstructed by the decoder, so this form does not carry them.",
+  "type": "object",
+  "properties": {},
+  "required": [],
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "_"
+      ],
+      "properties": {
+        "_": {
+          "type": "string"
+        }
+      },
+      "description": "Typed node."
+    },
+    {
+      "type": "object",
+      "required": [
+        "c"
+      ],
+      "properties": {
+        "c": {}
+      },
+      "additionalProperties": false,
+      "description": "Literal value."
+    },
+    {
+      "type": "object",
+      "required": [
+        "$"
+      ],
+      "properties": {
+        "$": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Name reference."
+    }
+  ]
+}

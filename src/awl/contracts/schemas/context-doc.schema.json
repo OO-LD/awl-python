@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://w3id.org/awl/contracts/context-doc.schema.json",
+  "@context": {
+    "awl": "https://w3id.org/awl/schema/",
+    "@vocab": "https://w3id.org/awl/schema/"
+  },
+  "x-oold-version": "0.1.0",
+  "title": "ContextDoc",
+  "description": "The JSON-LD context M7 emits. Ordered bodies use @container @list, numeric terms are explicitly typed so a float survives the RDF round trip, and collapsed nodes carry an embedded context.",
+  "type": "object",
+  "properties": {
+    "@context": {
+      "type": [
+        "object",
+        "array",
+        "string"
+      ]
+    }
+  },
+  "required": [
+    "@context"
+  ]
+}

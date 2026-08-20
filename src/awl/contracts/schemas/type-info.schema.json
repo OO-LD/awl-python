@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://w3id.org/awl/contracts/type-info.schema.json",
+  "@context": {
+    "awl": "https://w3id.org/awl/schema/",
+    "@vocab": "https://w3id.org/awl/schema/"
+  },
+  "x-oold-version": "0.1.0",
+  "title": "TypeInfo",
+  "description": "What M3 reads statically from a LinkedBaseModel subclass. Both link declaration forms are first class; neither is canonical.",
+  "type": "object",
+  "properties": {
+    "identity": {
+      "$ref": "https://w3id.org/awl/contracts/identity.schema.json"
+    },
+    "declaredTypes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Instance rdf:types. From x-oold-instance-rdf-type when present, else the type field default. Under allOf the nearest declaration replaces rather than appends."
+    },
+    "span": {
+      "$ref": "https://w3id.org/awl/contracts/source-span.schema.json"
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "isLink": {
+            "type": "boolean"
+          },
+          "isMany": {
+            "type": "boolean"
+          },
+          "target": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Target type for a link; null for a literal field."
+          },
+          "declarationForm": {
+            "enum": [
+              "Link[T]",
+              "LinkedField(link=True)",
+              "plain"
+            ]
+          },
+          "arms": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "literal",
+                "reference",
+                "embedded"
+              ]
+            },
+            "description": "The value forms this field admits, per the OO-LD spec."
+          }
+        },
+        "required": [
+          "name",
+          "isLink",
+          "isMany",
+          "declarationForm"
+        ]
+      }
+    }
+  },
+  "required": [
+    "identity",
+    "fields"
+  ]
+}

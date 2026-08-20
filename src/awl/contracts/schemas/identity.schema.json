@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://w3id.org/awl/contracts/identity.schema.json",
+  "@context": {
+    "awl": "https://w3id.org/awl/schema/",
+    "@vocab": "https://w3id.org/awl/schema/"
+  },
+  "x-oold-version": "0.1.0",
+  "title": "Identity",
+  "description": "A minted, globally unique name for a code entity. Produced only by M2, the single normalization authority: two producers that disagree here split one entity into disconnected nodes.",
+  "type": "object",
+  "properties": {
+    "iri": {
+      "type": "string",
+      "description": "The canonical IRI. The only field consumers should compare."
+    },
+    "scheme": {
+      "type": "string",
+      "description": "Language or frontend dimension, e.g. py."
+    },
+    "module": {
+      "type": "string",
+      "description": "Dotted module path, e.g. battery.params."
+    },
+    "symbol": {
+      "type": "string",
+      "description": "Dotted path within the module, e.g. ChargeParam.charge."
+    },
+    "version": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Set for OO-LD classes; null when unknown. Never guessed."
+    },
+    "disambiguator": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Distinguishes overloads and typed instantiations of a generic callee."
+    },
+    "aliasOf": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "The alias hop, if this identity was reached through one."
+    },
+    "aliasRoot": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "The resolved-to-root target, so queries choose their indirection level."
+    }
+  },
+  "required": [
+    "iri",
+    "scheme"
+  ]
+}

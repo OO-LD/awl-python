@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://w3id.org/awl/contracts/resolved-names.schema.json",
+  "@context": {
+    "awl": "https://w3id.org/awl/schema/",
+    "@vocab": "https://w3id.org/awl/schema/"
+  },
+  "x-oold-version": "0.1.0",
+  "title": "ResolvedNames",
+  "description": "Inference: binds a local name at a source span to an Identity, with the epistemic status of that binding. AMBIGUOUS is a valid outcome and must stay distinguishable from EXTRACTED.",
+  "type": "object",
+  "properties": {
+    "file": {
+      "type": "string"
+    },
+    "bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "localName": {
+            "type": "string"
+          },
+          "span": {
+            "$ref": "https://w3id.org/awl/contracts/source-span.schema.json"
+          },
+          "identity": {
+            "$ref": "https://w3id.org/awl/contracts/identity.schema.json"
+          },
+          "confidence": {
+            "enum": [
+              "EXTRACTED",
+              "INFERRED",
+              "AMBIGUOUS"
+            ]
+          }
+        },
+        "required": [
+          "localName",
+          "span",
+          "confidence"
+        ]
+      }
+    }
+  },
+  "required": [
+    "file",
+    "bindings"
+  ]
+}

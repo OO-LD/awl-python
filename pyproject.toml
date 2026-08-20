@@ -42,6 +42,11 @@ dependencies = [
 hitl = ["oold[UI-panel]"]
 # Structural source edits with trivia preservation (awl.writeback)
 edit = ["libcst"]
+# awl.contracts.validate(). An extra rather than a dev dependency because
+# validating against the contracts is part of what the package offers: any
+# module built against them needs it to check its own output.
+# referencing is declared explicitly rather than relied on transitively.
+validate = ["jsonschema>=4.18.0", "referencing"]
 
 [project.urls]
 Homepage = "https://OO-LD.github.io/awl-python/"
@@ -61,8 +66,10 @@ dev = [
     "ty>=0.0.1a21",
     "zensical>=0.0.46",
     "mkdocstrings-python>=1.0.3",
-    # Validates the M0 contract fixtures against their schemas.
-    "jsonschema>=4.0.0",
+    # The validate extra, so the contract tests run under a plain `uv sync`,
+    # which does not install extras.
+    "jsonschema>=4.18.0",
+    "referencing",
     # M13 UI variants are exercised in a browser.
     "pytest-playwright",
 ]
@@ -110,11 +117,14 @@ skip_empty = true
 [tool.ty.src]
 # awl.legacy is retained for reference only: it is not collected by pytest and
 # imports the optional oold UI extra, so it is not type checked either.
-exclude = ["src/awl/legacy", "tests/legacy"]
+# The contract fixtures are sample sources, parsed as data and never imported;
+# tier 3 references an oold branch that need not be installed.
+exclude = ["src/awl/legacy", "tests/legacy", "src/awl/contracts/fixtures"]
 
 [tool.deptry]
-# awl.legacy imports panel, which is only in the hitl extra.
-extend_exclude = ["src/awl/legacy"]
+# awl.legacy imports panel, which is only in the hitl extra. The contract
+# fixtures deliberately import modules that do not exist.
+extend_exclude = ["src/awl/legacy", "src/awl/contracts/fixtures"]
 
 [tool.deptry.per_rule_ignores]
 # Declared ahead of the modules that consume them, deliberately: dependency
@@ -129,8 +139,10 @@ target-version = "py311"
 line-length = 120
 fix = true
 # awl.legacy is retained for reference and not maintained; examples/ are
-# illustrative notebooks for that legacy feature.
-extend-exclude = ["src/awl/legacy", "tests/legacy", "examples"]
+# illustrative notebooks for that legacy feature. The contract fixtures are
+# sample sources treated as data: they are parsed, never imported or run, and
+# are deliberately minimal rather than idiomatic.
+extend-exclude = ["src/awl/legacy", "tests/legacy", "examples", "src/awl/contracts/fixtures"]
 
 [tool.ruff.lint]
 select = [
