@@ -10,7 +10,6 @@ copyright = 'Maintained by <a href="https://github.com/OO-LD">OO-LD</a>.'
 
 nav = [
     { "Home" = "index.md" },
-    { "Graph Derivation" = "graph-derivation.md" },
     { "API Reference" = "awl.md" },
     { "Development" = "dev.md" },
 ]
@@ -71,7 +70,7 @@ link = "https://pypi.org/project/awl"
 
 [project.markdown_extensions.pymdownx.superfences]
 
-# The graph-derivation analysis contains mermaid diagrams.
+# Design docs use mermaid diagrams.
 [[project.markdown_extensions.pymdownx.superfences.custom_fences]]
 name = "mermaid"
 class = "mermaid"
