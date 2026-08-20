@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+title: awl-python
+abstract: Python implementation of the Abstract Workflow Language (AWL-LD).
+message: If you use this software, please cite it as below.
+type: software
+license: Apache-2.0
+# Authors are curated by hand rather than generated from the contributor list,
+# so nobody is credited without consent. This list becomes the creator list of
+# every Zenodo release.
+authors:
+  - family-names: Stier
+    given-names: Simon
+    orcid: https://orcid.org/0000-0003-0410-3616
+repository-code: https://github.com/OO-LD/awl-python
+url: https://OO-LD.github.io/awl-python/
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.15108186
+    description: Concept DOI for all versions.
+keywords:
+  - workflow
+  - abstract syntax tree
+  - linked data
+  - json-ld
+  - rdf
+# Managed by python-semantic-release (version_variables in pyproject.toml).
+# Do not edit by hand; it is bumped automatically on merge to main, and is
+# what Zenodo shows as the version of each archived release.
+version: 0.3.2

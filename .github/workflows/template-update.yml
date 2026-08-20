@@ -1,0 +1,101 @@
+# Backports from the template: `copier update` replays changes made in
+# coregraft since this repository was generated.
+#
+# Local edits are preserved: copier regenerates the old template version from
+# .copier-answers.yml, diffs it against this repository to capture what you
+# changed, applies the new template version, then re-applies your diff.
+# Anything it cannot merge arrives as conflict markers for a human to resolve,
+# so the result is a proposal, never an automatic overwrite.
+#
+# Two delivery modes, because GitHub refuses to let the built-in token create
+# or update anything under .github/workflows/, and template updates routinely
+# do exactly that:
+#
+#   * With a GitHub App that has Workflows write, this opens a pull request.
+#   * Without one, it opens an issue naming the version and the command, and a
+#     maintainer runs the update locally where their own credentials apply.
+#
+# Both use the same `copier update`, so the merge quality is identical; only
+# the automation differs. See the README's "Updates from the template".
+#
+# Runs weekly and on demand.
+name: template-update
+
+on:
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: template-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      # `secrets` cannot be read in a job-level `if`, but it can here.
+      HAS_APP: ${{ secrets.RELEASE_APP_ID != '' }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # copier compares template versions against history
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Check for a newer template version
+        id: check
+        run: |
+          current=$(grep '^_commit:' .copier-answers.yml | cut -d' ' -f2)
+          src=$(grep '^_src_path:' .copier-answers.yml | cut -d' ' -f2)
+          latest=$(git ls-remote --tags --refs "$src" \
+            | awk -F/ '{print $NF}' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          if [ -n "$latest" ] && [ "$current" != "$latest" ]; then
+            echo "outdated=true" >> "$GITHUB_OUTPUT"
+            echo "Template moved: $current -> $latest"
+          else
+            echo "outdated=false" >> "$GITHUB_OUTPUT"
+            echo "Already on $current."
+          fi
+
+      # Fallback. Also covers the case where the bot is configured in the
+      # template but the secret is missing here: a step that never ran has an
+      # empty conclusion, so this still fires.
+      - name: Open an issue instead
+        if: steps.check.outputs.outdated == 'true' && steps.pr.conclusion != 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURRENT: ${{ steps.check.outputs.current }}
+          LATEST: ${{ steps.check.outputs.latest }}
+        run: |
+          title="Template update available: $LATEST"
+          if gh issue list --state open --label template-update --json title --jq '.[].title' \
+            | grep -qxF "$title"; then
+            echo "An issue for $LATEST is already open."
+            exit 0
+          fi
+          gh label create template-update --color 0e8a16 \
+            --description "Updates from the template" 2>/dev/null || true
+          gh issue create --title "$title" --label template-update --body "$(cat <<EOF
+          This repository is on \`$CURRENT\`; the template is on \`$LATEST\`.
+
+          Apply the update locally:
+
+          \`\`\`bash
+          uvx copier update --skip-answered --trust --conflict inline
+          \`\`\`
+
+          Then review the result, resolve any \`<<<<<<<\` conflict markers, and open a pull request as usual. Your own local changes are preserved: copier re-applies them on top of the new template version rather than overwriting them.
+
+          **Why this is an issue and not a pull request.** Template updates usually change files under \`.github/workflows/\`, and GitHub refuses to let the built-in token write those. Automating it needs a GitHub App with **Workflows: write**, installed here, with \`RELEASE_APP_ID\` and \`RELEASE_APP_PRIVATE_KEY\` available as secrets. See the README's "Updates from the template".
+          EOF
+          )"

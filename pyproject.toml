@@ -1,9 +1,146 @@
-[build-system]
-# AVOID CHANGING REQUIRES: IT WILL BE UPDATED BY PYSCAFFOLD!
-requires = ["setuptools>=46.1.0", "setuptools_scm[toml]>=5"]
-build-backend = "setuptools.build_meta"
+[project]
+# The distribution name stays "awl" (the existing PyPI package); the repository
+# is awl-python. The project is called AWL-LD in prose.
+name = "awl"
+description = "Python implementation of the Abstract Workflow Language (AWL-LD)"
+authors = [{ name = "Simon Stier", email = "simon.stier@gmx.de" }]
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+keywords = ["python", "workflow", "ast", "linked-data", "json-ld", "oo-ld", "rdf"]
+# >=3.11 is required for ast.co_positions() (PEP 657), which the trace and
+# write-back modules use to attribute events and edits to source spans.
+requires-python = ">=3.11,<4.0"
+# Version is managed by python-semantic-release (see [tool.semantic_release]).
+# Do not edit by hand; it is bumped automatically on merge to main.
+version = "0.3.2"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "ast2json",
+    "json2ast",
+    "pyyaml",
+    "pyld",
+    "rdflib",
+    "asttokens",
+    "oold>=0.8.0",
+]
 
-[tool.setuptools_scm]
-# For smarter version schemes and other configuration options,
-# check out https://github.com/pypa/setuptools_scm
-version_scheme = "no-guess-dev"
+[project.optional-dependencies]
+# Human-in-the-loop UI (awl.legacy.hitl). Legacy: not part of the AWL-LD
+# architecture, and currently uninstallable in practice because the published
+# oold wheel omits the built Vue assets that oold.ui.panel imports.
+hitl = ["oold[UI-panel]"]
+# Structural source edits with trivia preservation (awl.writeback)
+edit = ["libcst"]
+
+[project.urls]
+Homepage = "https://OO-LD.github.io/awl-python/"
+Documentation = "https://OO-LD.github.io/awl-python/"
+Repository = "https://github.com/OO-LD/awl-python"
+Download = "https://pypi.org/project/awl/#files"
+
+[dependency-groups]
+dev = [
+    "deptry>=0.25.0",
+    "mike @ git+https://github.com/squidfunk/mike.git@2.2.0+zensical-0.1.0",
+    "pre-commit>=4.0.0",
+    "pytest>=8.0.0",
+    "pytest-cov>=6.0.0",
+    "pytest-benchmark>=5.0.0",
+    "python-semantic-release>=10.0.0",
+    "ty>=0.0.1a21",
+    "zensical>=0.0.46",
+    "mkdocstrings-python>=1.0.3",
+    # Validates the M0 contract fixtures against their schemas.
+    "jsonschema>=4.0.0",
+    # M13 UI variants are exercised in a browser.
+    "pytest-playwright",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/awl"]
+
+[tool.semantic_release]
+commit_parser = "conventional"
+tag_format = "v{version}"
+commit_message = "chore(release): v{version} [skip ci]"
+allow_zero_version = true
+build_command = "uv lock"
+version_toml = ["pyproject.toml:project.version"]
+version_variables = ["CITATION.cff:version"]
+exclude_commit_patterns = ['''chore\(release\):.*''']
+assets = ["uv.lock"]
+
+[tool.semantic_release.changelog]
+mode = "update"
+insertion_flag = "<!-- version list -->"
+
+[tool.semantic_release.changelog.default_templates]
+changelog_file = "CHANGELOG.md"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# tests/legacy is not collected: it covers awl.legacy.hitl, which needs the
+# oold UI extra and is outside the AWL-LD architecture.
+# tests/benchmarks is not collected either; it has its own session via
+# pytest.benchmark.ini, because coverage distorts timings.
+addopts = "--cov --cov-config=pyproject.toml --cov-report=term-missing --ignore=tests/legacy --ignore=tests/benchmarks"
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+
+[tool.coverage.report]
+skip_empty = true
+
+[tool.ty.src]
+# awl.legacy is retained for reference only: it is not collected by pytest and
+# imports the optional oold UI extra, so it is not type checked either.
+exclude = ["src/awl/legacy", "tests/legacy"]
+
+[tool.deptry]
+# awl.legacy imports panel, which is only in the hitl extra.
+extend_exclude = ["src/awl/legacy"]
+
+[tool.deptry.per_rule_ignores]
+# Declared ahead of the modules that consume them, deliberately: dependency
+# changes are batched so parallel module work does not contend on uv.lock.
+# rdflib and pyld are used by tests today and by awl.rdf later; asttokens and
+# libcst are for awl.writeback.
+# oold is used by awl.legacy.hitl today (excluded above) and by awl.facts later.
+DEP002 = ["pyld", "rdflib", "asttokens", "libcst", "oold"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+fix = true
+# awl.legacy is retained for reference and not maintained; examples/ are
+# illustrative notebooks for that legacy feature.
+extend-exclude = ["src/awl/legacy", "tests/legacy", "examples"]
+
+[tool.ruff.lint]
+select = [
+    "YTT", "S", "B", "A", "C4", "T10", "SIM", "I", "C90", "E", "W", "F",
+    "PGH", "UP", "RUF", "TRY",
+]
+ignore = ["E501", "E731", "TRY003"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+
+[tool.ruff.format]
+preview = true

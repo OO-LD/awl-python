@@ -1,0 +1,148 @@
+# Automated release: python-semantic-release reads the conventional commits on
+# main, bumps the version, updates CHANGELOG.md, commits, tags, and a GitHub
+# release is created with generated notes.
+#
+# One-time setup: a GitHub App with Contents write access to this repository,
+# the RELEASE_APP_ID / RELEASE_APP_PRIVATE_KEY secrets, and a main ruleset the
+# App may bypass. See the coregraft README's Releasing section.
+name: release-main
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  # Releasing needs a GitHub App, which is a one-time repository setup. Until
+  # it exists, skip cleanly instead of failing every push on a missing app-id:
+  # a repository that has not opted into releases yet is not broken. `secrets`
+  # cannot be read in a job-level `if`, so it is surfaced as an output here.
+  check-setup:
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - id: check
+        env:
+          HAS_APP: ${{ secrets.RELEASE_APP_ID != '' }}
+        run: |
+          echo "configured=$HAS_APP" >> "$GITHUB_OUTPUT"
+          if [ "$HAS_APP" != "true" ]; then
+            echo "No RELEASE_APP_ID secret; skipping the release. See the README's Releasing section." \
+              >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  release:
+    needs: check-setup
+    if: needs.check-setup.outputs.configured == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # push the release commit and tag, create the GitHub release
+      id-token: write   # OIDC trusted publishing to PyPI
+    outputs:
+      released: ${{ steps.version.outputs.released }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history + tags so PSR can analyze commits
+          ref: main
+          token: ${{ steps.app-token.outputs.token }}   # app identity bypasses the main ruleset
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      # Release commits are authored by whichever release App this repository
+      # uses (derived from the token, not hardcoded).
+      - name: Configure git identity
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          bot_id=$(gh api "users/${APP_SLUG}%5Bbot%5D" --jq .id)
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${bot_id}+${APP_SLUG}[bot]@users.noreply.github.com"
+
+      - name: Semantic release version
+        id: version
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          before=$(git rev-parse HEAD)
+          uv run semantic-release version --no-vcs-release
+          after=$(git rev-parse HEAD)
+          if [ "$before" != "$after" ]; then
+            tag=$(git tag --points-at HEAD | grep -E '^v[0-9]' | head -1)
+            echo "released=true" >> "$GITHUB_OUTPUT"
+            echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+            echo "Released $tag"
+          else
+            echo "released=false" >> "$GITHUB_OUTPUT"
+            echo "No release for this push."
+          fi
+      - name: Build package
+        if: steps.version.outputs.released == 'true'
+        run: uv build
+
+      - name: Check package metadata
+        if: steps.version.outputs.released == 'true'
+        run: uvx twine check dist/*
+
+      - name: Publish to PyPI (OIDC trusted publishing)
+        if: steps.version.outputs.released == 'true'
+        run: uv publish --trusted-publishing always
+      - name: Create GitHub release with generated notes
+        if: steps.version.outputs.released == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "v$VERSION" --verify-tag --title "v$VERSION" --generate-notes
+          notes=$(gh release view "v$VERSION" --json body -q .body)
+          link="Full grouped changelog: [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/v${VERSION}/CHANGELOG.md)"
+          gh release edit "v$VERSION" --notes "${notes}"$'\n\n---\n'"${link}"
+
+  # Publish the versioned docs with mike. GitHub Pages must serve from the
+  # gh-pages branch (Settings > Pages > Source: Deploy from a branch).
+  deploy-docs:
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # mike pushes to gh-pages
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          ref: main   # include the release commit just pushed by PSR
+          fetch-depth: 0
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Deploy versioned documentation
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          uv run mike deploy --push --alias-type=copy --update-aliases "$VERSION" latest
+          uv run mike set-default --push latest

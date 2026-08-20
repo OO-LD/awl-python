@@ -1,0 +1,35 @@
+name: Bug report
+description: Something in the template or a repository generated from it is broken.
+labels: [bug]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Template repository itself
+        - A repository generated from it
+        - Backport / update flow
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Template version
+      description: From `TEMPLATE_VERSION` (or `.copier-answers.yml` in a generated repository).
+      placeholder: "0.2.0"
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      description: Command output or CI log excerpt. Rendered as shell automatically.
+      render: shell

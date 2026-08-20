@@ -1,0 +1,16 @@
+# Ignore list for the CI link checker (lychee) - one regex per line.
+# Add edge cases here rather than weakening real links.
+
+# Placeholder / non-resolvable hosts used inside examples.
+^https?://(www\.)?example\.(org|com)(/|$)
+^https?://localhost
+^https?://127\.0\.0\.1
+
+# Placeholder repository URLs in the README's usage instructions
+# (e.g. https://github.com/<owner>/<your-repo>.git).
+^https://github\.com/%3C
+^https://github\.com/<
+
+# The schema profile copies schemas/ into docs/ with `make stage-schemas` at
+# build time, so these links resolve in the built site but not in the sources.
+docs/schemas/
