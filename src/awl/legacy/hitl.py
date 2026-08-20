@@ -7,7 +7,6 @@ import sys
 import time
 
 import panel as pn
-
 from oold.model import LinkedBaseModel
 from oold.model.v1 import LinkedBaseModel as LinkedBaseModel_v1
 from oold.ui.panel import OoldEditor
@@ -25,17 +24,13 @@ class HitlApp(pn.viewable.Viewer):
 
         self.message = pn.pane.Markdown(
             """This is a human-in-the-loop application.
-            Please fill in the required fields and click 'Save' to proceed."""  # noqa
+            Please fill in the required fields and click 'Save' to proceed."""
         )
         self.jsoneditor = OoldEditor(max_height=500, max_width=800)
 
-        self.start_btn = pn.widgets.Button(
-            css_classes=["start_btn"], name="Start", button_type="primary"
-        )
+        self.start_btn = pn.widgets.Button(css_classes=["start_btn"], name="Start", button_type="primary")
         self.save_btn_clicked = False
-        self.save_btn = pn.widgets.Button(
-            css_classes=["save_btn"], name="Save", button_type="primary"
-        )
+        self.save_btn = pn.widgets.Button(css_classes=["save_btn"], name="Save", button_type="primary")
         pn.bind(self.on_save, self.save_btn, watch=True)
 
         self._view = pn.Column(
@@ -138,9 +133,7 @@ def entry_point(gui: bool = False, jupyter: bool = False):
 
             if jupyter:
                 # run the function in a thread to avoid blocking the Jupyter notebook
-                print(
-                    "Running in Jupyter, executing the function in a separate thread."
-                )
+                print("Running in Jupyter, executing the function in a separate thread.")
                 result = None
                 # result = func(*args, **kwargs)
             else:
@@ -224,7 +217,7 @@ def entry_point(gui: bool = False, jupyter: bool = False):
                         # # ui.save_btn.visible = False
                         # ui.start_btn.on_click(run_async)
                         # #await run_async()
-                        # display(ui.servable())  # noqa
+                        # display(ui.servable())
                         # print("After display")
                         # #result = await run_async()
                 else:
@@ -282,9 +275,7 @@ def hitl(func):
         # ToDo: DataClass or Pydantic model support
         for param in signature.parameters.values():
             # if parameter is a OOLD model run a jsoneditor
-            if issubclass(param.annotation, LinkedBaseModel) or issubclass(
-                param.annotation, LinkedBaseModel_v1
-            ):
+            if issubclass(param.annotation, LinkedBaseModel) or issubclass(param.annotation, LinkedBaseModel_v1):
                 # If parameter is a model, use the OswEditor to get the value
                 if ui is None:
                     ui = HitlApp()
@@ -304,9 +295,7 @@ def hitl(func):
                 # continue
             elif param.default is param.empty:
                 # If parameter has no default, prompt for input
-                user_input = input(
-                    f"Enter value for {param.name} ({param.annotation}): "
-                )
+                user_input = input(f"Enter value for {param.name} ({param.annotation}): ")
                 inputs[param.name] = user_input
             else:
                 # If parameter has a default, use it
@@ -327,9 +316,7 @@ def hitl(func):
         # ToDo: DataClass or Pydantic model support
         for param in signature.parameters.values():
             # if parameter is a OOLD model run a jsoneditor
-            if issubclass(param.annotation, LinkedBaseModel) or issubclass(
-                param.annotation, LinkedBaseModel_v1
-            ):
+            if issubclass(param.annotation, LinkedBaseModel) or issubclass(param.annotation, LinkedBaseModel_v1):
                 # If parameter is a model, use the OswEditor to get the value
                 if ui is None:
                     ui = HitlApp()
@@ -349,9 +336,7 @@ def hitl(func):
                 # continue
             elif param.default is param.empty:
                 # If parameter has no default, prompt for input
-                user_input = input(
-                    f"Enter value for {param.name} ({param.annotation}): "
-                )
+                user_input = input(f"Enter value for {param.name} ({param.annotation}): ")
                 inputs[param.name] = user_input
             else:
                 # If parameter has a default, use it

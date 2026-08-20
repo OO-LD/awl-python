@@ -2,11 +2,11 @@ import asyncio
 from enum import Enum
 from typing import Any
 
+from oold.model import LinkedBaseModel
 from pydantic import Field
 
-from awl.hitl import entry_point
-from awl.hitl import hitl as human_in_the_loop
-from oold.model import LinkedBaseModel
+from awl.legacy.hitl import entry_point
+from awl.legacy.hitl import hitl as human_in_the_loop
 
 
 class MachineParams(LinkedBaseModel):
