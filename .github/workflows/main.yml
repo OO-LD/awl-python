@@ -31,7 +31,10 @@ jobs:
     strategy:
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        # Must track requires-python in pyproject.toml. An entry below the
+        # floor does not fail: uv ignores it and resolves a compatible
+        # interpreter instead, so the job reports a false pass.
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     defaults:
       run:
