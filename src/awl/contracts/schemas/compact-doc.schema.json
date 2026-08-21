@@ -5,7 +5,7 @@
     "awl": "https://w3id.org/awl/schema/",
     "@vocab": "https://w3id.org/awl/schema/"
   },
-  "x-oold-version": "0.3.0",
+  "x-oold-version": "0.4.0",
   "title": "CompactDoc",
   "description": "The compact encoding used as the editor model. Three node forms: a typed node, a literal, and a name reference. Sequence position is the only ordering: order and argument_index are derivable from the arrays here and are materialized in the RDF projection instead, where position cannot be recovered. Required fields are rebuilt by the decoder, so this form does not carry them.",
   "type": "object",
@@ -41,6 +41,11 @@
             "string",
             "array"
           ]
+        },
+        "$schema": {
+          "type": "string",
+          "format": "uri",
+          "description": "The OO-LD schema of a collapsed constructor, carrying what a bare class name cannot: the version, the field ranges a form needs, and the declared instance types an exporter must materialize as @type. Only a constructor carries it, because only there are the sibling keys the author's own field names, so only there does a plain word risk colliding. Additive: the bare class term stays in @type so the document regenerates code without resolving anything."
         }
       },
       "description": "A typed node: a syntax node, or a collapsed constructor carrying its fields directly."

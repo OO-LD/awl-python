@@ -23,7 +23,7 @@ from awl.elide import unfold_node
 __all__ = ["RESERVED", "callee_of", "collapse", "expand"]
 
 #: Keys of a collapsed node that are structure rather than field data.
-RESERVED = frozenset({"@context", "@type", "span", "order"})
+RESERVED = frozenset({"$schema", "@context", "@type", "span", "order"})
 _RESERVED = RESERVED
 
 
@@ -123,6 +123,17 @@ def _typed_node(
     # context, so it is both the name to regenerate and, once mapped, the IRI;
     # the declared CURIEs follow it as co-types.
     node: dict[str, Any] = {"@type": [callee, *(info.get("declared_types") or [])]}
+    if info.get("schema"):
+        # Only a constructor carries this. Its sibling keys are the author's
+        # field names, so a plain word is never safe here; `$` cannot appear
+        # in a Python identifier, which is the same reason @type is safe.
+        #
+        # It earns its place by carrying what a bare class name cannot: the
+        # version, the field ranges a form needs, and the declared instance
+        # types an exporter must materialize. Additive, never a replacement:
+        # the bare term stays so the document regenerates code without
+        # resolving anything.
+        node["$schema"] = info["schema"]
     if embed_context:
         node["@context"] = {
             "@vocab": info["identity"]["iri"] + "#",
