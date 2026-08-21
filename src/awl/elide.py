@@ -32,7 +32,7 @@ def elide(doc: Any, *, profile: str = "ast", source: str = "") -> Any:
     profile : str
         One of ``awl.vocab.PROFILES``.
     source : str, optional
-        Original text, used to populate ``sourceText`` on opaque nodes. Without
+        Original text, used to populate ``source_text`` on opaque nodes. Without
         it an opaque node keeps its type but loses its expression.
 
     Returns
@@ -62,8 +62,8 @@ def _walk(node: Any, transparent, opaque, folds_keywords: bool, source: str) -> 
         # language-specific label rides as a property, never as the node type.
         return {
             "_type": "Call",
-            "parserTypeName": node_type,
-            "sourceText": _source_text(node, source),
+            "parser_type_name": node_type,
+            "source_text": _source_text(node, source),
         }
 
     out: dict[str, Any] = {}
@@ -106,13 +106,13 @@ def _index_arguments(out: dict[str, Any], folds_keywords: bool) -> None:
 
     Positional arguments are numbered from 1; 0 is reserved for an implicit
     receiver, and -1 marks a named argument, which then also carries
-    ``argumentName``. That is the code property graph's convention, and it
+    ``argument_name``. That is the code property graph's convention, and it
     means a second language frontend without keyword arguments simply never
     emits -1.
     """
     for position, argument in enumerate(out.get("args", []) or []):
         if isinstance(argument, dict):
-            argument["argumentIndex"] = position + 1
+            argument["argument_index"] = position + 1
 
     if not folds_keywords:
         return
@@ -132,8 +132,8 @@ def _index_arguments(out: dict[str, Any], folds_keywords: bool) -> None:
         if isinstance(keyword, dict) and keyword.get("arg"):
             value = keyword.get("value")
             if isinstance(value, dict):
-                value["argumentName"] = keyword["arg"]
-                value["argumentIndex"] = -1
+                value["argument_name"] = keyword["arg"]
+                value["argument_index"] = -1
             folded[keyword["arg"]] = value
         else:
             # `**kwargs` is a keyword with no name, so it has no key to fold
@@ -141,7 +141,7 @@ def _index_arguments(out: dict[str, Any], folds_keywords: bool) -> None:
             # silently: `f(a=1, **rest)` regenerated as `f(a=1)`.
             unfoldable.append(keyword)
     if folded:
-        out["keywordArguments"] = folded
+        out["keyword_arguments"] = folded
         if unfoldable:
             out["keywords"] = unfoldable
         else:
@@ -167,7 +167,7 @@ _POSITION = ("lineno", "col_offset", "end_lineno", "end_col_offset")
 
 #: Markers folding adds. They are derivable from the restored keyword list, so
 #: carrying them back would duplicate what the structure already says.
-_ORDERING = ("argumentName", "argumentIndex")
+_ORDERING = ("argument_name", "argument_index")
 
 
 def unfold_node(node: dict[str, Any], *, type_key: str = "_type") -> dict[str, Any]:
@@ -176,7 +176,7 @@ def unfold_node(node: dict[str, Any], *, type_key: str = "_type") -> dict[str, A
     Parameters
     ----------
     node : dict
-        A node that may carry ``keywordArguments``.
+        A node that may carry ``keyword_arguments``.
     type_key : str, optional
         The key naming a node type. The compact form spells it ``type`` and
         the intermediate form ``_type``; parameterising it keeps one
@@ -194,10 +194,10 @@ def unfold_node(node: dict[str, Any], *, type_key: str = "_type") -> dict[str, A
     inverse the profile that regenerates code could not fold, and the
     constructor collapse could never fire where it is most useful.
     """
-    folded = node.get("keywordArguments")
+    folded = node.get("keyword_arguments")
     if not isinstance(folded, dict):
         return node
-    out = {key: value for key, value in node.items() if key != "keywordArguments"}
+    out = {key: value for key, value in node.items() if key != "keyword_arguments"}
     position = {key: node[key] for key in _POSITION if key in node}
     # Anything already here had no name to fold under, `**kwargs` being the
     # only case. Overwriting the list rather than extending it dropped it.

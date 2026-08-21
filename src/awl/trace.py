@@ -64,10 +64,10 @@ def _position(frame: FrameType) -> dict[str, Any] | None:
         return None
     return {
         "file": frame.f_code.co_filename,
-        "startLine": line,
-        "startCol": col or 0,
-        "endLine": end_line or line,
-        "endCol": end_col or 0,
+        "start_line": line,
+        "start_col": col or 0,
+        "end_line": end_line or line,
+        "end_col": end_col or 0,
     }
 
 
@@ -226,7 +226,7 @@ class _Recorder:
         structures = _structures(span["file"])
         if not structures:
             return None
-        point = (span["startLine"], span["startCol"])
+        point = (span["start_line"], span["start_col"])
         self._resolve_branch(state, structures, point)
         return self._update_loops(state, structures, point)
 
@@ -238,10 +238,10 @@ class _Recorder:
                 kind="branch",
                 span={
                     "file": pending.file,
-                    "startLine": pending.span[0],
-                    "startCol": pending.span[1],
-                    "endLine": pending.span[2],
-                    "endCol": pending.span[3],
+                    "start_line": pending.span[0],
+                    "start_col": pending.span[1],
+                    "end_line": pending.span[2],
+                    "end_col": pending.span[3],
                 },
                 taken=_contains(pending.body, point),
             )

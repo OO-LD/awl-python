@@ -18,7 +18,7 @@
       "items": {
         "type": "object",
         "properties": {
-          "localName": {
+          "local_name": {
             "type": "string"
           },
           "span": {
@@ -36,7 +36,7 @@
           }
         },
         "required": [
-          "localName",
+          "local_name",
           "span",
           "confidence"
         ]

@@ -57,10 +57,10 @@ def _span(node: ast.AST, file: str) -> dict[str, Any] | None:
         return None
     return {
         "file": file,
-        "startLine": lineno,
-        "startCol": getattr(node, "col_offset", 0),
-        "endLine": getattr(node, "end_lineno", None) or lineno,
-        "endCol": getattr(node, "end_col_offset", None) or 0,
+        "start_line": lineno,
+        "start_col": getattr(node, "col_offset", 0),
+        "end_line": getattr(node, "end_lineno", None) or lineno,
+        "end_col": getattr(node, "end_col_offset", None) or 0,
     }
 
 
@@ -164,7 +164,7 @@ class _Annotation:
         # A capitalised bare name is a class reference and therefore a possible
         # link target; a lowercase builtin is a literal arm. This is the one
         # place a convention is read, and it only ever widens `arms`, never
-        # decides `isLink`, which comes from the declaration.
+        # decides `is_link`, which comes from the declaration.
         if name[:1].isupper():
             self.target = self.target or name
         else:
@@ -177,7 +177,7 @@ def _field_from(name: str, annotation: ast.AST | None, default: ast.AST | None) 
     Both link declaration forms are first class here: ``Link[T]`` inside the
     annotation and ``LinkedField(link=True)`` on the value. Neither is a
     migration stage, so neither is treated as canonical, and the two produce
-    identical output apart from ``declarationForm``.
+    identical output apart from ``declaration_form``.
     """
     parsed = _Annotation(annotation)
     declared_link = _linked_field_link(default)
@@ -197,11 +197,11 @@ def _field_from(name: str, annotation: ast.AST | None, default: ast.AST | None) 
 
     return {
         "name": name,
-        "isLink": is_link,
-        "isMany": parsed.is_many,
+        "is_link": is_link,
+        "is_many": parsed.is_many,
         "target": parsed.target if is_link else None,
         "annotation": parsed.text,
-        "declarationForm": form,
+        "declaration_form": form,
         "arms": arms,
     }
 
@@ -291,18 +291,18 @@ class _Walk(ast.NodeVisitor):
         for alias in node.names:
             local = alias.asname or alias.name
             self.imports.append({
-                "localName": local,
-                "importedName": alias.name,
-                "fromModule": origin,
-                "isAlias": alias.asname is not None,
-                "isStar": alias.name == "*",
+                "local_name": local,
+                "imported_name": alias.name,
+                "from_module": origin,
+                "is_alias": alias.asname is not None,
+                "is_star": alias.name == "*",
                 "span": _span(node, self.file),
             })
             if alias.asname is not None:
                 self.aliases.append({
-                    "localName": local,
-                    "aliasOf": alias.name,
-                    "aliasRoot": f"{origin}.{alias.name}" if origin else alias.name,
+                    "local_name": local,
+                    "alias_of": alias.name,
+                    "alias_root": f"{origin}.{alias.name}" if origin else alias.name,
                 })
             self._export(local, origin=origin)
         self.generic_visit(node)
@@ -311,18 +311,18 @@ class _Walk(ast.NodeVisitor):
         for alias in node.names:
             local = alias.asname or alias.name.split(".")[0]
             self.imports.append({
-                "localName": local,
-                "importedName": alias.name,
-                "fromModule": "",
-                "isAlias": alias.asname is not None,
-                "isStar": False,
+                "local_name": local,
+                "imported_name": alias.name,
+                "from_module": "",
+                "is_alias": alias.asname is not None,
+                "is_star": False,
                 "span": _span(node, self.file),
             })
             if alias.asname is not None:
                 self.aliases.append({
-                    "localName": local,
-                    "aliasOf": alias.name,
-                    "aliasRoot": alias.name,
+                    "local_name": local,
+                    "alias_of": alias.name,
+                    "alias_root": alias.name,
                 })
             self._export(local, origin=alias.name)
         self.generic_visit(node)
@@ -331,9 +331,9 @@ class _Walk(ast.NodeVisitor):
         name = _name_of(node.func)
         if name is not None:
             self.uses.append({
-                "localName": name,
+                "local_name": name,
                 "span": _span(node, self.file),
-                "argumentTypes": [
+                "argument_types": [
                     called
                     for argument in node.args
                     if isinstance(argument, ast.Call) and (called := _name_of(argument.func))
@@ -368,14 +368,14 @@ class _Walk(ast.NodeVisitor):
         value = getattr(statement, "value", None)
         callee = _name_of(value.func) if isinstance(value, ast.Call) else None
         common = {
-            "inFunction": self._functions[-1] if self._functions else None,
+            "in_function": self._functions[-1] if self._functions else None,
             "span": _span(statement, self.file),
         }
         if len(path) == 1:
             self.bindings.append({
                 "name": path[0],
-                "valuePath": _attribute_path(value) if value is not None else None,
-                "valueCallee": callee,
+                "value_path": _attribute_path(value) if value is not None else None,
+                "value_callee": callee,
                 "annotation": (
                     ast.unparse(statement.annotation)
                     if isinstance(statement, ast.AnnAssign) and statement.annotation
@@ -384,7 +384,7 @@ class _Walk(ast.NodeVisitor):
                 **common,
             })
             return
-        self.writes.append({"path": path, "writtenBy": callee, **common})
+        self.writes.append({"path": path, "written_by": callee, **common})
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         fields, declared = _class_fields(node)
@@ -407,7 +407,7 @@ class _Walk(ast.NodeVisitor):
         if LINKED_BASE in bases:
             self.types.append({
                 "identity": identity,
-                "declaredTypes": declared,
+                "declared_types": declared,
                 "fields": fields,
                 "span": _span(node, self.file),
             })
@@ -457,9 +457,9 @@ class _Walk(ast.NodeVisitor):
         export is how a re-export resolver ends up with duplicate nodes.
         """
         if self._depth == 0 and not name.startswith("_") and name != "*":
-            entry = {"exportedName": name, "module": self.module}
+            entry = {"exported_name": name, "module": self.module}
             if origin:
-                entry["fromModule"] = origin
+                entry["from_module"] = origin
             self.exports.append(entry)
 
 

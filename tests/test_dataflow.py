@@ -22,19 +22,19 @@ def _closure(out, start):
         if current in seen:
             continue
         seen.add(current)
-        frontier.extend(by_id[current]["dependsOn"])
+        frontier.extend(by_id[current]["depends_on"])
     return {by_id[identity]["name"] for identity in seen}
 
 
 def test_a_use_links_to_the_binding_that_produced_it():
     out = _analyze("def f():\n    a = 1\n    b = a + 2\n")
     definitions = {entry["name"]: entry for entry in out["definitions"]}
-    assert definitions["b"]["dependsOn"] == [definitions["a"]["id"]]
+    assert definitions["b"]["depends_on"] == [definitions["a"]["id"]]
 
 
 def test_a_definition_records_what_produced_it():
     out = _analyze("def f():\n    x = compute(1)\n")
-    assert out["definitions"][0]["producedBy"] == "compute"
+    assert out["definitions"][0]["produced_by"] == "compute"
 
 
 def test_a_parameter_is_a_definition():
@@ -51,15 +51,15 @@ def test_a_name_bound_in_both_arms_reaches_through_both():
     """
     out = _analyze("def f(flag, a, b):\n    if flag:\n        x = a\n    else:\n        x = b\n    y = x\n")
     y = next(entry for entry in out["definitions"] if entry["name"] == "y")
-    assert len(y["dependsOn"]) == 2, "both arms reach the use"
-    assert _closure(out, y["dependsOn"]) >= {"x", "a", "b"}
+    assert len(y["depends_on"]) == 2, "both arms reach the use"
+    assert _closure(out, y["depends_on"]) >= {"x", "a", "b"}
 
 
 def test_a_branch_condition_is_a_dependency_of_what_the_branch_produced():
     """A value only exists because a test went one way; that is provenance."""
     out = _analyze("def f(flag, a):\n    if flag:\n        x = a\n")
     x = next(entry for entry in out["definitions"] if entry["name"] == "x")
-    assert _closure(out, x["dependsOn"]) >= {"a", "flag"}
+    assert _closure(out, x["depends_on"]) >= {"a", "flag"}
 
 
 def test_a_loop_carried_dependency_is_recorded():
@@ -67,29 +67,29 @@ def test_a_loop_carried_dependency_is_recorded():
     out = _analyze("def f(items):\n    total = 0\n    for i in items:\n        total = total + i\n")
     totals = [entry for entry in out["definitions"] if entry["name"] == "total"]
     assert len(totals) > 1, "the loop rebinds it"
-    assert _closure(out, totals[-1]["dependsOn"]) >= {"i", "items"}
+    assert _closure(out, totals[-1]["depends_on"]) >= {"i", "items"}
 
 
 def test_an_augmented_assignment_reads_its_own_target():
     out = _analyze("def f(n):\n    i = 0\n    i += n\n")
     augmented = next(entry for entry in out["definitions"] if entry["kind"] == "augmented")
-    assert _closure(out, augmented["dependsOn"]) >= {"i", "n"}
+    assert _closure(out, augmented["depends_on"]) >= {"i", "n"}
 
 
 def test_starred_unpacking_binds_the_named_element():
     """`slope, *_ = linregress(...)` is how the real file binds its result."""
     out = _analyze("def f(a):\n    slope, *_ = compute(a)\n")
     slope = next(entry for entry in out["definitions"] if entry["name"] == "slope")
-    assert slope["producedBy"] == "compute"
-    assert _closure(out, slope["dependsOn"]) >= {"a"}
+    assert slope["produced_by"] == "compute"
+    assert _closure(out, slope["depends_on"]) >= {"a"}
 
 
 def test_a_member_write_carries_its_dependencies():
     out = _analyze("def f(dataset, value):\n    dataset.specimen.e_mod = wrap(value)\n")
     write = out["writes"][0]
     assert write["path"] == "dataset.specimen.e_mod"
-    assert write["producedBy"] == "wrap"
-    assert _closure(out, write["dependsOn"]) >= {"value", "dataset"}
+    assert write["produced_by"] == "wrap"
+    assert _closure(out, write["depends_on"]) >= {"value", "dataset"}
 
 
 def test_provenance_runs_through_an_untypeable_chain():
@@ -102,14 +102,14 @@ def test_provenance_runs_through_an_untypeable_chain():
     """
     out = analyze(TENSILE, module="tensile_test", file="tensile_test.py")
     write = next(entry for entry in out["writes"] if entry["path"].endswith("e_mod"))
-    reached = _closure(out, write["dependsOn"])
+    reached = _closure(out, write["depends_on"])
     assert {"slope", "linear", "df", "dataset"} <= reached, reached
 
 
 def test_the_producing_call_is_recorded_along_the_chain():
     """linregress is opaque, and still nameable as the step that made the value."""
     out = analyze(TENSILE, module="tensile_test", file="tensile_test.py")
-    produced = {entry["producedBy"] for entry in out["definitions"]}
+    produced = {entry["produced_by"] for entry in out["definitions"]}
     assert "linregress" in produced
     assert "dataset.result.to_df" in produced
 
@@ -125,7 +125,7 @@ def test_two_functions_do_not_share_a_scope():
     """A name in one function must not reach a use in another."""
     out = _analyze("def f():\n    x = 1\n\ndef g():\n    y = x\n")
     y = next(entry for entry in out["definitions"] if entry["name"] == "y")
-    assert y["dependsOn"] == [], "x is not in scope here"
+    assert y["depends_on"] == [], "x is not in scope here"
 
 
 def test_the_whole_corpus_analyses_without_error():

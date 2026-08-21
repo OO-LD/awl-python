@@ -124,8 +124,8 @@ def mint(
         "symbol": symbol,
         "version": version,
         "disambiguator": disambiguator,
-        "aliasOf": None,
-        "aliasRoot": None,
+        "alias_of": None,
+        "alias_root": None,
     }
 
 
@@ -195,7 +195,7 @@ def class_identity(
     Returns
     -------
     dict
-        An identity carrying an extra ``declaredTypes`` list.
+        An identity carrying an extra ``declared_types`` list.
 
     Notes
     -----
@@ -215,5 +215,5 @@ def class_identity(
     # control; overwriting `iri` with it produced predicates like
     # `ex:ChargeParam#target_voltage`, which rdflib accepts and which join with
     # nothing. Declared types are carried alongside, never instead.
-    identity["declaredTypes"] = declared
+    identity["declared_types"] = declared
     return identity

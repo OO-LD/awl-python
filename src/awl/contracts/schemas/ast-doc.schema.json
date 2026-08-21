@@ -14,7 +14,7 @@
       "type": "string",
       "description": "Node type as emitted by the frontend."
     },
-    "parserTypeName": {
+    "parser_type_name": {
       "type": "string",
       "description": "Raw frontend label, preserved as a property so a neutral node type can still round-trip."
     }

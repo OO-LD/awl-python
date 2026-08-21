@@ -92,7 +92,7 @@ def palette(schema: dict[str, Any], type_schemas: list[dict[str, Any]] | None = 
             "name": name,
             "kind": "type",
             "fields": dict(type_schema.get("properties", {})),
-            "declaredTypes": list(type_schema.get("x-oold-instance-rdf-type", [])),
+            "declared_types": list(type_schema.get("x-oold-instance-rdf-type", [])),
         })
     return entries
 

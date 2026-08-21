@@ -40,21 +40,21 @@
       ],
       "description": "Distinguishes overloads and typed instantiations of a generic callee."
     },
-    "aliasOf": {
+    "alias_of": {
       "type": [
         "string",
         "null"
       ],
       "description": "The alias hop, if this identity was reached through one."
     },
-    "aliasRoot": {
+    "alias_root": {
       "type": [
         "string",
         "null"
       ],
       "description": "The resolved-to-root target, so queries choose their indirection level."
     },
-    "declaredTypes": {
+    "declared_types": {
       "type": "array",
       "items": {
         "type": "string"

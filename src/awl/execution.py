@@ -27,8 +27,8 @@ def _key(span: dict[str, Any] | None) -> tuple[Any, ...] | None:
         return None
     return (
         span.get("file"),
-        span.get("startLine"),
-        span.get("startCol"),
+        span.get("start_line"),
+        span.get("start_col"),
     )
 
 
@@ -42,7 +42,7 @@ def _line_key(span: dict[str, Any] | None) -> tuple[Any, ...] | None:
     """
     if not span:
         return None
-    return (span.get("file"), span.get("startLine"))
+    return (span.get("file"), span.get("start_line"))
 
 
 def _index(steps):
@@ -62,13 +62,13 @@ def _index(steps):
 def _finish(record: dict[str, Any]) -> dict[str, Any]:
     """Turn accumulated sets into the ordered output entry."""
     iterations = sorted(record.pop("iterations"))
-    taken = sorted(record.pop("branchTaken"))
+    taken = sorted(record.pop("branch_taken"))
     entry = {**record, "iterations": iterations}
     if iterations:
         # One more than the highest ordinal: ordinals count from zero.
-        entry["iterationCount"] = iterations[-1] + 1
+        entry["iteration_count"] = iterations[-1] + 1
     if taken:
-        entry["branchTaken"] = taken
+        entry["branch_taken"] = taken
     return entry
 
 
@@ -90,9 +90,9 @@ def join(plan: dict[str, Any], events: list[dict[str, Any]]) -> dict[str, Any]:
         ordinals it ran under, and for a branch the outcomes recorded. A step
         that never ran carries ``executed: false``.
 
-        ``eventCount`` is the number of attributed events, **not** the number
+        ``event_count`` is the number of attributed events, **not** the number
         of times the step executed: opcode tracing fires many times per
-        statement. The honest execution count is ``iterationCount``, which is
+        statement. The honest execution count is ``iteration_count``, which is
         derived from the loop ordinals the tracer recorded.
 
     Notes
@@ -111,9 +111,9 @@ def join(plan: dict[str, Any], events: list[dict[str, Any]]) -> dict[str, Any]:
             "condition": step.get("condition"),
             "span": step["span"],
             "executed": False,
-            "eventCount": 0,
+            "event_count": 0,
             "iterations": set(),
-            "branchTaken": set(),
+            "branch_taken": set(),
         }
         for step in plan["steps"]
     }
@@ -126,11 +126,11 @@ def join(plan: dict[str, Any], events: list[dict[str, Any]]) -> dict[str, Any]:
         for step in matched:
             record = observed[step["id"]]
             record["executed"] = True
-            record["eventCount"] += 1
+            record["event_count"] += 1
             if event.get("iteration") is not None:
                 record["iterations"].add(event["iteration"])
             if event.get("kind") == "branch" and "taken" in event:
-                record["branchTaken"].add(bool(event["taken"]))
+                record["branch_taken"].add(bool(event["taken"]))
 
     return {
         "file": plan["file"],

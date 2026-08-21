@@ -141,9 +141,9 @@ def test_a_float_survives_the_projection_as_a_double():
             "fields": [
                 {
                     "name": "target_voltage",
-                    "isLink": False,
-                    "isMany": False,
-                    "declarationForm": "plain",
+                    "is_link": False,
+                    "is_many": False,
+                    "declaration_form": "plain",
                     "annotation": "float",
                 }
             ],

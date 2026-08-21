@@ -20,7 +20,7 @@ def test_events_carry_expression_level_positions():
     """
     events = trace(lambda: exec(compile("b = a + 2", "<demo>", "exec"), {"a": 1}))  # noqa: S102
     spans = [
-        (event["span"]["startCol"], event["span"]["endCol"])
+        (event["span"]["start_col"], event["span"]["end_col"])
         for event in events
         if event["kind"] == "line" and event["span"]["file"] == "<demo>"
     ]
@@ -95,7 +95,7 @@ def test_a_branch_event_points_at_the_if_statement():
 
     event = next(e for e in trace(lambda: work(True)) if e["kind"] == "branch")
     assert event["span"]["file"] == __file__
-    line = event["span"]["startLine"]
+    line = event["span"]["start_line"]
     source = Path(__file__).read_text(encoding="utf-8").splitlines()[line - 1]
     assert source.strip() == "if flag:"
 

@@ -24,6 +24,65 @@ XSD = "http://www.w3.org/2001/XMLSchema#"
 #: integer-valued float is otherwise emitted as xsd:integer.
 _COERCIONS = {"float": "xsd:double"}
 
+#: Keys whose value is a count or a position.
+_INTEGERS = (
+    "order",
+    "argument_index",
+    "iteration",
+    "iteration_count",
+    "event_count",
+    "start_line",
+    "start_col",
+    "end_line",
+    "end_col",
+)
+
+#: Keys whose value is an IRI naming another node, not text.
+_REFERENCES = ("member", "member_of", "root_type", "range", "depends_on", "id")
+
+#: The remaining vocabulary this project introduces. Listed so the mapping is
+#: explicit: a key absent from here still projects, through @vocab, under its
+#: snake_case name, which is a worse IRI but never a lost triple.
+_VOCABULARY = (
+    "alias_of",
+    "alias_root",
+    "argument_name",
+    "argument_types",
+    "branch_taken",
+    "declaration_form",
+    "declared_types",
+    "exported_name",
+    "from_module",
+    "imported_name",
+    "in_function",
+    "is_alias",
+    "is_link",
+    "is_many",
+    "is_star",
+    "keyword_arguments",
+    "local_name",
+    "member_path",
+    "node_type",
+    "parser_type_name",
+    "produced_by",
+    "range_name",
+    "source_text",
+    "value_callee",
+    "value_path",
+    "written_by",
+)
+
+
+def _camel(term: str) -> str:
+    """Return the RDF property name for a document key.
+
+    ``when_true`` becomes ``whenTrue``. The document reads like the Python it
+    came from; the vocabulary reads like every other RDF vocabulary.
+    """
+    head, *rest = term.split("_")
+    return head + "".join(part.capitalize() for part in rest)
+
+
 #: Terms whose meaning depends on the node type they appear under. `args` is a
 #: parameter list under a method declaration and an argument list under a call.
 #: A type-scoped context states that declaratively and per type, which is
@@ -97,20 +156,19 @@ def build_context(types: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         "literal": {"@id": f"{AWL}literal"},
         "var": {"@id": f"{AWL}var"},
         "span": {"@id": f"{AWL}span"},
-        "order": {"@id": f"{AWL}order", "@type": "xsd:integer"},
-        "argumentIndex": {"@id": f"{AWL}argumentIndex", "@type": "xsd:integer"},
-        "iteration": {"@id": f"{AWL}iteration", "@type": "xsd:integer"},
-        "startLine": {"@id": f"{AWL}startLine", "@type": "xsd:integer"},
-        "startCol": {"@id": f"{AWL}startCol", "@type": "xsd:integer"},
+        **{term: {"@id": f"{AWL}{_camel(term)}", "@type": "xsd:integer"} for term in _INTEGERS},
     }
-    # The write vocabulary names classes and members, so its values are IRIs
-    # rather than text. Without this a query for "written to a member of
-    # TensileTestSpecimen" has to string-match instead of joining.
-    for term in ("member", "memberOf", "rootType", "range", "dependsOn", "id"):
-        context[term] = {"@id": f"{AWL}{term}", "@type": "@id"}
-    # Control-flow edges are predicates, so a path expression can cross them.
-    for term in EDGE_KINDS:
-        context[term] = {"@id": f"{AWL}{term}", "@type": "@id"}
+    # Document keys are snake_case, matching the Python-derived data and the
+    # syntax fields they sit beside (`col_offset`, `decorator_list`). RDF
+    # property names are camelCase by convention. The context is exactly the
+    # place those two meet, so neither has to give.
+    for term in _VOCABULARY:
+        context[term] = {"@id": f"{AWL}{_camel(term)}"}
+    # These name classes and members, so their values are IRIs rather than
+    # text: a query for "written to a member of TensileTestSpecimen" joins
+    # instead of string-matching.
+    for term in (*_REFERENCES, *EDGE_KINDS):
+        context[term] = {"@id": f"{AWL}{_camel(term)}", "@type": "@id"}
     # Taken from the vocabulary rather than restated, so a field added there
     # cannot silently lose its ordering here.
     for field in ORDERED_FIELDS:
@@ -161,9 +219,9 @@ def _term_for(field: dict[str, Any]) -> dict[str, Any] | None:
     arms are what make this decidable, which is the reason to record them.
     """
     name = field["name"]
-    if field.get("isLink") and "literal" not in (field.get("arms") or []):
+    if field.get("is_link") and "literal" not in (field.get("arms") or []):
         term: dict[str, Any] = {"@id": f"{AWL}{name}", "@type": "@id"}
-        if field.get("isMany"):
+        if field.get("is_many"):
             # A set, not a list: the annotation declares multiplicity, not order.
             term["@container"] = "@set"
         return term

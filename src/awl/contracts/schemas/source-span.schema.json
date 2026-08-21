@@ -14,28 +14,28 @@
       "type": "string",
       "description": "Path relative to the scan root."
     },
-    "startLine": {
+    "start_line": {
       "type": "integer",
       "minimum": 1
     },
-    "startCol": {
+    "start_col": {
       "type": "integer",
       "minimum": 0
     },
-    "endLine": {
+    "end_line": {
       "type": "integer",
       "minimum": 1
     },
-    "endCol": {
+    "end_col": {
       "type": "integer",
       "minimum": 0
     }
   },
   "required": [
     "file",
-    "startLine",
-    "startCol",
-    "endLine",
-    "endCol"
+    "start_line",
+    "start_col",
+    "end_line",
+    "end_col"
   ]
 }

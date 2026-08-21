@@ -12,8 +12,8 @@
         "symbol": "procedure",
         "version": null,
         "disambiguator": null,
-        "aliasOf": null,
-        "aliasRoot": null
+        "alias_of": null,
+        "alias_root": null
       },
       "parameters": [
         {
@@ -23,114 +23,114 @@
       ],
       "span": {
         "file": "tier2_dataclass/procedure.py",
-        "startLine": 13,
-        "startCol": 0,
-        "endLine": 18,
-        "endCol": 14
+        "start_line": 13,
+        "start_col": 0,
+        "end_line": 18,
+        "end_col": 14
       }
     }
   ],
   "imports": [
     {
-      "localName": "charge",
-      "importedName": "charge",
-      "fromModule": "battery.device",
-      "isAlias": false,
-      "isStar": false,
+      "local_name": "charge",
+      "imported_name": "charge",
+      "from_module": "battery.device",
+      "is_alias": false,
+      "is_star": false,
       "span": {
         "file": "tier2_dataclass/procedure.py",
-        "startLine": 8,
-        "startCol": 0,
-        "endLine": 8,
-        "endCol": 39
+        "start_line": 8,
+        "start_col": 0,
+        "end_line": 8,
+        "end_col": 39
       }
     },
     {
-      "localName": "rest",
-      "importedName": "rest",
-      "fromModule": "battery.device",
-      "isAlias": false,
-      "isStar": false,
+      "local_name": "rest",
+      "imported_name": "rest",
+      "from_module": "battery.device",
+      "is_alias": false,
+      "is_star": false,
       "span": {
         "file": "tier2_dataclass/procedure.py",
-        "startLine": 8,
-        "startCol": 0,
-        "endLine": 8,
-        "endCol": 39
+        "start_line": 8,
+        "start_col": 0,
+        "end_line": 8,
+        "end_col": 39
       }
     },
     {
-      "localName": "ChargeParam",
-      "importedName": "ChargeParam",
-      "fromModule": ".params",
-      "isAlias": false,
-      "isStar": false,
+      "local_name": "ChargeParam",
+      "imported_name": "ChargeParam",
+      "from_module": ".params",
+      "is_alias": false,
+      "is_star": false,
       "span": {
         "file": "tier2_dataclass/procedure.py",
-        "startLine": 10,
-        "startCol": 0,
-        "endLine": 10,
-        "endCol": 31
+        "start_line": 10,
+        "start_col": 0,
+        "end_line": 10,
+        "end_col": 31
       }
     }
   ],
   "aliases": [],
   "exports": [
     {
-      "exportedName": "charge",
+      "exported_name": "charge",
       "module": "tier2_dataclass.procedure",
-      "fromModule": "battery.device"
+      "from_module": "battery.device"
     },
     {
-      "exportedName": "rest",
+      "exported_name": "rest",
       "module": "tier2_dataclass.procedure",
-      "fromModule": "battery.device"
+      "from_module": "battery.device"
     },
     {
-      "exportedName": "ChargeParam",
+      "exported_name": "ChargeParam",
       "module": "tier2_dataclass.procedure",
-      "fromModule": ".params"
+      "from_module": ".params"
     },
     {
-      "exportedName": "procedure",
+      "exported_name": "procedure",
       "module": "tier2_dataclass.procedure"
     }
   ],
   "uses": [
     {
-      "localName": "charge",
+      "local_name": "charge",
       "span": {
         "file": "tier2_dataclass/procedure.py",
-        "startLine": 16,
-        "startCol": 8,
-        "endLine": 16,
-        "endCol": 60
+        "start_line": 16,
+        "start_col": 8,
+        "end_line": 16,
+        "end_col": 60
       },
-      "argumentTypes": [
+      "argument_types": [
         "ChargeParam"
       ]
     },
     {
-      "localName": "ChargeParam",
+      "local_name": "ChargeParam",
       "span": {
         "file": "tier2_dataclass/procedure.py",
-        "startLine": 16,
-        "startCol": 15,
-        "endLine": 16,
-        "endCol": 59
+        "start_line": 16,
+        "start_col": 15,
+        "end_line": 16,
+        "end_col": 59
       },
-      "argumentTypes": []
+      "argument_types": []
     },
     {
-      "localName": "rest",
+      "local_name": "rest",
       "span": {
         "file": "tier2_dataclass/procedure.py",
-        "startLine": 17,
-        "startCol": 8,
-        "endLine": 17,
-        "endCol": 17
+        "start_line": 17,
+        "start_col": 8,
+        "end_line": 17,
+        "end_col": 17
       },
-      "argumentTypes": []
+      "argument_types": []
     }
   ],
   "types": []

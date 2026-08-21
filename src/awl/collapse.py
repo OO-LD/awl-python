@@ -108,7 +108,7 @@ def _typed_node(
     control, and using it here produces predicates like
     ``ex:ChargeParam#target_voltage``, which validate and join with nothing.
     """
-    arguments = call.get("keywordArguments")
+    arguments = call.get("keyword_arguments")
     if arguments is None:
         # Keywords have not been folded, so there is nothing to key on.
         return _descend(call, embed_context=embed_context, keep_spans=keep_spans, **kw)
@@ -122,7 +122,7 @@ def _typed_node(
     # The class name leads, as a bare term. A term resolves through the
     # context, so it is both the name to regenerate and, once mapped, the IRI;
     # the declared CURIEs follow it as co-types.
-    node: dict[str, Any] = {"@type": [callee, *(info.get("declaredTypes") or [])]}
+    node: dict[str, Any] = {"@type": [callee, *(info.get("declared_types") or [])]}
     if embed_context:
         node["@context"] = {
             "@vocab": info["identity"]["iri"] + "#",

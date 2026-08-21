@@ -23,7 +23,7 @@ def _labelled(graph):
     by_id = {step["id"]: step for step in graph["steps"]}
 
     def label(step):
-        return step["callee"] or step["condition"] or step["parserTypeName"]
+        return step["callee"] or step["condition"] or step["parser_type_name"]
 
     return {(label(by_id[edge["from"]]), edge["kind"], label(by_id[edge["to"]])) for edge in graph["edges"]}
 
@@ -35,8 +35,8 @@ def test_sequential_steps_are_connected_unconditionally():
 def test_a_conditional_emits_both_arms():
     """An ordered body says a step comes second; it cannot say "only if"."""
     edges = _labelled(_cfg("if flag:\n    a()\nelse:\n    b()\n"))
-    assert ("flag", "whenTrue", "a") in edges
-    assert ("flag", "whenFalse", "b") in edges
+    assert ("flag", "when_true", "a") in edges
+    assert ("flag", "when_false", "b") in edges
 
 
 def test_falling_past_a_conditional_is_still_a_decision():
@@ -44,20 +44,20 @@ def test_falling_past_a_conditional_is_still_a_decision():
     sequence would lose the fact that skipping was a decision.
     """
     edges = _labelled(_cfg("if flag:\n    a()\nb()\n"))
-    assert ("flag", "whenTrue", "a") in edges
-    assert ("flag", "whenFalse", "b") in edges
+    assert ("flag", "when_true", "a") in edges
+    assert ("flag", "when_false", "b") in edges
 
 
 def test_a_loop_has_a_back_edge():
     """What makes a loop a loop rather than a list."""
     edges = _labelled(_cfg("while cond:\n    a()\n"))
-    assert ("cond", "whenTrue", "a") in edges
+    assert ("cond", "when_true", "a") in edges
     assert ("a", "repeat", "cond") in edges
 
 
 def test_a_for_loop_says_which_edge_is_an_iteration():
     edges = _labelled(_cfg("for item in items:\n    a()\nb()\n"))
-    assert ("items", "eachItem", "a") in edges
+    assert ("items", "each_item", "a") in edges
     assert ("a", "repeat", "items") in edges
     assert ("items", "exhausted", "b") in edges
 
@@ -65,7 +65,7 @@ def test_a_for_loop_says_which_edge_is_an_iteration():
 def test_a_return_ends_the_path():
     """Nothing follows a return, so no edge may leave it."""
     graph = _cfg("def f():\n    return 1\n")
-    returns = [step for step in graph["steps"] if step["parserTypeName"] == "Return"]
+    returns = [step for step in graph["steps"] if step["parser_type_name"] == "Return"]
     assert returns
     assert not [edge for edge in graph["edges"] if edge["from"] == returns[0]["id"]]
 
@@ -73,7 +73,7 @@ def test_a_return_ends_the_path():
 def test_a_break_leaves_the_loop_rather_than_repeating_it():
     graph = _cfg("while cond:\n    if flag:\n        break\n    a()\nb()\n")
     by_id = {step["id"]: step for step in graph["steps"]}
-    breaks = next(step for step in graph["steps"] if step["parserTypeName"] == "Break")
+    breaks = next(step for step in graph["steps"] if step["parser_type_name"] == "Break")
     outgoing = [edge for edge in graph["edges"] if edge["from"] == breaks["id"]]
     assert outgoing, "a break must reach the statement after the loop"
     assert all(by_id[edge["to"]]["callee"] == "b" for edge in outgoing)
@@ -82,7 +82,7 @@ def test_a_break_leaves_the_loop_rather_than_repeating_it():
 def test_a_continue_goes_back_to_the_loop_header():
     graph = _cfg("while cond:\n    continue\n")
     by_id = {step["id"]: step for step in graph["steps"]}
-    node = next(step for step in graph["steps"] if step["parserTypeName"] == "Continue")
+    node = next(step for step in graph["steps"] if step["parser_type_name"] == "Continue")
     edges = [edge for edge in graph["edges"] if edge["from"] == node["id"]]
     assert [(edge["kind"], by_id[edge["to"]]["condition"]) for edge in edges] == [("repeat", "cond")]
 
@@ -91,14 +91,14 @@ def test_a_step_carries_its_callee_and_its_span():
     """The callee makes a step nameable; the span is the join key to a trace."""
     step = next(item for item in _cfg("charge(4.2)\n")["steps"] if item["callee"])
     assert step["callee"] == "charge"
-    assert step["span"]["startLine"] == 1
+    assert step["span"]["start_line"] == 1
 
 
 def test_a_step_uses_the_neutral_node_type():
     """The Python label rides as a property, never as the node type."""
     step = next(item for item in _cfg("while cond:\n    a()\n")["steps"] if item["condition"])
-    assert step["nodeType"] == "ControlStructure"
-    assert step["parserTypeName"] == "While"
+    assert step["node_type"] == "ControlStructure"
+    assert step["parser_type_name"] == "While"
 
 
 def test_each_function_is_its_own_subgraph():
@@ -111,7 +111,7 @@ def test_each_function_is_its_own_subgraph():
 
 def test_the_real_procedure_reads_as_a_plan():
     edges = _labelled(_cfg(TIER2, module="battery.procedure"))
-    assert ("i < cycles", "whenTrue", "charge") in edges
+    assert ("i < cycles", "when_true", "charge") in edges
     assert ("charge", "next", "rest") in edges
     assert ("i += 1", "repeat", "i < cycles") in edges or any(
         kind == "repeat" and target == "i < cycles" for _, kind, target in edges

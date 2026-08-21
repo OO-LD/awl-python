@@ -74,9 +74,9 @@ def test_a_float_stays_a_double():
             "fields": [
                 {
                     "name": "target_voltage",
-                    "isLink": False,
-                    "isMany": False,
-                    "declarationForm": "plain",
+                    "is_link": False,
+                    "is_many": False,
+                    "declaration_form": "plain",
                     "annotation": "float",
                 }
             ],
@@ -92,9 +92,9 @@ def _numeric_context(annotation):
             "fields": [
                 {
                     "name": "v",
-                    "isLink": False,
-                    "isMany": False,
-                    "declarationForm": "plain",
+                    "is_link": False,
+                    "is_many": False,
+                    "declaration_form": "plain",
                     "annotation": annotation,
                 }
             ],
@@ -192,16 +192,16 @@ def test_the_context_is_built_from_real_extracted_types():
             "fields": [
                 {
                     "name": "target_voltage",
-                    "isLink": False,
-                    "isMany": False,
-                    "declarationForm": "plain",
+                    "is_link": False,
+                    "is_many": False,
+                    "declaration_form": "plain",
                     "annotation": "float",
                 },
                 {
                     "name": "c_rate",
-                    "isLink": False,
-                    "isMany": False,
-                    "declarationForm": "plain",
+                    "is_link": False,
+                    "is_many": False,
+                    "declaration_form": "plain",
                     "annotation": "float",
                 },
             ],
@@ -215,11 +215,11 @@ def test_the_context_is_built_from_real_extracted_types():
 def _linked_context(**overrides):
     field = {
         "name": "device",
-        "isLink": True,
-        "isMany": False,
+        "is_link": True,
+        "is_many": False,
         "target": "Device",
         "annotation": "Link[Device] | None",
-        "declarationForm": "Link[T]",
+        "declaration_form": "Link[T]",
         "arms": ["reference", "embedded"],
         **overrides,
     }
@@ -293,4 +293,4 @@ def test_a_union_with_a_literal_arm_is_not_coerced():
 
 def test_a_repeated_link_declares_its_multiplicity():
     """The annotation declares many, not ordered, so a set rather than a list."""
-    assert _linked_context(isMany=True)["device"]["@container"] == "@set"
+    assert _linked_context(is_many=True)["device"]["@container"] == "@set"

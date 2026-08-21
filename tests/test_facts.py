@@ -18,41 +18,41 @@ def _facts(path, module):
 
 def test_records_imports_with_their_alias_hop():
     facts = _facts(TIER2, "tier2_dataclass.procedure")
-    imported = {entry["localName"]: entry for entry in facts["imports"]}
-    assert imported["charge"]["fromModule"] == "battery.device"
-    assert imported["ChargeParam"]["fromModule"] == ".params", "relative imports stay as written"
+    imported = {entry["local_name"]: entry for entry in facts["imports"]}
+    assert imported["charge"]["from_module"] == "battery.device"
+    assert imported["ChargeParam"]["from_module"] == ".params", "relative imports stay as written"
 
 
 def test_an_aliased_import_keeps_both_names():
     """Kythe's aliases and aliases/root pair: a query picks its indirection level."""
     facts = extract("from a.b import C as D\n", module="m")
     entry = facts["imports"][0]
-    assert entry["localName"] == "D"
-    assert entry["importedName"] == "C"
-    assert entry["isAlias"] is True
-    assert facts["aliases"] == [{"localName": "D", "aliasOf": "C", "aliasRoot": "a.b.C"}]
+    assert entry["local_name"] == "D"
+    assert entry["imported_name"] == "C"
+    assert entry["is_alias"] is True
+    assert facts["aliases"] == [{"local_name": "D", "alias_of": "C", "alias_root": "a.b.C"}]
 
 
 def test_a_plain_import_records_the_bound_name():
     facts = extract("import numpy.linalg\nimport numpy as np\n", module="m")
-    bound = {entry["localName"]: entry["importedName"] for entry in facts["imports"]}
+    bound = {entry["local_name"]: entry["imported_name"] for entry in facts["imports"]}
     assert bound == {"numpy": "numpy.linalg", "np": "numpy"}
 
 
 def test_a_star_import_is_recorded_and_never_resolved():
     """The sound answer is to make it illegal in the domain schema, not to guess."""
     facts = extract("from a.b import *\n", module="m")
-    assert facts["imports"][0]["importedName"] == "*"
-    assert facts["imports"][0]["isStar"] is True
+    assert facts["imports"][0]["imported_name"] == "*"
+    assert facts["imports"][0]["is_star"] is True
 
 
 def test_every_call_site_becomes_a_use():
     """awl.resolve binds uses, so an unpopulated list silently disables resolution."""
     facts = _facts(TIER2, "tier2_dataclass.procedure")
-    used = {entry["localName"] for entry in facts["uses"]}
+    used = {entry["local_name"] for entry in facts["uses"]}
     assert {"charge", "rest", "ChargeParam"} <= used
     for use in facts["uses"]:
-        assert use["span"]["startLine"] >= 1, "a use without a span cannot be attributed"
+        assert use["span"]["start_line"] >= 1, "a use without a span cannot be attributed"
 
 
 def test_a_use_records_its_argument_type_names():
@@ -60,8 +60,8 @@ def test_a_use_records_its_argument_type_names():
     distinguishable from a call on a known type.
     """
     facts = extract("charge(ChargeParam(target_voltage=4.2))\n", module="m")
-    charge = next(entry for entry in facts["uses"] if entry["localName"] == "charge")
-    assert charge["argumentTypes"] == ["ChargeParam"]
+    charge = next(entry for entry in facts["uses"] if entry["local_name"] == "charge")
+    assert charge["argument_types"] == ["ChargeParam"]
 
 
 def test_a_function_becomes_a_declaration():
@@ -75,7 +75,7 @@ def test_a_function_becomes_a_declaration():
 def test_module_level_names_become_exports():
     """What another module could import from here; the re-export input for resolution."""
     facts = _facts(TIER2, "tier2_dataclass.procedure")
-    assert "procedure" in {entry["exportedName"] for entry in facts["exports"]}
+    assert "procedure" in {entry["exported_name"] for entry in facts["exports"]}
 
 
 def test_reads_both_link_declaration_forms():
@@ -84,19 +84,19 @@ def test_reads_both_link_declaration_forms():
     charge = next(t for t in facts["types"] if t["identity"]["symbol"] == "ChargeParam")
     fields = {f["name"]: f for f in charge["fields"]}
 
-    assert fields["device"]["declarationForm"] == "Link[T]"
-    assert fields["device"]["isLink"] is True
+    assert fields["device"]["declaration_form"] == "Link[T]"
+    assert fields["device"]["is_link"] is True
     assert fields["device"]["target"] == "Device"
 
-    assert fields["calibrated_against"]["declarationForm"] == "LinkedField(link=True)"
-    assert fields["calibrated_against"]["isLink"] is True
+    assert fields["calibrated_against"]["declaration_form"] == "LinkedField(link=True)"
+    assert fields["calibrated_against"]["is_link"] is True
     assert fields["calibrated_against"]["target"] == "Device"
 
 
 def test_the_two_link_forms_agree_on_every_semantic_field():
     """The point of "neither is canonical", asserted rather than stated.
 
-    They differ in `declarationForm` and in `annotation`, and must not differ
+    They differ in `declaration_form` and in `annotation`, and must not differ
     anywhere else. Both exclusions are deliberate: `annotation` is the text as
     written, which is an observation, and the two forms genuinely write
     different text (`Link[Device] | None` against `Device | None`). Every
@@ -105,7 +105,7 @@ def test_the_two_link_forms_agree_on_every_semantic_field():
     facts = _facts(TIER3, "tier3_oold.params")
     charge = next(t for t in facts["types"] if t["identity"]["symbol"] == "ChargeParam")
     fields = {f["name"]: f for f in charge["fields"]}
-    semantic = ("isLink", "isMany", "target", "arms")
+    semantic = ("is_link", "is_many", "target", "arms")
     assert {key: fields["device"][key] for key in semantic} == {
         key: fields["calibrated_against"][key] for key in semantic
     }
@@ -116,9 +116,9 @@ def test_a_plain_field_is_not_a_link():
     facts = _facts(TIER3, "tier3_oold.params")
     charge = next(t for t in facts["types"] if t["identity"]["symbol"] == "ChargeParam")
     fields = {f["name"]: f for f in charge["fields"]}
-    assert fields["target_voltage"]["isLink"] is False
+    assert fields["target_voltage"]["is_link"] is False
     assert fields["target_voltage"]["target"] is None
-    assert fields["target_voltage"]["declarationForm"] == "plain"
+    assert fields["target_voltage"]["declaration_form"] == "plain"
 
 
 def test_a_numeric_field_carries_its_annotation():
@@ -158,15 +158,15 @@ def test_a_list_of_links_is_many():
         module="m",
     )
     field = facts["types"][0]["fields"][0]
-    assert field["isMany"] is True
-    assert field["isLink"] is True
+    assert field["is_many"] is True
+    assert field["is_link"] is True
     assert field["target"] == "A", "a forward reference is still a target"
 
 
 def test_the_type_field_default_is_recorded():
     facts = _facts(TIER3, "tier3_oold.params")
     charge = next(t for t in facts["types"] if t["identity"]["symbol"] == "ChargeParam")
-    assert charge["declaredTypes"] == ["ex:ChargeParam"]
+    assert charge["declared_types"] == ["ex:ChargeParam"]
 
 
 def test_a_list_valued_type_default_is_kept_whole():
@@ -177,7 +177,7 @@ def test_a_list_valued_type_default_is_kept_whole():
         "    type: list[str] | None = ['Diameter', 'qudt:Quantity']\n",
         module="m",
     )
-    assert facts["types"][0]["declaredTypes"] == ["Diameter", "qudt:Quantity"]
+    assert facts["types"][0]["declared_types"] == ["Diameter", "qudt:Quantity"]
 
 
 def test_the_id_and_type_fields_are_not_data_fields():
@@ -227,7 +227,7 @@ def test_the_gradient_is_measurable_across_the_tiers():
 def test_tier_one_still_yields_a_call_graph():
     """The lower bound: no semantics, but the calls and their order are there."""
     facts = _facts(TIER1, "tier1_plain.procedure")
-    assert {"charge", "rest"} <= {entry["localName"] for entry in facts["uses"]}
+    assert {"charge", "rest"} <= {entry["local_name"] for entry in facts["uses"]}
     assert facts["types"] == []
     procedure = next(entry for entry in facts["declarations"] if entry["name"] == "procedure")
     assert procedure["parameters"][0]["annotation"] is None, "nothing says what cycles is"

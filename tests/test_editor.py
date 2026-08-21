@@ -86,7 +86,7 @@ def test_a_typed_entry_carries_its_fields():
     charge = next(entry for entry in entries if entry["name"] == "ChargeParam")
     assert charge["kind"] == "type"
     assert set(charge["fields"]) == {"target_voltage", "c_rate"}
-    assert charge["declaredTypes"] == ["ex:ChargeParam"]
+    assert charge["declared_types"] == ["ex:ChargeParam"]
 
 
 def test_a_typed_entry_keeps_the_widget_hint():

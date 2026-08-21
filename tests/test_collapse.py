@@ -24,15 +24,15 @@ TYPES: dict[str, Any] = {
             "symbol": "ChargeParam",
             "scheme": "py",
         },
-        "declaredTypes": ["ex:ChargeParam"],
+        "declared_types": ["ex:ChargeParam"],
         "fields": [
             {
                 "name": "target_voltage",
-                "isLink": False,
-                "isMany": False,
-                "declarationForm": "plain",
+                "is_link": False,
+                "is_many": False,
+                "declaration_form": "plain",
             },
-            {"name": "c_rate", "isLink": False, "isMany": False, "declarationForm": "plain"},
+            {"name": "c_rate", "is_link": False, "is_many": False, "declaration_form": "plain"},
         ],
     }
 }
@@ -75,7 +75,7 @@ def test_a_resolved_constructor_becomes_one_typed_node():
     assert node is not None
     assert node["target_voltage"] == 4.2
     assert node["c_rate"] == 0.23
-    assert "keywordArguments" not in node, "the plumbing is gone"
+    assert "keyword_arguments" not in node, "the plumbing is gone"
 
 
 def test_the_property_namespace_is_the_resolvable_iri():
@@ -92,7 +92,7 @@ def test_the_property_namespace_is_the_resolvable_iri():
 
 def test_a_type_without_a_declared_iri_falls_back_to_the_minted_one():
     """Tier 2 has no declared IRI, and must still collapse to something typed."""
-    types: dict[str, Any] = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
+    types: dict[str, Any] = {"ChargeParam": {**TYPES["ChargeParam"], "declared_types": []}}
     out = collapse(_folded(), types=types, resolved=RESOLVED)
     node = _find(out, lambda item: "@type" in item)
     assert node["@type"] == ["ChargeParam"], "the class name alone still identifies it"
@@ -237,7 +237,7 @@ def test_the_compact_editor_form_is_class_name_plus_data():
     """
     from awl.compact import encode
 
-    types: dict[str, Any] = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
+    types: dict[str, Any] = {"ChargeParam": {**TYPES["ChargeParam"], "declared_types": []}}
     doc = collapse(
         elide(ast2json(ast.parse(SOURCE)), profile="ast"),
         types=types,
@@ -252,7 +252,7 @@ def test_that_form_regenerates_the_original_python():
     """The whole point: export, hold as JSON, regenerate."""
     from awl.compact import decode, encode
 
-    types: dict[str, Any] = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
+    types: dict[str, Any] = {"ChargeParam": {**TYPES["ChargeParam"], "declared_types": []}}
     doc = collapse(
         elide(ast2json(ast.parse(SOURCE)), profile="ast"),
         types=types,
@@ -267,7 +267,7 @@ def test_editing_the_json_changes_the_regenerated_python():
     """Edit a field as plain JSON, with no knowledge of the syntax tree."""
     from awl.compact import decode, encode
 
-    types: dict[str, Any] = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
+    types: dict[str, Any] = {"ChargeParam": {**TYPES["ChargeParam"], "declared_types": []}}
     compact = encode(
         collapse(
             elide(ast2json(ast.parse(SOURCE)), profile="ast"),
@@ -291,7 +291,7 @@ def test_the_class_term_resolves_through_the_document_context():
 
     from awl.context import build_context
 
-    types: dict[str, Any] = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
+    types: dict[str, Any] = {"ChargeParam": {**TYPES["ChargeParam"], "declared_types": []}}
     doc = collapse(
         elide(ast2json(ast.parse(SOURCE)), profile="ast"),
         types=types,

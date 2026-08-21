@@ -70,21 +70,21 @@ def test_the_derivable_orderings_are_not_carried():
     """
     doc = ast2json(ast.parse("f(1, x=2)"))
     call = doc["body"][0]["value"]
-    call["args"][0]["argumentIndex"] = 1
-    call["keywords"][0]["value"]["argumentIndex"] = -1
-    call["keywords"][0]["value"]["argumentName"] = "x"
+    call["args"][0]["argument_index"] = 1
+    call["keywords"][0]["value"]["argument_index"] = -1
+    call["keywords"][0]["value"]["argument_name"] = "x"
     call["order"] = 0
 
     blob = json.dumps(encode(doc))
-    assert "argumentIndex" not in blob
-    assert "argumentName" not in blob
+    assert "argument_index" not in blob
+    assert "argument_name" not in blob
     assert '"order"' not in blob
 
 
 def test_an_ordering_does_not_force_a_literal_back_to_the_long_form():
     """A literal stays a literal; an ordering must not push it to the long form."""
     doc = ast2json(ast.parse("f(1)"))
-    doc["body"][0]["value"]["args"][0]["argumentIndex"] = 1
+    doc["body"][0]["value"]["args"][0]["argument_index"] = 1
     assert encode(doc)["body"][0]["value"]["args"][0] == {"literal": 1}
 
 

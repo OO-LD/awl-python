@@ -114,7 +114,7 @@ def node_type_for(ast_node_name: str) -> str:
     str
         A member of :data:`NODE_TYPES`. ``"Unknown"`` when unmapped, which is a
         deliberate answer rather than an error: the frontend keeps the raw
-        label in ``parserTypeName``, so nothing is lost.
+        label in ``parser_type_name``, so nothing is lost.
     """
     return _BY_NODE.get(ast_node_name, "Unknown")
 

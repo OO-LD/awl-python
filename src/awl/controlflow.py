@@ -9,9 +9,9 @@ when this test is true" rather than reconstructing it from nesting:
 
 ============  ===========================================================
 ``next``      unconditional sequence
-``whenTrue``  the test held
-``whenFalse`` the test did not hold, including falling past an ``if``
-``eachItem``  one pass of a ``for``
+``when_true``  the test held
+``when_false`` the test did not hold, including falling past an ``if``
+``each_item``  one pass of a ``for``
 ``exhausted`` the iterable ran out
 ``repeat``    the back edge closing a loop
 ============  ===========================================================
@@ -40,10 +40,10 @@ def _span(node: ast.AST, file: str) -> dict[str, Any] | None:
         return None
     return {
         "file": file,
-        "startLine": lineno,
-        "startCol": getattr(node, "col_offset", 0),
-        "endLine": getattr(node, "end_lineno", None) or lineno,
-        "endCol": getattr(node, "end_col_offset", None) or 0,
+        "start_line": lineno,
+        "start_col": getattr(node, "col_offset", 0),
+        "end_line": getattr(node, "end_lineno", None) or lineno,
+        "end_col": getattr(node, "end_col_offset", None) or 0,
     }
 
 
@@ -101,8 +101,8 @@ class _Graph:
         )["iri"]
         self.steps.append({
             "id": identity,
-            "nodeType": node_type_for(type(node).__name__),
-            "parserTypeName": type(node).__name__,
+            "node_type": node_type_for(type(node).__name__),
+            "parser_type_name": type(node).__name__,
             "scope": scope,
             "callee": _callee_of(node),
             "condition": _condition_of(node),
@@ -158,18 +158,18 @@ class _Builder:
         identity = self.graph.step(node, scope)
         body_entry, body_exits = self.sequence(node.body, scope)
         if body_entry is not None:
-            self.graph.edge(identity, body_entry, "whenTrue")
+            self.graph.edge(identity, body_entry, "when_true")
         else:
-            body_exits = [(identity, "whenTrue")]
+            body_exits = [(identity, "when_true")]
 
         else_entry, else_exits = self.sequence(node.orelse, scope)
         if else_entry is not None:
-            self.graph.edge(identity, else_entry, "whenFalse")
+            self.graph.edge(identity, else_entry, "when_false")
         else:
             # No else arm: control falls past the conditional, and that is
-            # still a whenFalse edge. Emitting it as plain sequence would lose
+            # still a when_false edge. Emitting it as plain sequence would lose
             # the fact that skipping the body was a decision.
-            else_exits = [(identity, "whenFalse")]
+            else_exits = [(identity, "when_false")]
         return identity, [*body_exits, *else_exits]
 
     def _loop(self, node: ast.stmt, scope: str, enter: str, leave: str) -> tuple[str, list[_Exit]]:
@@ -193,10 +193,10 @@ class _Builder:
         return identity, exits
 
     def _on_While(self, node: ast.While, scope: str) -> tuple[str, list[_Exit]]:
-        return self._loop(node, scope, "whenTrue", "whenFalse")
+        return self._loop(node, scope, "when_true", "when_false")
 
     def _on_For(self, node: ast.For, scope: str) -> tuple[str, list[_Exit]]:
-        return self._loop(node, scope, "eachItem", "exhausted")
+        return self._loop(node, scope, "each_item", "exhausted")
 
     _on_AsyncFor = _on_For
 
@@ -226,7 +226,7 @@ class _Builder:
             if handler_entry is not None:
                 # Any step in the body may raise, so the handler is reachable
                 # from the try itself rather than from a particular statement.
-                self.graph.edge(identity, handler_entry, "onError")
+                self.graph.edge(identity, handler_entry, "on_error")
                 exits = [*exits, *handler_exits]
         else_entry, else_exits = self.sequence(node.orelse, scope)
         if else_entry is not None:
@@ -293,8 +293,8 @@ def analyze(source: str, *, module: str = "", file: str = "<source>") -> dict[st
 
 #: Every reason control moves. Emitted as a predicate rather than as a
 #: reified edge node, because a store is the consumer and
-#: `?loop awl:whenTrue+ ?step` is the query this graph exists to serve.
-EDGE_KINDS = ("next", "whenTrue", "whenFalse", "eachItem", "exhausted", "repeat", "onError")
+#: `?loop awl:when_true+ ?step` is the query this graph exists to serve.
+EDGE_KINDS = ("next", "when_true", "when_false", "each_item", "exhausted", "repeat", "on_error")
 
 
 def as_document(graph: dict[str, Any]) -> dict[str, Any]:
@@ -314,7 +314,7 @@ def as_document(graph: dict[str, Any]) -> dict[str, Any]:
     Notes
     -----
     Reifying an edge as its own node would need two joins to cross one edge
-    and would put ``repeat`` and ``whenTrue`` behind a literal comparison. A
+    and would put ``repeat`` and ``when_true`` behind a literal comparison. A
     predicate per reason keeps a path expression usable, which is what makes
     "every step reachable while this test holds" a one-line query.
     """
@@ -327,8 +327,8 @@ def as_document(graph: dict[str, Any]) -> dict[str, Any]:
         node: dict[str, Any] = {
             "@id": step["id"],
             "_type": "Step",
-            "nodeType": step["nodeType"],
-            "parserTypeName": step["parserTypeName"],
+            "node_type": step["node_type"],
+            "parser_type_name": step["parser_type_name"],
             "span": step["span"],
         }
         for key in ("callee", "condition", "scope"):

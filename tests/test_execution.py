@@ -68,12 +68,12 @@ def test_a_step_inside_a_guard_only_ran_on_the_iterations_that_passed_it(run):
 
 def test_the_loop_iteration_count_is_recorded(run):
     """PROV has no loop counter, so the ordinal is carried on the event."""
-    assert run["rest"]["iterationCount"] == 3
+    assert run["rest"]["iteration_count"] == 3
 
 
 def test_both_outcomes_of_a_branch_are_recorded(run):
     """`i == 0` was true once and false twice, and both are facts about the run."""
-    assert run["i == 0"]["branchTaken"] == [False, True]
+    assert run["i == 0"]["branch_taken"] == [False, True]
 
 
 def test_every_matched_step_is_marked_executed(run):
@@ -87,7 +87,7 @@ def test_the_event_count_does_not_claim_to_be_an_execution_count(run):
     Reporting that as "ran 5 times" would be a plain falsehood, so the count
     is named for what it is and the execution count comes from the ordinals.
     """
-    assert run["charge"]["eventCount"] > 1
+    assert run["charge"]["event_count"] > 1
     assert run["charge"]["iterations"] == [0], "ran on exactly one pass"
 
 
@@ -108,7 +108,7 @@ def test_an_event_with_no_matching_step_is_ignored():
             {
                 "kind": "line",
                 "index": 0,
-                "span": {"file": "elsewhere.py", "startLine": 1, "startCol": 0, "endLine": 1, "endCol": 1},
+                "span": {"file": "elsewhere.py", "start_line": 1, "start_col": 0, "end_line": 1, "end_col": 1},
             }
         ],
     )
@@ -127,7 +127,7 @@ def test_an_event_inside_a_statement_still_attributes_to_that_step():
             {
                 "kind": "line",
                 "index": 0,
-                "span": {"file": "p.py", "startLine": 1, "startCol": 7, "endLine": 1, "endCol": 10},
+                "span": {"file": "p.py", "start_line": 1, "start_col": 7, "end_line": 1, "end_col": 10},
             }
         ],
     )

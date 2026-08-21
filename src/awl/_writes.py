@@ -109,7 +109,7 @@ def _bound_from(
     if annotated:
         return _Bound(annotated, EXTRACTED)
 
-    value_path = binding.get("valuePath")
+    value_path = binding.get("value_path")
     if value_path:
         walked = _walk(value_path, environment, classes)
         if walked is not None and walked.type_name:
@@ -120,7 +120,7 @@ def _bound_from(
             # still records that it was followed.
             return _Bound(walked.type_name, INFERRED, walked.root_type, walked.chain)
 
-    callee = binding.get("valueCallee")
+    callee = binding.get("value_callee")
     if callee and callee.split(".")[0] in classes:
         return _Bound(callee.split(".")[0], INFERRED)
     return None
@@ -131,22 +131,22 @@ def _describe(event: dict[str, Any], walked: _Bound | None, identity_for) -> dic
     entry: dict[str, Any] = {
         "path": ".".join(event["path"]),
         "span": event["span"],
-        "writtenBy": event.get("writtenBy"),
+        "written_by": event.get("written_by"),
         "confidence": AMBIGUOUS,
     }
     if walked is None or not walked.chain or walked.root_type is None:
         return entry
 
     owner, member = walked.chain[-1]
-    entry["rootType"] = identity_for(walked.root_type)
-    entry["memberOf"] = identity_for(owner)
+    entry["root_type"] = identity_for(walked.root_type)
+    entry["member_of"] = identity_for(owner)
     entry["member"] = f"{identity_for(owner)}/{member}"
     # Canonical and alias-independent, unlike `path`, which is the text the
     # developer happened to write.
-    entry["memberPath"] = ".".join([walked.root_type, *(step for _, step in walked.chain)])
+    entry["member_path"] = ".".join([walked.root_type, *(step for _, step in walked.chain)])
     if walked.type_name is not None:
         entry["range"] = identity_for(walked.type_name)
-        entry["rangeName"] = walked.type_name
+        entry["range_name"] = walked.type_name
         entry["confidence"] = walked.tier
     return entry
 
@@ -186,19 +186,19 @@ def resolve_writes(facts: dict[str, Any], *, scheme: str = "py") -> dict[str, An
     A hop that cannot be walked yields ``AMBIGUOUS`` rather than a guess.
     """
     classes = _classes(facts)
-    imports = {entry["localName"]: entry for entry in facts.get("imports", [])}
+    imports = {entry["local_name"]: entry for entry in facts.get("imports", [])}
     module = facts.get("module", "")
 
     def identity_for(class_name: str) -> str:
         """Mint the identity of a class, following its import if it has one."""
         imported = imports.get(class_name)
         if imported is not None:
-            return mint(scheme=scheme, module=imported["fromModule"], symbol=class_name)["iri"]
+            return mint(scheme=scheme, module=imported["from_module"], symbol=class_name)["iri"]
         return mint(scheme=scheme, module=module, symbol=class_name)["iri"]
 
     def position(event: dict[str, Any]) -> tuple[int, int]:
         span = event.get("span") or {}
-        return span.get("startLine", 0), span.get("startCol", 0)
+        return span.get("start_line", 0), span.get("start_col", 0)
 
     events: list[dict[str, Any]] = [
         *({"kind": "binding", **entry} for entry in facts.get("bindings", [])),
@@ -218,7 +218,7 @@ def resolve_writes(facts: dict[str, Any], *, scheme: str = "py") -> dict[str, An
 
     resolved = []
     for event in events:
-        environment = environments.setdefault(event.get("inFunction"), {})
+        environment = environments.setdefault(event.get("in_function"), {})
 
         if event["kind"] == "binding":
             bound = _bound_from(event, environment, classes)

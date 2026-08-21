@@ -13,7 +13,7 @@
     "identity": {
       "$ref": "https://w3id.org/awl/contracts/identity.schema.json"
     },
-    "declaredTypes": {
+    "declared_types": {
       "type": "array",
       "items": {
         "type": "string"
@@ -31,10 +31,10 @@
           "name": {
             "type": "string"
           },
-          "isLink": {
+          "is_link": {
             "type": "boolean"
           },
-          "isMany": {
+          "is_many": {
             "type": "boolean"
           },
           "target": {
@@ -51,7 +51,7 @@
             ],
             "description": "The annotation as written, e.g. float. Observation, not inference. awl.context derives the xsd:double coercion from it, without which an integer-valued float field round-trips through JSON-LD as xsd:integer. Named annotation and not pythonType because declarations already uses that name for the same thing, and because a language-specific key would contradict the neutral vocabulary."
           },
-          "declarationForm": {
+          "declaration_form": {
             "enum": [
               "Link[T]",
               "LinkedField(link=True)",
@@ -72,9 +72,9 @@
         },
         "required": [
           "name",
-          "isLink",
-          "isMany",
-          "declarationForm"
+          "is_link",
+          "is_many",
+          "declaration_form"
         ]
       }
     }

@@ -78,14 +78,14 @@ class TestValidation:
         contracts.validate(
             {
                 "identity": {"iri": "py:battery.params.ChargeParam", "scheme": "py"},
-                "declaredTypes": ["ex:ChargeParam"],
+                "declared_types": ["ex:ChargeParam"],
                 "fields": [
                     {
                         "name": "device",
-                        "isLink": True,
-                        "isMany": False,
+                        "is_link": True,
+                        "is_many": False,
                         "target": "Device",
-                        "declarationForm": "Link[T]",
+                        "declaration_form": "Link[T]",
                         "arms": ["reference", "embedded"],
                     }
                 ],
@@ -100,7 +100,7 @@ class TestValidation:
             contracts.validate(
                 {
                     "identity": {"iri": "py:x", "scheme": "py"},
-                    "fields": [{"name": "f", "isLink": False, "isMany": False, "declarationForm": "invented"}],
+                    "fields": [{"name": "f", "is_link": False, "is_many": False, "declaration_form": "invented"}],
                 },
                 "type-info",
             )
@@ -115,8 +115,14 @@ class TestValidation:
                     "file": "procedure.py",
                     "bindings": [
                         {
-                            "localName": "charge",
-                            "span": {"file": "procedure.py", "startLine": 1, "startCol": 0, "endLine": 1, "endCol": 6},
+                            "local_name": "charge",
+                            "span": {
+                                "file": "procedure.py",
+                                "start_line": 1,
+                                "start_col": 0,
+                                "end_line": 1,
+                                "end_col": 6,
+                            },
                             "confidence": "PROBABLY",
                         }
                     ],

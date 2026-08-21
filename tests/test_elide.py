@@ -88,9 +88,9 @@ def test_a_loop_body_is_ordered_too():
 def test_a_folded_keyword_keeps_its_name_and_is_marked_named():
     doc = elide(ast2json(ast.parse(TIER2.read_text(encoding="utf-8"))), profile="workflow")
     call = _find(doc, lambda node: node.get("func", {}).get("id") == "ChargeParam")
-    assert set(call["keywordArguments"]) == {"target_voltage", "c_rate"}
-    assert call["keywordArguments"]["target_voltage"]["argumentName"] == "target_voltage"
-    assert call["keywordArguments"]["target_voltage"]["argumentIndex"] == -1, "-1 means named"
+    assert set(call["keyword_arguments"]) == {"target_voltage", "c_rate"}
+    assert call["keyword_arguments"]["target_voltage"]["argument_name"] == "target_voltage"
+    assert call["keyword_arguments"]["target_voltage"]["argument_index"] == -1, "-1 means named"
     assert "keywords" not in call, "folded, so the wrapper list is gone"
 
 
@@ -103,34 +103,34 @@ def test_every_profile_folds_because_folding_reverses():
     """
     doc = elide(ast2json(ast.parse("f(x=1)\n")), profile="ast")
     call = _find(doc, lambda node: node.get("_type") == "Call")
-    assert "keywordArguments" in call
+    assert "keyword_arguments" in call
     assert "keywords" not in call
 
     restored = _find(unfold(doc), lambda node: node.get("_type") == "Call")
     assert restored["keywords"][0]["arg"] == "x"
-    assert "keywordArguments" not in restored
+    assert "keyword_arguments" not in restored
 
 
 def test_unfolding_drops_the_markers_it_added():
-    """argumentName and argumentIndex are derivable from the restored list."""
+    """argument_name and argument_index are derivable from the restored list."""
     doc = unfold(elide(ast2json(ast.parse("f(x=1)\n")), profile="ast"))
     value = _find(doc, lambda node: node.get("_type") == "Call")["keywords"][0]["value"]
-    assert "argumentName" not in value and "argumentIndex" not in value
+    assert "argument_name" not in value and "argument_index" not in value
 
 
 def test_positional_arguments_are_numbered_from_one():
     """0 is reserved for an implicit receiver, per the code property graph."""
     doc = elide(ast2json(ast.parse("f(a, b)\n")), profile="workflow")
     call = _find(doc, lambda node: node.get("_type") == "Call")
-    assert [argument["argumentIndex"] for argument in call["args"]] == [1, 2]
+    assert [argument["argument_index"] for argument in call["args"]] == [1, 2]
 
 
 def test_mixed_positional_and_named_arguments_stay_distinguishable():
     """The two orderings are separate: sibling slot against argument slot."""
     doc = elide(ast2json(ast.parse("f(a, x=1)\n")), profile="workflow")
     call = _find(doc, lambda node: node.get("_type") == "Call")
-    assert call["args"][0]["argumentIndex"] == 1
-    assert call["keywordArguments"]["x"]["argumentIndex"] == -1
+    assert call["args"][0]["argument_index"] == 1
+    assert call["keyword_arguments"]["x"]["argument_index"] == -1
 
 
 def test_the_workflow_profile_is_smaller_than_ast():
@@ -158,21 +158,21 @@ def test_an_unknown_profile_raises():
 def test_the_frontend_label_survives_elision():
     source = "x = a < b\n"
     doc = elide(ast2json(ast.parse(source)), profile="workflow", source=source)
-    opaque = _find(doc, lambda node: node.get("parserTypeName") == "Compare")
+    opaque = _find(doc, lambda node: node.get("parser_type_name") == "Compare")
     assert opaque is not None
     assert opaque["_type"] == "Call", "a neutral node type, with the label as a property"
-    assert opaque["sourceText"] == "a < b", "the expression is kept as text, not lost"
+    assert opaque["source_text"] == "a < b", "the expression is kept as text, not lost"
 
 
 def test_an_opaque_node_without_source_keeps_its_type_and_loses_its_text():
     """A real loss, stated rather than hidden: the pipeline must pass source."""
     doc = elide(ast2json(ast.parse("x = a < b\n")), profile="workflow")
-    opaque = _find(doc, lambda node: node.get("parserTypeName") == "Compare")
-    assert opaque["sourceText"] == ""
+    opaque = _find(doc, lambda node: node.get("parser_type_name") == "Compare")
+    assert opaque["source_text"] == ""
 
 
 def test_a_multiline_opaque_node_keeps_every_line():
     source = "x = (a <\n     b)\n"
     doc = elide(ast2json(ast.parse(source)), profile="workflow", source=source)
-    opaque = _find(doc, lambda node: node.get("parserTypeName") == "Compare")
-    assert "a <" in opaque["sourceText"] and "b" in opaque["sourceText"]
+    opaque = _find(doc, lambda node: node.get("parser_type_name") == "Compare")
+    assert "a <" in opaque["source_text"] and "b" in opaque["source_text"]

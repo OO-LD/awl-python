@@ -14,21 +14,21 @@ from awl.resolve import resolve
 
 TIER2 = contracts.load_fixture("tier2-procedure-symbol-facts")
 
-SPAN = {"file": "p.py", "startLine": 7, "startCol": 8, "endLine": 7, "endCol": 14}
+SPAN = {"file": "p.py", "start_line": 7, "start_col": 8, "end_line": 7, "end_col": 14}
 
 FACTS = {
     "file": "procedure.py",
     "module": "procedure",
     "imports": [
         {
-            "localName": "charge",
-            "importedName": "charge",
-            "fromModule": "battery.device",
-            "isAlias": False,
-            "isStar": False,
+            "local_name": "charge",
+            "imported_name": "charge",
+            "from_module": "battery.device",
+            "is_alias": False,
+            "is_star": False,
         }
     ],
-    "uses": [{"localName": "charge", "span": SPAN}],
+    "uses": [{"local_name": "charge", "span": SPAN}],
     "declarations": [],
     "aliases": [],
     "exports": [],
@@ -47,7 +47,7 @@ def test_the_real_corpus_file_resolves_every_call():
     what extraction emits and what resolution reads.
     """
     bindings = resolve(TIER2)["bindings"]
-    by_name = {binding["localName"]: binding for binding in bindings}
+    by_name = {binding["local_name"]: binding for binding in bindings}
     assert {"charge", "rest", "ChargeParam"} <= set(by_name)
     for name in ("charge", "rest", "ChargeParam"):
         assert by_name[name]["confidence"] == "EXTRACTED", name
@@ -63,11 +63,11 @@ def test_a_star_import_never_produces_an_identity():
     facts = copy.deepcopy(FACTS)
     facts["imports"] = [
         {
-            "localName": "*",
-            "importedName": "*",
-            "fromModule": "battery.device",
-            "isAlias": False,
-            "isStar": True,
+            "local_name": "*",
+            "imported_name": "*",
+            "from_module": "battery.device",
+            "is_alias": False,
+            "is_star": True,
         }
     ]
     binding = resolve(facts)["bindings"][0]
@@ -104,26 +104,26 @@ def test_a_re_export_records_both_the_hop_and_the_root():
     facts = copy.deepcopy(FACTS)
     facts["imports"] = [
         {
-            "localName": "Thing",
-            "importedName": "Thing",
-            "fromModule": "pkg",
-            "isAlias": False,
-            "isStar": False,
+            "local_name": "Thing",
+            "imported_name": "Thing",
+            "from_module": "pkg",
+            "is_alias": False,
+            "is_star": False,
         }
     ]
-    facts["uses"] = [{"localName": "Thing", "span": SPAN}]
+    facts["uses"] = [{"local_name": "Thing", "span": SPAN}]
     index = {
         "pkg": {
             "file": "pkg/__init__.py",
             "module": "pkg",
-            "exports": [{"exportedName": "Thing", "module": "pkg", "fromModule": "pkg.impl"}],
+            "exports": [{"exported_name": "Thing", "module": "pkg", "from_module": "pkg.impl"}],
         }
     }
 
     binding = resolve(facts, index=index)["bindings"][0]
     assert binding["confidence"] == "INFERRED", "following a re-export is a deduction"
-    assert binding["identity"]["aliasOf"] == "pkg"
-    assert binding["identity"]["aliasRoot"].endswith("pkg.impl/Thing")
+    assert binding["identity"]["alias_of"] == "pkg"
+    assert binding["identity"]["alias_root"].endswith("pkg.impl/Thing")
 
 
 def test_without_the_index_the_same_import_stays_extracted():
@@ -135,14 +135,14 @@ def test_without_the_index_the_same_import_stays_extracted():
     facts = copy.deepcopy(FACTS)
     facts["imports"] = [
         {
-            "localName": "Thing",
-            "importedName": "Thing",
-            "fromModule": "pkg",
-            "isAlias": False,
-            "isStar": False,
+            "local_name": "Thing",
+            "imported_name": "Thing",
+            "from_module": "pkg",
+            "is_alias": False,
+            "is_star": False,
         }
     ]
-    facts["uses"] = [{"localName": "Thing", "span": SPAN}]
+    facts["uses"] = [{"local_name": "Thing", "span": SPAN}]
     binding = resolve(facts)["bindings"][0]
     assert binding["confidence"] == "EXTRACTED"
     assert binding["identity"]["iri"].endswith("pkg/Thing")
@@ -153,15 +153,15 @@ def test_a_module_that_defines_the_name_is_not_a_re_export():
     facts = copy.deepcopy(FACTS)
     facts["imports"] = [
         {
-            "localName": "Thing",
-            "importedName": "Thing",
-            "fromModule": "pkg",
-            "isAlias": False,
-            "isStar": False,
+            "local_name": "Thing",
+            "imported_name": "Thing",
+            "from_module": "pkg",
+            "is_alias": False,
+            "is_star": False,
         }
     ]
-    facts["uses"] = [{"localName": "Thing", "span": SPAN}]
-    index = {"pkg": {"file": "pkg.py", "exports": [{"exportedName": "Thing", "module": "pkg"}]}}
+    facts["uses"] = [{"local_name": "Thing", "span": SPAN}]
+    index = {"pkg": {"file": "pkg.py", "exports": [{"exported_name": "Thing", "module": "pkg"}]}}
     assert resolve(facts, index=index)["bindings"][0]["confidence"] == "EXTRACTED"
 
 
@@ -170,19 +170,19 @@ def test_an_aliased_import_resolves_to_the_original_name():
     facts = copy.deepcopy(FACTS)
     facts["imports"] = [
         {
-            "localName": "np",
-            "importedName": "numpy",
-            "fromModule": "",
-            "isAlias": True,
-            "isStar": False,
+            "local_name": "np",
+            "imported_name": "numpy",
+            "from_module": "",
+            "is_alias": True,
+            "is_star": False,
         }
     ]
-    facts["uses"] = [{"localName": "np", "span": SPAN}]
+    facts["uses"] = [{"local_name": "np", "span": SPAN}]
 
     binding = resolve(facts)["bindings"][0]
     assert binding["confidence"] == "EXTRACTED", "an alias is local and unambiguous"
     assert binding["identity"]["iri"].endswith("numpy")
-    assert binding["identity"]["aliasOf"] == "np", "the hop as written is kept"
+    assert binding["identity"]["alias_of"] == "np", "the hop as written is kept"
 
 
 @pytest.mark.parametrize(
@@ -204,7 +204,7 @@ def test_an_overloaded_callee_is_ambiguous_until_disambiguated(declarations):
     facts = copy.deepcopy(FACTS)
     facts["imports"] = []
     facts["declarations"] = declarations
-    facts["uses"] = [{"localName": "handle", "span": SPAN}]
+    facts["uses"] = [{"local_name": "handle", "span": SPAN}]
 
     binding = resolve(facts)["bindings"][0]
     assert binding["confidence"] == "AMBIGUOUS"
@@ -221,16 +221,16 @@ def test_the_three_tiers_stay_distinguishable():
                 **copy.deepcopy(FACTS),
                 "imports": [
                     {
-                        "localName": "Thing",
-                        "importedName": "Thing",
-                        "fromModule": "pkg",
-                        "isAlias": False,
-                        "isStar": False,
+                        "local_name": "Thing",
+                        "imported_name": "Thing",
+                        "from_module": "pkg",
+                        "is_alias": False,
+                        "is_star": False,
                     }
                 ],
-                "uses": [{"localName": "Thing", "span": SPAN}],
+                "uses": [{"local_name": "Thing", "span": SPAN}],
             },
-            {"pkg": {"file": "p", "exports": [{"exportedName": "Thing", "fromModule": "pkg.impl"}]}},
+            {"pkg": {"file": "p", "exports": [{"exported_name": "Thing", "from_module": "pkg.impl"}]}},
         ),
         ({**copy.deepcopy(FACTS), "imports": []}, None),
     ):
@@ -259,7 +259,7 @@ def _writes(source):
 
 
 def _modulus(writes):
-    return next(entry for entry in writes if entry.get("rangeName") == "ModulusOfElasticity")
+    return next(entry for entry in writes if entry.get("range_name") == "ModulusOfElasticity")
 
 
 def test_a_member_write_is_resolved_to_its_declaring_class_and_range():
@@ -267,17 +267,17 @@ def test_a_member_write_is_resolved_to_its_declaring_class_and_range():
     of elasticity of a tensile test specimen".
     """
     entry = _modulus(_writes(TENSILE))
-    assert entry["memberPath"] == "TensileTestDataset.specimen.e_mod"
-    assert entry["memberOf"].endswith("TensileTestSpecimen")
+    assert entry["member_path"] == "TensileTestDataset.specimen.e_mod"
+    assert entry["member_of"].endswith("TensileTestSpecimen")
     assert entry["member"].endswith("TensileTestSpecimen/e_mod")
-    assert entry["rootType"].endswith("TensileTestDataset")
-    assert entry["writtenBy"] == "ModulusOfElasticity.from_pint"
+    assert entry["root_type"].endswith("TensileTestDataset")
+    assert entry["written_by"] == "ModulusOfElasticity.from_pint"
     assert entry["confidence"] == "EXTRACTED"
 
 
 def test_the_write_carries_the_span_so_the_answer_is_actionable():
     entry = _modulus(_writes(TENSILE))
-    assert entry["span"]["startLine"] == 74
+    assert entry["span"]["start_line"] == 74
     assert TENSILE.splitlines()[73].strip().startswith("dataset.specimen.e_mod =")
 
 
@@ -290,7 +290,7 @@ def test_a_local_alias_does_not_change_what_the_code_means():
     """
     direct = _modulus(_writes(TENSILE))
     aliased = _modulus(_writes(ALIASED))
-    for key in ("memberPath", "member", "memberOf", "rootType", "range", "writtenBy"):
+    for key in ("member_path", "member", "member_of", "root_type", "range", "written_by"):
         assert aliased[key] == direct[key], key
 
 
@@ -326,6 +326,6 @@ def test_every_hop_of_the_chain_must_be_declared():
 
 def test_the_other_writes_in_the_real_file_resolve_too():
     """Not a single hand-picked case."""
-    resolved = {entry["memberPath"]: entry["rangeName"] for entry in _writes(TENSILE) if entry.get("memberPath")}
+    resolved = {entry["member_path"]: entry["range_name"] for entry in _writes(TENSILE) if entry.get("member_path")}
     assert resolved["TensileTestDataset.specimen.cross_section_area"] == "Area"
     assert resolved["TensileTestDataset.result"] == "TensileTestResult"

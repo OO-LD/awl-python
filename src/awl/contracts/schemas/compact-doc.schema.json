@@ -7,7 +7,7 @@
   },
   "x-oold-version": "0.3.0",
   "title": "CompactDoc",
-  "description": "The compact encoding used as the editor model. Three node forms: a typed node, a literal, and a name reference. Sequence position is the only ordering: order and argumentIndex are derivable from the arrays here and are materialized in the RDF projection instead, where position cannot be recovered. Required fields are rebuilt by the decoder, so this form does not carry them.",
+  "description": "The compact encoding used as the editor model. Three node forms: a typed node, a literal, and a name reference. Sequence position is the only ordering: order and argument_index are derivable from the arrays here and are materialized in the RDF projection instead, where position cannot be recovered. Required fields are rebuilt by the decoder, so this form does not carry them.",
   "type": "object",
   "oneOf": [
     {
@@ -33,7 +33,7 @@
           },
           "minItems": 4,
           "maxItems": 4,
-          "description": "Optional [lineno, col, endLineno, endCol]; the join key for the editor, the trace overlay and in-place patching. Needed only to patch the original file, not to regenerate code."
+          "description": "Optional [lineno, col, endLineno, end_col]; the join key for the editor, the trace overlay and in-place patching. Needed only to patch the original file, not to regenerate code."
         },
         "@context": {
           "type": [
@@ -62,7 +62,7 @@
           },
           "minItems": 4,
           "maxItems": 4,
-          "description": "Optional [lineno, col, endLineno, endCol]; the join key for the editor, the trace overlay and in-place patching. Needed only to patch the original file, not to regenerate code."
+          "description": "Optional [lineno, col, endLineno, end_col]; the join key for the editor, the trace overlay and in-place patching. Needed only to patch the original file, not to regenerate code."
         }
       },
       "additionalProperties": false,
@@ -87,7 +87,7 @@
           },
           "minItems": 4,
           "maxItems": 4,
-          "description": "Optional [lineno, col, endLineno, endCol]; the join key for the editor, the trace overlay and in-place patching. Needed only to patch the original file, not to regenerate code."
+          "description": "Optional [lineno, col, endLineno, end_col]; the join key for the editor, the trace overlay and in-place patching. Needed only to patch the original file, not to regenerate code."
         }
       },
       "additionalProperties": false,

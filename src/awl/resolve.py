@@ -59,8 +59,8 @@ def _re_export_origin(index: dict[str, Any], module: str, name: str) -> str | No
     if facts is None:
         return None
     for export in facts.get("exports", []):
-        if export.get("exportedName") == name:
-            return export.get("fromModule") or None
+        if export.get("exported_name") == name:
+            return export.get("from_module") or None
     return None
 
 
@@ -70,8 +70,8 @@ def _bind_import(
     scheme: str,
 ) -> tuple[dict[str, Any], str]:
     """Bind a name reached through an import, following one re-export hop."""
-    module = imported["fromModule"]
-    symbol = imported["importedName"]
+    module = imported["from_module"]
+    symbol = imported["imported_name"]
 
     origin = _re_export_origin(index, module, symbol)
     if origin is not None:
@@ -80,14 +80,14 @@ def _bind_import(
         # the resolved target, so a query picks its own indirection level.
         # Without both, pkg.Thing and pkg.impl.Thing become two nodes for one
         # entity, which is the likeliest duplicate source in Python.
-        identity["aliasOf"] = module
-        identity["aliasRoot"] = identity["iri"]
+        identity["alias_of"] = module
+        identity["alias_root"] = identity["iri"]
         return identity, INFERRED
 
     identity = mint(scheme=scheme, module=module, symbol=symbol)
-    if imported.get("isAlias"):
-        identity["aliasOf"] = imported["localName"]
-        identity["aliasRoot"] = identity["iri"]
+    if imported.get("is_alias"):
+        identity["alias_of"] = imported["local_name"]
+        identity["alias_root"] = identity["iri"]
     return identity, EXTRACTED
 
 
@@ -121,15 +121,15 @@ def resolve(
     """
     index = index or {}
     imports = facts.get("imports", [])
-    by_name = {entry["localName"]: entry for entry in imports}
+    by_name = {entry["local_name"]: entry for entry in imports}
     declarations = facts.get("declarations", [])
     declared = {entry.get("name") for entry in declarations}
-    has_star = any(entry.get("isStar") for entry in imports)
+    has_star = any(entry.get("is_star") for entry in imports)
     module = facts.get("module", "")
 
     bindings = []
     for use in facts.get("uses", []):
-        name = use["localName"]
+        name = use["local_name"]
         identity: dict[str, Any] | None = None
 
         if _is_overloaded(declarations, name):
@@ -146,7 +146,7 @@ def resolve(
             confidence = AMBIGUOUS
 
         binding: dict[str, Any] = {
-            "localName": name,
+            "local_name": name,
             "span": use["span"],
             "confidence": confidence,
         }

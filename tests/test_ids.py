@@ -86,7 +86,7 @@ def test_declared_types_are_carried_in_precedence_order():
         instance_rdf_types=["ex:ChargeParam", "qudt:QuantityValue"],
         type_field_default=["ex:Ignored"],
     )
-    assert identity["declaredTypes"] == ["ex:ChargeParam", "qudt:QuantityValue"]
+    assert identity["declared_types"] == ["ex:ChargeParam", "qudt:QuantityValue"]
 
 
 def test_the_type_field_default_is_used_when_no_schema_declaration():
@@ -96,13 +96,13 @@ def test_the_type_field_default_is_used_when_no_schema_declaration():
         symbol="ChargeParam",
         type_field_default="ex:ChargeParam",
     )
-    assert identity["declaredTypes"] == ["ex:ChargeParam"]
+    assert identity["declared_types"] == ["ex:ChargeParam"]
 
 
 def test_an_undeclared_class_has_no_declared_types():
     identity = class_identity(scheme="py", module="battery.params", symbol="ChargeParam")
     assert identity["iri"].endswith("battery.params/ChargeParam")
-    assert identity["declaredTypes"] == []
+    assert identity["declared_types"] == []
 
 
 def test_a_generic_callee_and_its_instantiation_differ():
@@ -120,7 +120,7 @@ def test_identity_validates_against_the_contract():
 
 
 def test_a_class_identity_validates_against_the_contract():
-    """declaredTypes is part of the contract, not an undeclared extra.
+    """declared_types is part of the contract, not an undeclared extra.
 
     awl.facts and awl.collapse read it, so it needs a schema entry or they are consuming a
     field no contract describes.
@@ -129,4 +129,4 @@ def test_a_class_identity_validates_against_the_contract():
 
     identity = class_identity(scheme="py", module="a", symbol="B", instance_rdf_types=["ex:B"])
     contracts.validate(identity, "identity")
-    assert "declaredTypes" in contracts.load_schema("identity")["properties"]
+    assert "declared_types" in contracts.load_schema("identity")["properties"]

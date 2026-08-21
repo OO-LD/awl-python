@@ -31,7 +31,7 @@ thing everywhere: an ``ast`` node type and a collapsed class name are both
 
 ``@value`` was the obvious JSON-LD choice for a literal and is unusable here:
 a value object may carry only ``@value``, ``type``, ``@language``, ``@index``
-and ``@direction``, so a literal could not also carry ``argumentIndex``.
+and ``@direction``, so a literal could not also carry ``argument_index``.
 """
 
 from __future__ import annotations
@@ -68,8 +68,8 @@ _LIST_FIELDS = _list_fields()
 
 # Derivable or positional; never carried.
 _DROP = frozenset({
-    "argumentIndex",
-    "argumentName",
+    "argument_index",
+    "argument_name",
     "col_offset",
     "ctx",
     "end_col_offset",
@@ -91,7 +91,7 @@ _OPERATOR_FIELDS = frozenset({"op", "ops"})
 # recoverable: an rdf:List yields members, and SPARQL property paths cannot
 # count. Carrying them in this document would duplicate what the array already
 # says, and let an editor reorder the array while leaving the numbers stale.
-_ORDERINGS = ("order", "argumentIndex", "argumentName")
+_ORDERINGS = ("order", "argument_index", "argument_name")
 _SHORTHAND_EXTRA = frozenset({"span"})
 
 
@@ -133,7 +133,7 @@ def _encode_long(doc: dict[str, Any], *, keep_spans: bool) -> dict[str, Any]:
         if key in _OPERATOR_FIELDS:
             node[key] = _encode_operator(value)
             continue
-        if key == "keywordArguments" and isinstance(value, dict):
+        if key == "keyword_arguments" and isinstance(value, dict):
             # The keys here are the author's parameter names, not node fields,
             # so the drop list must not touch them. `optimize.shgo(n=256)`
             # lost its argument because `n` is a legacy AST field name.

@@ -40,10 +40,10 @@ def _span(node: ast.AST, file: str) -> dict[str, Any] | None:
         return None
     return {
         "file": file,
-        "startLine": lineno,
-        "startCol": getattr(node, "col_offset", 0),
-        "endLine": getattr(node, "end_lineno", None) or lineno,
-        "endCol": getattr(node, "end_col_offset", None) or 0,
+        "start_line": lineno,
+        "start_col": getattr(node, "col_offset", 0),
+        "end_line": getattr(node, "end_lineno", None) or lineno,
+        "end_col": getattr(node, "end_col_offset", None) or 0,
     }
 
 
@@ -136,8 +136,8 @@ class _Analysis:
             "kind": kind,
             "scope": scope,
             "span": _span(node, self.file),
-            "producedBy": produced_by,
-            "dependsOn": sorted(depends_on),
+            "produced_by": produced_by,
+            "depends_on": sorted(depends_on),
         })
         return identity
 
@@ -155,8 +155,8 @@ class _Analysis:
             "path": ".".join(path),
             "scope": scope,
             "span": _span(node, self.file),
-            "producedBy": produced_by,
-            "dependsOn": sorted(depends_on),
+            "produced_by": produced_by,
+            "depends_on": sorted(depends_on),
         })
 
 
@@ -270,7 +270,7 @@ class _Walker:
         # The condition is a dependency of everything the branch produced.
         for definition in self.analysis.definitions:
             if definition["id"] in _new_ids(environment, merged):
-                definition["dependsOn"] = sorted(set(definition["dependsOn"]) | condition)
+                definition["depends_on"] = sorted(set(definition["depends_on"]) | condition)
         return merged
 
     def _loop(self, node, environment, scope, target=None, iterable=None):
@@ -365,7 +365,7 @@ def analyze(source: str, *, module: str = "", file: str = "<source>") -> dict[st
     -------
     dict
         ``definitions`` are name bindings, each with the definitions it
-        ``dependsOn`` and the callee that ``producedBy`` it. ``writes`` are
+        ``depends_on`` and the callee that ``produced_by`` it. ``writes`` are
         assignments to attribute paths, carrying the same two edges.
 
     Notes
