@@ -225,3 +225,75 @@ def test_value_provenance_over_the_whole_chain():
     """)
     reached = {str(row[0]) for row in rows}
     assert {"linear", "df", "dataset"} <= reached, reached
+
+
+def _tier(name):
+    """Return a tier's procedure and an index holding the module it imports."""
+    folder = contracts.CORPUS_DIR / name
+    return (
+        _source(folder / "procedure.py"),
+        {f"{name}.params": _source(folder / "params.py")},
+    )
+
+
+def test_the_collapse_fires_across_modules():
+    """A parameter object is defined in another file, essentially always.
+
+    Without an index only classes declared beside the procedure could
+    collapse, which is almost never where they live.
+    """
+    source, index = _tier("tier2_dataclass")
+    doc = pipeline.to_compact(source, module="tier2_dataclass.procedure", index=index)
+    node = doc["body"][3]["body"][1]["body"][0]["args"][0]
+    assert node == {"@type": ["ChargeParam"], "target_voltage": 4.2, "c_rate": 0.23}
+
+
+def test_without_the_index_nothing_is_collapsed():
+    """Refusal, not a guess: the class was never read, so it is not named."""
+    source, _ = _tier("tier2_dataclass")
+    doc = pipeline.to_compact(source, module="tier2_dataclass.procedure")
+    node = doc["body"][3]["body"][1]["body"][0]["args"][0]
+    assert node["@type"] == "Call", "still a call, with its keywords intact"
+    assert set(node["keyword_arguments"]) == {"target_voltage", "c_rate"}
+
+
+def test_the_gradient_shows_in_the_collapsed_node():
+    """The progressive-enhancement claim, made concrete rather than asserted.
+
+    A plain dataclass collapses to its class name; the same computation in the
+    linked notation adds the declared IRI. Same shape, more meaning.
+    """
+    plain = pipeline.to_compact(
+        *_tier("tier2_dataclass")[:1], module="tier2_dataclass.procedure", index=_tier("tier2_dataclass")[1]
+    )
+    linked = pipeline.to_compact(*_tier("tier3_oold")[:1], module="tier3_oold.procedure", index=_tier("tier3_oold")[1])
+    at = lambda d: d["body"][3]["body"][1]["body"][0]["args"][0]["@type"]
+    assert at(plain) == ["ChargeParam"]
+    assert at(linked) == ["ChargeParam", "ex:ChargeParam"]
+
+
+def test_a_relative_import_is_resolved_against_the_importing_module():
+    """`from .params import X` inside battery.procedure names battery.params."""
+    assert pipeline.resolve_module("battery.procedure", ".params") == "battery.params"
+    assert pipeline.resolve_module("a.b.c", "..d") == "a.d"
+    assert pipeline.resolve_module("battery.procedure", "scipy.stats") == "scipy.stats"
+
+
+def test_a_collapsed_document_still_regenerates_its_source():
+    """Collapsing across modules must not cost the round trip."""
+    source, index = _tier("tier3_oold")
+    doc = pipeline.to_compact(source, module="tier3_oold.procedure", index=index)
+    restored = ast.unparse(ast.fix_missing_locations(compact.decode(doc)))
+    assert restored == ast.unparse(ast.parse(source))
+
+
+def test_the_collapsed_fields_reach_rdf_as_properties_of_the_type():
+    """The defect the embedded context was invented for, over the whole chain."""
+    source, index = _tier("tier3_oold")
+    graph = pipeline.to_graph(source, module="tier3_oold.procedure", index=index)
+    rows = graph.query("""
+        PREFIX awl: <https://w3id.org/awl/schema/>
+        SELECT ?voltage WHERE { ?p a <https://w3id.org/awl/py/tier3_oold.params/ChargeParam> ;
+                                   awl:target_voltage ?voltage }
+    """)
+    assert [float(row[0]) for row in rows] == [4.2]

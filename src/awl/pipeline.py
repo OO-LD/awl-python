@@ -21,7 +21,7 @@ from awl import collapse, compact, context, controlflow, dataflow, elide, execut
 from awl.astdoc import to_doc
 from awl.resolve import resolve, resolve_writes
 
-__all__ = ["analyze", "to_ast_doc", "to_compact", "to_graph"]
+__all__ = ["analyze", "resolve_module", "to_ast_doc", "to_compact", "to_graph"]
 
 
 def analyze(source: str, *, module: str = "", file: str = "<source>") -> dict[str, Any]:
@@ -55,12 +55,80 @@ def analyze(source: str, *, module: str = "", file: str = "<source>") -> dict[st
     }
 
 
+def resolve_module(module: str, origin: str) -> str:
+    """Return the absolute path an import names.
+
+    ``from .params import ChargeParam`` inside ``battery.procedure`` names
+    ``battery.params``. Extraction records the origin exactly as written,
+    because that is what the source says; turning it into a path is an
+    inference and belongs here.
+    """
+    if not origin.startswith("."):
+        return origin
+    depth = len(origin) - len(origin.lstrip("."))
+    parts = module.split(".")[: -depth or None]
+    tail = origin.lstrip(".")
+    return ".".join([*parts, tail]) if tail else ".".join(parts)
+
+
+def _classes_of(observed: dict[str, Any], module: str) -> dict[str, Any]:
+    """Return every collapsible class a module offers, by qualified name.
+
+    Both rungs of the gradient, which is the point. A class deriving from the
+    linked base carries declared IRIs and link forms; a plain annotated class
+    carries only field names and their annotations. The collapse needs the
+    field names, and both have those, so both collapse. Only the resulting
+    node differs, which is the progressive enhancement claim doing real work
+    rather than being asserted.
+    """
+    found = {f"{module}.{entry['identity']['symbol']}": entry for entry in observed.get("types", [])}
+    for entry in observed.get("declarations", []):
+        if entry.get("kind") != "class" or not entry.get("fields"):
+            continue
+        qualified = f"{module}.{entry['name']}"
+        found.setdefault(
+            qualified,
+            {"identity": entry["identity"], "declared_types": [], "fields": entry["fields"]},
+        )
+    return found
+
+
+def _collapsible(observed: dict[str, Any], module: str, index: dict[str, str]) -> tuple[dict[str, Any], dict[str, str]]:
+    """Return the types the collapse may use, and what each local name means.
+
+    Parameters
+    ----------
+    index : dict
+        Module path to that module's source. Without it only classes declared
+        in this file can collapse, which is almost never where they live: a
+        parameter object is imported, not defined beside the procedure using
+        it.
+    """
+    types = _classes_of(observed, module)
+    resolved = {name.rsplit(".", 1)[-1]: name for name in types}
+
+    for entry in observed.get("imports", []):
+        if entry.get("is_star"):
+            continue
+        origin = resolve_module(module, entry["from_module"])
+        other = index.get(origin)
+        if other is None:
+            continue
+        available = _classes_of(facts.extract(other, module=origin, file=origin), origin)
+        qualified = f"{origin}.{entry['imported_name']}"
+        if qualified in available:
+            types[qualified] = available[qualified]
+            resolved[entry["local_name"]] = qualified
+    return types, resolved
+
+
 def to_ast_doc(
     source: str,
     *,
     module: str = "",
     profile: str = "ast",
     file: str = "<source>",
+    index: dict[str, str] | None = None,
 ) -> Any:
     """Parse, elide by profile, and collapse resolved constructors.
 
@@ -74,6 +142,10 @@ def to_ast_doc(
         One of ``awl.vocab.PROFILES``.
     file : str, optional
         A label for spans.
+    index : dict, optional
+        Module path to source, for the modules this one imports from. A
+        parameter object is nearly always defined in another file, so without
+        it the collapse almost never fires.
 
     Returns
     -------
@@ -82,8 +154,7 @@ def to_ast_doc(
         an unresolved name stays a plain call.
     """
     observed = facts.extract(source, module=module, file=file)
-    types = {entry["identity"]["symbol"]: entry for entry in observed["types"]}
-    resolved = {name: name for name in types}
+    types, resolved = _collapsible(observed, module, index or {})
     doc = elide.elide(to_doc(ast.parse(source)), profile=profile, source=source)
     return collapse.collapse(doc, types=types, resolved=resolved, embed_context=False)
 
@@ -95,6 +166,7 @@ def to_compact(
     profile: str = "ast",
     spans: bool = False,
     file: str = "<source>",
+    index: dict[str, str] | None = None,
 ) -> Any:
     """Run the chain and return the editor model.
 
@@ -104,7 +176,10 @@ def to_compact(
         Keep source spans, which are the join key for in-place patching and
         for the trace overlay. Not needed to regenerate code.
     """
-    return compact.encode(to_ast_doc(source, module=module, profile=profile, file=file), keep_spans=spans)
+    return compact.encode(
+        to_ast_doc(source, module=module, profile=profile, file=file, index=index),
+        keep_spans=spans,
+    )
 
 
 def to_graph(
@@ -113,6 +188,7 @@ def to_graph(
     module: str = "",
     profile: str = "ast",
     file: str = "<source>",
+    index: dict[str, str] | None = None,
 ):
     """Run the chain and return the RDF graph.
 
@@ -133,7 +209,12 @@ def to_graph(
     from rdflib import Graph
 
     observed = facts.extract(source, module=module, file=file)
-    document = context.build_context(observed["types"])
+    # The same resolution the collapse used. Building the context from this
+    # module's types alone left an imported class resolving through @vocab, so
+    # the node was typed awl:ChargeParam while the collapse had named it
+    # py/tier3_oold.params/ChargeParam: one entity, two IRIs.
+    types, _ = _collapsible(observed, module, index or {})
+    document = context.build_context(list(types.values()))
 
     flow = dataflow.analyze(source, module=module, file=file)
     plan = controlflow.analyze(source, module=module, file=file)
@@ -141,7 +222,7 @@ def to_graph(
 
     graph = Graph()
     for part in (
-        to_ast_doc(source, module=module, profile=profile, file=file),
+        to_ast_doc(source, module=module, profile=profile, file=file, index=index),
         controlflow.as_document(plan),
         {"@graph": _write_nodes(resolve_writes(observed))},
         {"@graph": _flow_nodes(flow)},
