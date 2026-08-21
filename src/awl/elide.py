@@ -19,6 +19,12 @@ from typing import Any
 
 from awl.vocab import FOLDS_KEYWORDS, OPAQUE, ORDERED_FIELDS, TRANSPARENT, statement_types
 
+#: Dropped because it is recoverable from position. A load/store marker is not
+#: a node anyone asks about, and leaving it in typed six blank nodes per file
+#: as awl:Load and awl:Store, which mean nothing in the graph. The decoder
+#: rebuilds it, exactly as it rebuilds an omitted sequence field.
+_DERIVABLE = frozenset({"ctx"})
+
 __all__ = ["elide", "rewrap_statements", "unfold", "unfold_node"]
 
 
@@ -66,13 +72,7 @@ def _walk(node: Any, transparent, opaque, folds_keywords: bool, source: str) -> 
             "source_text": _source_text(node, source),
         }
 
-    out: dict[str, Any] = {}
-    for key, value in node.items():
-        walked = _walk(value, transparent, opaque, folds_keywords, source)
-        if isinstance(walked, list) and not walked:
-            continue
-        out[key] = walked
-
+    out = _walk_fields(node, transparent, opaque, folds_keywords, source)
     _materialize_order(out)
     if node_type == "Call":
         _index_arguments(out, folds_keywords)
@@ -83,6 +83,19 @@ def _walk(node: Any, transparent, opaque, folds_keywords: bool, source: str) -> 
             if isinstance(payload, dict) and "order" in out:
                 payload["order"] = out["order"]
             return payload
+    return out
+
+
+def _walk_fields(node, transparent, opaque, folds_keywords, source) -> dict[str, Any]:
+    """Rewrite every field of a node, dropping what is derivable or empty."""
+    out: dict[str, Any] = {}
+    for key, value in node.items():
+        if key in _DERIVABLE:
+            continue
+        walked = _walk(value, transparent, opaque, folds_keywords, source)
+        if isinstance(walked, list) and not walked:
+            continue
+        out[key] = walked
     return out
 
 

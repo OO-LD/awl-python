@@ -111,7 +111,7 @@ def to_graph(
     source: str,
     *,
     module: str = "",
-    profile: str = "workflow",
+    profile: str = "ast",
     file: str = "<source>",
 ):
     """Run the chain and return the RDF graph.
@@ -119,8 +119,10 @@ def to_graph(
     Parameters
     ----------
     profile : str, optional
-        Defaults to ``workflow``: the projection is for querying, and the
-        faithful profile carries syntax a query does not ask about.
+        Defaults to ``ast``, the profile whose obligation is complete value
+        provenance. The reduced profiles are paused: they elide by
+        construction, and until each is defined by the class of question it
+        must answer, choosing one only makes the graph smaller and no better.
 
     Returns
     -------

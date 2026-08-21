@@ -57,6 +57,18 @@ def _dotted(node: ast.AST | None) -> str | None:
     return None
 
 
+def _effective(node: ast.stmt) -> ast.AST:
+    """Return the node that gives a statement its category.
+
+    An ``Expr`` exists only to hold an expression in a statement position, so
+    it says nothing about what the step *is*. Typing the wrapper made every
+    call-bearing statement come out as ``Unknown``, which is the neutral
+    vocabulary's escape hatch being used for something it knows perfectly
+    well.
+    """
+    return node.value if isinstance(node, ast.Expr) else node
+
+
 def _callee_of(node: ast.stmt) -> str | None:
     """Return the name a statement calls, when it is a call.
 
@@ -100,7 +112,7 @@ def _condition_of(node: ast.stmt, self_file: str) -> dict[str, Any] | None:
     if test is None:
         return None
     return {
-        "node_type": node_type_for(type(test).__name__),
+        "_type": node_type_for(type(test).__name__),
         "parser_type_name": type(test).__name__,
         "source_text": ast.unparse(test),
         "span": _span(test, self_file),
@@ -128,7 +140,7 @@ class _Graph:
         )["iri"]
         self.steps.append({
             "id": identity,
-            "node_type": node_type_for(type(node).__name__),
+            "node_type": node_type_for(type(_effective(node)).__name__),
             "parser_type_name": type(node).__name__,
             "scope": scope,
             "callee": _callee_of(node),
@@ -353,8 +365,12 @@ def as_document(graph: dict[str, Any]) -> dict[str, Any]:
     for step in graph["steps"]:
         node: dict[str, Any] = {
             "@id": step["id"],
-            "_type": "Step",
-            "node_type": step["node_type"],
+            # Co-typed: it is a plan step, and it is a control structure. Two
+            # properties for that would be two spellings of one relation, and
+            # JSON-LD expresses co-typing as a list natively.
+            "_type": ["Step", step["node_type"]],
+            # A label, deliberately not a type: a second language frontend
+            # should add a name here, never a new type.
             "parser_type_name": step["parser_type_name"],
             "span": step["span"],
         }

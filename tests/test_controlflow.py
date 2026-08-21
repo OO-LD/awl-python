@@ -192,3 +192,35 @@ def test_a_step_outside_the_loop_is_not_reachable_through_it():
         }
     """)
     assert [str(row[0]) for row in rows] == ["a"]
+
+
+def test_a_call_statement_is_typed_through_its_wrapper():
+    """An Expr exists only to hold an expression in a statement position, so
+    it says nothing about what the step is.
+
+    Typing the wrapper made every call-bearing statement come out Unknown,
+    which is the vocabulary's escape hatch used for something it knows.
+    """
+    step = next(item for item in _cfg("charge(4.2)\n")["steps"] if item["callee"])
+    assert step["node_type"] == "Call"
+    assert step["parser_type_name"] == "Expr", "the label still records what was written"
+
+
+def test_a_step_is_co_typed_rather_than_carrying_two_type_properties():
+    """It is a plan step and it is a control structure. Two properties for one
+    relation is how a vocabulary grows two spellings of the same thing.
+    """
+    node = next(item for item in as_document(_cfg("while cond:\n    a()\n"))["@graph"] if item.get("condition"))
+    assert node["_type"] == ["Step", "ControlStructure"]
+    assert "node_type" not in node
+
+
+def test_context_markers_are_not_nodes():
+    """Load and Store typed six blank nodes per file and meant nothing."""
+    import json
+
+    from awl.astdoc import to_doc
+    from awl.elide import elide
+
+    blob = json.dumps(elide(to_doc(__import__("ast").parse("x = y\n")), profile="ast"))
+    assert "Load" not in blob and "Store" not in blob and "ctx" not in blob
