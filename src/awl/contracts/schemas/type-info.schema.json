@@ -77,11 +77,6 @@
           "declaration_form"
         ]
       }
-    },
-    "schema": {
-      "type": "string",
-      "format": "uri",
-      "description": "The class's own OO-LD schema, when it has a resolvable one. Never invented: a URL guessed from an import path would validate and resolve to nothing."
     }
   },
   "required": [
