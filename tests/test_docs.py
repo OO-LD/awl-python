@@ -63,3 +63,25 @@ def test_nothing_is_left_unrendered(page):
     """An unexpanded macro call would ship its own source to the reader."""
     assert "corpus_examples()" not in page
     assert "corpus_count()" not in page
+
+
+def test_the_built_page_renders_three_tab_labels_per_file():
+    """Asserted on the HTML, not the markdown.
+
+    A test that only checks `=== "Python"` is in the source passes while the
+    tab silently fails to render, which is exactly what happened: the JSON
+    column had no blank lines and rendered, the Python column had them and
+    did not, and the markdown assertion could not tell the difference.
+
+    Skipped when the site has not been built; CI builds it in docs-test.
+    """
+    import re
+
+    built = Path(__file__).resolve().parents[1] / "site" / "examples" / "index.html"
+    if not built.exists():
+        pytest.skip("run `uv run zensical build` first")
+
+    labels = re.findall(r"<label[^>]*>([^<]+)</label>", built.read_text(encoding="utf-8"))
+    expected = len(contracts.corpus_files())
+    for title in ("Python", "AWL AST, collapsed", "AWL AST, plain"):
+        assert labels.count(title) == expected, f"{title}: {labels.count(title)} of {expected}"
