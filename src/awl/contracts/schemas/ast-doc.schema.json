@@ -3,9 +3,217 @@
   "$id": "https://w3id.org/awl/contracts/ast-doc.schema.json",
   "@context": {
     "awl": "https://w3id.org/awl/schema/",
-    "@vocab": "https://w3id.org/awl/schema/"
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "@vocab": "https://w3id.org/awl/schema/",
+    "type": "@type",
+    "_type": "@type",
+    "literal": {
+      "@id": "awl:literal"
+    },
+    "var": {
+      "@id": "awl:var"
+    },
+    "span": {
+      "@id": "awl:span"
+    },
+    "order": {
+      "@id": "awl:order",
+      "@type": "xsd:integer"
+    },
+    "argument_index": {
+      "@id": "awl:argumentIndex",
+      "@type": "xsd:integer"
+    },
+    "iteration": {
+      "@id": "awl:iteration",
+      "@type": "xsd:integer"
+    },
+    "iteration_count": {
+      "@id": "awl:iterationCount",
+      "@type": "xsd:integer"
+    },
+    "event_count": {
+      "@id": "awl:eventCount",
+      "@type": "xsd:integer"
+    },
+    "start_line": {
+      "@id": "awl:startLine",
+      "@type": "xsd:integer"
+    },
+    "start_col": {
+      "@id": "awl:startCol",
+      "@type": "xsd:integer"
+    },
+    "end_line": {
+      "@id": "awl:endLine",
+      "@type": "xsd:integer"
+    },
+    "end_col": {
+      "@id": "awl:endCol",
+      "@type": "xsd:integer"
+    },
+    "alias_of": {
+      "@id": "awl:aliasOf"
+    },
+    "alias_root": {
+      "@id": "awl:aliasRoot"
+    },
+    "argument_name": {
+      "@id": "awl:argumentName"
+    },
+    "argument_types": {
+      "@id": "awl:argumentTypes"
+    },
+    "branch_taken": {
+      "@id": "awl:branchTaken"
+    },
+    "declaration_form": {
+      "@id": "awl:declarationForm"
+    },
+    "declared_types": {
+      "@id": "awl:declaredTypes"
+    },
+    "exported_name": {
+      "@id": "awl:exportedName"
+    },
+    "from_module": {
+      "@id": "awl:fromModule"
+    },
+    "imported_name": {
+      "@id": "awl:importedName"
+    },
+    "in_function": {
+      "@id": "awl:inFunction"
+    },
+    "is_alias": {
+      "@id": "awl:isAlias"
+    },
+    "is_link": {
+      "@id": "awl:isLink"
+    },
+    "is_many": {
+      "@id": "awl:isMany"
+    },
+    "is_star": {
+      "@id": "awl:isStar"
+    },
+    "keyword_arguments": {
+      "@id": "awl:keywordArguments"
+    },
+    "local_name": {
+      "@id": "awl:localName"
+    },
+    "member_path": {
+      "@id": "awl:memberPath"
+    },
+    "node_type": {
+      "@id": "awl:nodeType"
+    },
+    "parser_type_name": {
+      "@id": "awl:parserTypeName"
+    },
+    "produced_by": {
+      "@id": "awl:producedBy"
+    },
+    "range_name": {
+      "@id": "awl:rangeName"
+    },
+    "source_text": {
+      "@id": "awl:sourceText"
+    },
+    "value_callee": {
+      "@id": "awl:valueCallee"
+    },
+    "value_path": {
+      "@id": "awl:valuePath"
+    },
+    "written_by": {
+      "@id": "awl:writtenBy"
+    },
+    "member": {
+      "@id": "awl:member",
+      "@type": "@id"
+    },
+    "member_of": {
+      "@id": "awl:memberOf",
+      "@type": "@id"
+    },
+    "root_type": {
+      "@id": "awl:rootType",
+      "@type": "@id"
+    },
+    "range": {
+      "@id": "awl:range",
+      "@type": "@id"
+    },
+    "depends_on": {
+      "@id": "awl:dependsOn",
+      "@type": "@id"
+    },
+    "id": {
+      "@id": "awl:id",
+      "@type": "@id"
+    },
+    "next": {
+      "@id": "awl:next",
+      "@type": "@id"
+    },
+    "when_true": {
+      "@id": "awl:whenTrue",
+      "@type": "@id"
+    },
+    "when_false": {
+      "@id": "awl:whenFalse",
+      "@type": "@id"
+    },
+    "each_item": {
+      "@id": "awl:eachItem",
+      "@type": "@id"
+    },
+    "exhausted": {
+      "@id": "awl:exhausted",
+      "@type": "@id"
+    },
+    "repeat": {
+      "@id": "awl:repeat",
+      "@type": "@id"
+    },
+    "on_error": {
+      "@id": "awl:onError",
+      "@type": "@id"
+    },
+    "body": {
+      "@id": "awl:body",
+      "@container": "@list"
+    },
+    "orelse": {
+      "@id": "awl:orelse",
+      "@container": "@list"
+    },
+    "finalbody": {
+      "@id": "awl:finalbody",
+      "@container": "@list"
+    },
+    "Method": {
+      "@id": "awl:Method",
+      "@context": {
+        "args": {
+          "@id": "awl:parameter",
+          "@container": "@list"
+        }
+      }
+    },
+    "Call": {
+      "@id": "awl:Call",
+      "@context": {
+        "args": {
+          "@id": "awl:argument",
+          "@container": "@list"
+        }
+      }
+    }
   },
-  "x-oold-version": "0.1.0",
+  "x-oold-version": "0.2.0",
   "title": "AstDoc",
   "description": "The AST as a document. Deliberately permissive: node types are not enumerated, because pinning them would version AWL-LD against the CPython grammar and defeat the language-agnostic objective.",
   "type": "object",

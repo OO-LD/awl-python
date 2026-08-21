@@ -10,7 +10,7 @@ import pytest
 from rdflib import Graph
 
 from awl import contracts
-from awl.context import build_context
+from awl.context import AWL, build_context
 
 
 def _graph(doc):
@@ -294,3 +294,36 @@ def test_a_union_with_a_literal_arm_is_not_coerced():
 def test_a_repeated_link_declares_its_multiplicity():
     """The annotation declares many, not ordered, so a set rather than a list."""
     assert _linked_context(is_many=True)["device"]["@container"] == "@set"
+
+
+def test_the_static_vocabulary_is_defined_only_in_the_schema():
+    """One artefact, not two.
+
+    ast-doc.schema.json is an OO-LD document: the same file is the shape and
+    the mapping. Holding the terms in Python as well would define them twice,
+    and the two would drift the first time either was edited.
+    """
+    from awl import contracts
+
+    declared = contracts.load_schema("ast-doc")["@context"]
+    built = build_context()["@context"]
+    assert declared, "the schema carries the vocabulary"
+    assert built == declared, "and nothing is added to it without a type"
+
+
+def test_a_term_edited_in_the_schema_reaches_the_projection():
+    """Proves the schema is the source rather than a stale copy of it."""
+    from awl import contracts
+
+    assert contracts.load_schema("ast-doc")["@context"]["body"]["@container"] == "@list"
+    assert build_context()["@context"]["body"]["@container"] == "@list"
+
+
+def test_terms_use_the_bound_prefix_rather_than_repeating_the_namespace():
+    """`awl` is declared once; spelling the namespace out per term is noise."""
+    context = build_context()["@context"]
+    assert context["awl"] == AWL
+    assert context["when_true"]["@id"] == "awl:whenTrue"
+    assert not [
+        term for term, value in context.items() if isinstance(value, dict) and str(value.get("@id", "")).startswith(AWL)
+    ], "no term repeats the full namespace"

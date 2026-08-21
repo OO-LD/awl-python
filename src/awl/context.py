@@ -12,9 +12,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from awl.controlflow import EDGE_KINDS
-from awl.vocab import ORDERED_FIELDS
-
 __all__ = ["AWL", "XSD", "build_context"]
 
 AWL = "https://w3id.org/awl/schema/"
@@ -91,8 +88,8 @@ def _camel(term: str) -> str:
 #: A type-scoped context states that declaratively and per type, which is
 #: stronger than a qualifier enum and is what LinkML's generator does not emit.
 _TYPE_SCOPED = {
-    "Method": {"args": {"@id": f"{AWL}parameter", "@container": "@list"}},
-    "Call": {"args": {"@id": f"{AWL}argument", "@container": "@list"}},
+    "Method": {"args": {"@id": "awl:parameter", "@container": "@list"}},
+    "Call": {"args": {"@id": "awl:argument", "@container": "@list"}},
 }
 
 
@@ -145,40 +142,13 @@ def build_context(types: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     written ``4.0`` silently becomes an integer on the way through a
     JavaScript processor.
     """
-    context: dict[str, Any] = {
-        "awl": AWL,
-        "xsd": XSD,
-        # A fallback vocabulary, so an unmapped term still produces a triple
-        # instead of being dropped.
-        "@vocab": AWL,
-        # Keyword aliases, so the document needs no punctuation keys. The
-        # OO-LD notation spells its own instance type `type`, and matching it
-        # keeps one spelling across the schema, the instance and this graph.
-        "type": "@type",
-        "_type": "@type",
-        "literal": {"@id": f"{AWL}literal"},
-        "var": {"@id": f"{AWL}var"},
-        "span": {"@id": f"{AWL}span"},
-        **{term: {"@id": f"{AWL}{_camel(term)}", "@type": "xsd:integer"} for term in _INTEGERS},
-    }
-    # Document keys are snake_case, matching the Python-derived data and the
-    # syntax fields they sit beside (`col_offset`, `decorator_list`). RDF
-    # property names are camelCase by convention. The context is exactly the
-    # place those two meet, so neither has to give.
-    for term in _VOCABULARY:
-        context[term] = {"@id": f"{AWL}{_camel(term)}"}
-    # These name classes and members, so their values are IRIs rather than
-    # text: a query for "written to a member of TensileTestSpecimen" joins
-    # instead of string-matching.
-    for term in (*_REFERENCES, *EDGE_KINDS):
-        context[term] = {"@id": f"{AWL}{_camel(term)}", "@type": "@id"}
-    # Taken from the vocabulary rather than restated, so a field added there
-    # cannot silently lose its ordering here.
-    for field in ORDERED_FIELDS:
-        context[field] = {"@id": f"{AWL}{field}", "@container": "@list"}
+    # The static half of the vocabulary lives in ast-doc.schema.json, which is
+    # an OO-LD document: one file that is both the shape and the mapping.
+    # Holding it here as well would define the same terms twice, and the two
+    # would drift the first time either was edited.
+    from awl import contracts
 
-    for node_type, terms in _TYPE_SCOPED.items():
-        context[node_type] = {"@id": f"{AWL}{node_type}", "@context": terms}
+    context: dict[str, Any] = dict(contracts.load_schema("ast-doc")["@context"])
 
     for info in types or []:
         _add_type(context, info)
@@ -223,7 +193,7 @@ def _term_for(field: dict[str, Any]) -> dict[str, Any] | None:
     """
     name = field["name"]
     if field.get("is_link") and "literal" not in (field.get("arms") or []):
-        term: dict[str, Any] = {"@id": f"{AWL}{name}", "@type": "@id"}
+        term: dict[str, Any] = {"@id": f"awl:{name}", "@type": "@id"}
         if field.get("is_many"):
             # A set, not a list: the annotation declares multiplicity, not order.
             term["@container"] = "@set"
@@ -231,5 +201,5 @@ def _term_for(field: dict[str, Any]) -> dict[str, Any] | None:
 
     coercion = _coercion_for(field.get("annotation"))
     if coercion:
-        return {"@id": f"{AWL}{name}", "@type": coercion}
+        return {"@id": f"awl:{name}", "@type": coercion}
     return None
