@@ -157,17 +157,21 @@ def test_the_plan_is_queryable_as_a_path_expression():
     assert [str(row[0]) for row in rows] == ["charge", "rest"]
 
 
-def test_a_condition_is_a_node_with_one_text_property():
-    """`source_text` is the only property carrying a node's own source.
+def test_a_condition_is_a_node_carrying_only_its_own_text_and_span():
+    """`source_text` is the only property carrying a node's source, and the
+    span is the only thing linking it onward.
 
-    A separate `condition` string would be a second spelling of it, and two
-    names for one thing is how a vocabulary drifts.
+    The plan says a step is governed by a test. *Which bindings* that test
+    reads is a dataflow question, and answering it here with names would be
+    the text-matching mistake one size smaller: a name is scope-blind and
+    joins to nothing.
     """
     step = next(item for item in _cfg("while i < cycles:\n    a()\n")["steps"] if item["condition"])
     condition = step["condition"]
-    assert condition["source_text"] == "i < cycles", "kept, but for rendering"
-    assert condition["reads"] == ["i", "cycles"], "the queryable half"
+    assert condition["source_text"] == "i < cycles", "kept, for rendering"
     assert condition["parser_type_name"] == "Compare"
+    assert condition["span"]["start_line"] == 1
+    assert "reads" not in condition, "the plan does not guess at dataflow"
 
 
 def test_the_back_edge_survives_the_projection():
@@ -183,7 +187,7 @@ def test_a_step_outside_the_loop_is_not_reachable_through_it():
     rows = _graph_of("setup()\nwhile cond:\n    a()\n").query("""
         PREFIX awl: <https://w3id.org/awl/schema/>
         SELECT ?callee WHERE {
-          ?loop awl:condition/awl:reads "cond" ; awl:whenTrue/awl:next* ?step .
+          ?loop ^awl:repeat ?back ; awl:whenTrue/awl:next* ?step .
           ?step awl:callee ?callee .
         }
     """)

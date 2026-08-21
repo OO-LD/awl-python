@@ -133,15 +133,47 @@ def to_graph(
     observed = facts.extract(source, module=module, file=file)
     document = context.build_context(observed["types"])
 
+    flow = dataflow.analyze(source, module=module, file=file)
+    plan = controlflow.analyze(source, module=module, file=file)
+    _attach_condition_reads(plan, flow)
+
     graph = Graph()
     for part in (
         to_ast_doc(source, module=module, profile=profile, file=file),
-        controlflow.as_document(controlflow.analyze(source, module=module, file=file)),
+        controlflow.as_document(plan),
         {"@graph": _write_nodes(resolve_writes(observed))},
-        {"@graph": _flow_nodes(dataflow.analyze(source, module=module, file=file))},
+        {"@graph": _flow_nodes(flow)},
     ):
         graph += rdf.to_graph(part, context=document)
     return graph
+
+
+def _attach_condition_reads(plan: dict[str, Any], flow: dict[str, Any]) -> None:
+    """Link each condition to the definitions it reads.
+
+    The plan knows a step is governed by a test; the def-use graph knows which
+    bindings that test consulted. Neither can say it alone, and joining them
+    is this module's whole job. The key is the span, as everywhere else.
+
+    Answering with names instead would be the text-matching mistake one size
+    smaller: a name is scope-blind and joins to nothing, where a definition
+    identity leads straight on to where the value came from.
+    """
+    reads = {_span_key(entry["span"]): entry["reads"] for entry in flow.get("conditions", []) if entry.get("span")}
+    for step in plan["steps"]:
+        condition = step.get("condition")
+        if not condition:
+            continue
+        found = reads.get(_span_key(condition.get("span")))
+        if found:
+            condition["reads"] = [{"@id": identity} for identity in found]
+
+
+def _span_key(span: dict[str, Any] | None) -> tuple[Any, ...] | None:
+    """Return a span's join key."""
+    if not span:
+        return None
+    return (span.get("file"), span.get("start_line"), span.get("start_col"))
 
 
 def _write_nodes(writes: dict[str, Any]) -> list[dict[str, Any]]:

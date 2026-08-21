@@ -148,19 +148,43 @@ def test_which_steps_repeat_and_what_governs_the_repetition():
     assert [str(row[0]) for row in rows] == ["charge", "rest"]
 
 
-def test_a_condition_is_queryable_by_what_it_reads():
-    """ "Which loops depend on cycles" is a question; "which loops are spelled
-    i < cycles" is not.
+def test_a_condition_links_to_the_bindings_it_reads():
+    """A name would be scope-blind and would join to nothing.
+
+    Pointing at the definition instead lets the query keep going: which steps
+    repeat, governed by which binding, and where was that binding made.
     """
     graph = pipeline.to_graph(_source(TIER2), module="battery.procedure", file="procedure.py")
     rows = graph.query("""
         PREFIX awl: <https://w3id.org/awl/schema/>
-        SELECT DISTINCT ?callee WHERE {
-          ?loop awl:condition/awl:reads "cycles" ; awl:whenTrue/awl:next* ?step .
+        SELECT ?callee ?governs ?bound_at WHERE {
+          ?loop ^awl:repeat ?back ; awl:condition/awl:reads ?def ;
+                awl:whenTrue/awl:next* ?step .
           ?step awl:callee ?callee .
-        } ORDER BY ?callee
+          ?def awl:name ?governs ; awl:span [ awl:startLine ?bound_at ] .
+        } ORDER BY ?callee ?governs
     """)
-    assert [str(row[0]) for row in rows] == ["charge", "rest"]
+    assert [(str(a), str(b), int(c)) for a, b, c in rows] == [
+        ("charge", "cycles", 13),
+        ("charge", "i", 14),
+        ("rest", "cycles", 13),
+        ("rest", "i", 14),
+    ]
+
+
+def test_the_condition_join_is_by_span_not_by_name():
+    """The plan and the def-use graph mint independently; only the span ties
+    them, so a condition with no matching span gets no reads rather than a
+    guess.
+    """
+    analysis = pipeline.analyze(_source(TIER2), module="battery.procedure", file="procedure.py")
+    spans = {(entry["span"]["start_line"], entry["span"]["start_col"]) for entry in analysis["flow"]["conditions"]}
+    plan_spans = {
+        (step["condition"]["span"]["start_line"], step["condition"]["span"]["start_col"])
+        for step in analysis["plan"]["steps"]
+        if step.get("condition")
+    }
+    assert spans and spans == plan_spans
 
 
 def test_which_step_follows_another():

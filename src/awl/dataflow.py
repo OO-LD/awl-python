@@ -110,6 +110,7 @@ class _Analysis:
         self.file = file
         self.definitions: list[dict[str, Any]] = []
         self.writes: list[dict[str, Any]] = []
+        self.conditions: list[dict[str, Any]] = []
         self._counter = 0
 
     def define(
@@ -140,6 +141,15 @@ class _Analysis:
             "depends_on": sorted(depends_on),
         })
         return identity
+
+    def condition(self, node: ast.AST, reads: frozenset[str]) -> None:
+        """Record which definitions a control-flow test reads.
+
+        The plan says a step runs when a test holds; this says which bindings
+        that test consulted. Recorded as identities rather than names, so a
+        query joins straight through to where each value came from.
+        """
+        self.conditions.append({"span": _span(node, self.file), "reads": sorted(reads)})
 
     def write(
         self,
@@ -264,6 +274,7 @@ class _Walker:
 
     def _on_If(self, node, environment, scope):
         condition = self.reads(node.test, environment)
+        self.analysis.condition(node.test, condition)
         then_branch = self.block(node.body, dict(environment), scope)
         else_branch = self.block(node.orelse, dict(environment), scope)
         merged = _merge(then_branch, else_branch)
@@ -274,6 +285,9 @@ class _Walker:
         return merged
 
     def _loop(self, node, environment, scope, target=None, iterable=None):
+        test = getattr(node, "test", None) or iterable
+        if test is not None:
+            self.analysis.condition(test, self.reads(test, environment))
         if target is not None and iterable is not None:
             depends = self.reads(iterable, environment)
             environment = dict(environment)
@@ -387,4 +401,5 @@ def analyze(source: str, *, module: str = "", file: str = "<source>") -> dict[st
         "module": module,
         "definitions": analysis.definitions,
         "writes": analysis.writes,
+        "conditions": analysis.conditions,
     }

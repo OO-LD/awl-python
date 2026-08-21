@@ -80,7 +80,7 @@ def _test_of(node: ast.stmt) -> ast.expr | None:
     return None
 
 
-def _condition_of(node: ast.stmt) -> dict[str, Any] | None:
+def _condition_of(node: ast.stmt, self_file: str) -> dict[str, Any] | None:
     """Return the test as a node, or None when the statement has no test.
 
     A condition is an expression, so it is a node like any other and carries
@@ -89,22 +89,21 @@ def _condition_of(node: ast.stmt) -> dict[str, Any] | None:
     ``source_text``, and two names for one thing is how a vocabulary starts
     to drift.
 
-    ``reads`` is the queryable half. "Which loops depend on ``cycles``" is a
-    question; "which loops are spelled ``i < cycles``" is not one anyone asks,
-    and matching that text breaks on a space or a rename.
+    It carries a span and no ``reads``. What a condition depends on is a
+    dataflow question, and answering it with *names* would be the same mistake
+    as matching its text one size smaller: a name is scope-blind and joins to
+    nothing, where the def-use graph already mints an identity for the very
+    binding being read. The two are joined by span, which is what every other
+    pair of views here uses.
     """
     test = _test_of(node)
     if test is None:
         return None
-    reads: list[str] = []
-    for child in ast.walk(test):
-        if isinstance(child, ast.Name) and isinstance(child.ctx, ast.Load) and child.id not in reads:
-            reads.append(child.id)
     return {
         "node_type": node_type_for(type(test).__name__),
         "parser_type_name": type(test).__name__,
         "source_text": ast.unparse(test),
-        "reads": reads,
+        "span": _span(test, self_file),
     }
 
 
@@ -133,7 +132,7 @@ class _Graph:
             "parser_type_name": type(node).__name__,
             "scope": scope,
             "callee": _callee_of(node),
-            "condition": _condition_of(node),
+            "condition": _condition_of(node, self.file),
             "span": _span(node, self.file),
         })
         return identity
