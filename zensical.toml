@@ -15,6 +15,8 @@ nav = [
     { "Development" = "dev.md" },
 ]
 
+extra_css = ["assets/wide.css"]
+
 [project.plugins.macros]
 # The worked-examples page is built from the corpus at render time.
 module_name = "docs/macros"

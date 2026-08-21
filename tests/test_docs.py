@@ -40,8 +40,17 @@ def test_every_corpus_file_appears(page):
 def test_each_file_pairs_its_source_with_tabbed_representations(page):
     """Left is the source, right is tabbed: the layout is the point."""
     assert page.count('<div class="grid" markdown>') == len(contracts.corpus_files())
+    assert page.count('=== "Python"') == len(contracts.corpus_files())
     assert page.count('=== "AWL AST, collapsed"') == len(contracts.corpus_files())
     assert page.count('=== "AWL AST, plain"') == len(contracts.corpus_files())
+
+
+def test_the_source_column_is_tabbed_too(page):
+    """Both columns are tab sets, so they sit at the same height and read as
+    one artefact in two notations rather than as two different kinds of thing.
+    """
+    assert '=== "Python"' in page
+    assert chr(10) + "```python" not in page, "no bare code block outside a tab"
 
 
 def test_the_collapsed_view_actually_differs_from_the_plain_one(page):

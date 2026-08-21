@@ -61,15 +61,28 @@ def _views(path: Path) -> list[tuple[str, str]]:
     return [
         (
             "AWL AST, collapsed",
-            dumps(pipeline.to_compact(source, module=module, index=_siblings(path))),
+            dumps(pipeline.to_compact(source, module=module, index=_siblings(path)), width=110),
         ),
-        ("AWL AST, plain", dumps(encode(elide(to_doc(ast.parse(source)), profile="ast")))),
+        ("AWL AST, plain", dumps(encode(elide(to_doc(ast.parse(source)), profile="ast")), width=110)),
     ]
+
+
+def _tabs(entries):
+    """Return a tab set, one tab per (title, body, language).
+
+    The source column gets one too, even with a single tab. A bare code block
+    beside a tab set sits at a different height and reads as a different kind
+    of thing, when the two are one artefact in two notations. It also leaves
+    room for the source to gain a second tab without the layout shifting.
+    """
+    separator = "\n\n"
+    return separator.join(
+        '=== "' + title + '"\n\n' + _fence(body, language, "    ") for title, body, language in entries
+    )
 
 
 def _split_view(path: Path) -> str:
     """Return one file's source beside its representations."""
-    tabs = "\n\n".join(f'=== "{title}"\n\n' + _fence(rendered, "json", "    ") for title, rendered in _views(path))
     return "\n".join([
         f"## `{path.parent.name}/{path.name}`",
         "",
@@ -77,13 +90,13 @@ def _split_view(path: Path) -> str:
         "",
         '<div markdown="1">',
         "",
-        _fence(path.read_text(encoding="utf-8").rstrip(), "python"),
+        _tabs([("Python", path.read_text(encoding="utf-8").rstrip(), "python")]),
         "",
         "</div>",
         "",
         '<div markdown="1">',
         "",
-        tabs,
+        _tabs([(title, rendered, "json") for title, rendered in _views(path)]),
         "",
         "</div>",
         "",

@@ -1,0 +1,11 @@
+/* The worked-examples page puts source and JSON side by side, so the default
+   reading width leaves both columns too narrow to see a node's shape. */
+.md-grid { max-width: 100rem; }
+
+/* Tabs on that page hold code, not prose, so they can afford to be smaller. */
+.md-typeset .tabbed-set > code,
+.md-typeset .tabbed-content pre > code { font-size: 0.62rem; line-height: 1.35; }
+.md-typeset .tabbed-labels > label { font-size: 0.62rem; }
+
+/* Two columns of code need the gap kept tight. */
+.md-typeset .grid { gap: 0.4rem; }
