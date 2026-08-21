@@ -2,10 +2,13 @@
    reading width leaves both columns too narrow to see a node's shape. */
 .md-grid { max-width: 100rem; }
 
-/* Tabs on that page hold code, not prose, so they can afford to be smaller. */
-.md-typeset .tabbed-set > code,
-.md-typeset .tabbed-content pre > code { font-size: 0.62rem; line-height: 1.35; }
-.md-typeset .tabbed-labels > label { font-size: 0.62rem; }
+/* Those tabs hold code, not prose. Code is scanned for shape rather than read
+   line by line, so it takes a smaller size than body text without costing
+   legibility, and a node that fits on one line is worth more than a larger
+   glyph. */
+.md-typeset .tabbed-set pre > code,
+.md-typeset .tabbed-set > code { font-size: 0.54rem; line-height: 1.3; }
+.md-typeset .tabbed-labels > label { font-size: 0.56rem; }
 
 /* Two columns of code need the gap kept tight. */
 .md-typeset .grid { gap: 0.4rem; }

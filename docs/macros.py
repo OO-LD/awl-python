@@ -61,9 +61,9 @@ def _views(path: Path) -> list[tuple[str, str]]:
     return [
         (
             "AWL AST, collapsed",
-            dumps(pipeline.to_compact(source, module=module, index=_siblings(path)), width=110),
+            dumps(pipeline.to_compact(source, module=module, index=_siblings(path)), width=128),
         ),
-        ("AWL AST, plain", dumps(encode(elide(to_doc(ast.parse(source)), profile="ast")), width=110)),
+        ("AWL AST, plain", dumps(encode(elide(to_doc(ast.parse(source)), profile="ast")), width=128)),
     ]
 
 
