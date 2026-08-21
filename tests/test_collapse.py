@@ -6,6 +6,7 @@ the contracts package, and the two AST/JSON converters.
 
 import ast
 import json
+from typing import Any
 
 import pytest
 from ast2json import ast2json
@@ -16,7 +17,7 @@ from awl.elide import elide
 
 SOURCE = "charge(ChargeParam(target_voltage=4.2, c_rate=0.23))\n"
 
-TYPES = {
+TYPES: dict[str, Any] = {
     "ChargeParam": {
         "identity": {
             "iri": "https://w3id.org/awl/py/battery.params/ChargeParam",
@@ -81,10 +82,11 @@ def test_the_property_namespace_is_the_resolvable_iri():
 
 def test_a_type_without_a_declared_iri_falls_back_to_the_minted_one():
     """Tier 2 has no declared IRI, and must still collapse to something typed."""
+    minted = TYPES["ChargeParam"]["identity"]["iri"]
     types = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
     out = collapse(_folded(), types=types, resolved=RESOLVED)
     node = _find(out, lambda item: "_callee" in item)
-    assert node["@type"] == types["ChargeParam"]["identity"]["iri"]
+    assert node["@type"] == minted
 
 
 def test_an_unresolved_callee_is_left_alone():
