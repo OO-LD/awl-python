@@ -159,9 +159,42 @@ class TestValidation:
 class TestCorpus:
     """The corpus is the evidence for the progressive-enhancement claim."""
 
-    def test_all_three_tiers_are_present(self):
+    def test_all_tiers_are_present(self):
         tiers = {p.parent.name for p in contracts.corpus_files()}
-        assert {"tier1_plain", "tier2_dataclass", "tier3_oold", "edge"} <= tiers
+        assert {"tier1_plain", "tier2_dataclass", "tier3_oold", "edge", "real"} <= tiers
+
+    def test_a_real_world_file_is_vendored_with_provenance(self):
+        """Everything else was written by us to be testable.
+
+        Without at least one file we did not shape, the suite validates
+        against code built to pass it.
+        """
+        real = contracts.CORPUS_DIR / "real"
+        assert list(real.glob("*.py")), "no real-world sample"
+        provenance = (real / "PROVENANCE.md").read_text(encoding="utf-8")
+        for required in ("Blob SHA", "Licence", "Source"):
+            assert required in provenance, f"{required} not recorded"
+
+    def test_the_real_file_keeps_the_properties_it_was_chosen_for(self):
+        """Guards against it being quietly replaced by another toy.
+
+        Each assertion is a capability the rest of the corpus does not
+        exercise: C callees, control flow, and an attribute/subscript chain.
+        """
+        source = next((contracts.CORPUS_DIR / "real").glob("*.py")).read_text(encoding="utf-8")
+        tree = ast.parse(source)
+
+        imported = {
+            node.module.split(".")[0] for node in ast.walk(tree) if isinstance(node, ast.ImportFrom) and node.module
+        } | {
+            alias.name.split(".")[0] for node in ast.walk(tree) if isinstance(node, ast.Import) for alias in node.names
+        }
+        assert imported & {"numpy", "scipy"}, "must reach C callees"
+
+        assert any(isinstance(n, (ast.For, ast.While)) for n in ast.walk(tree)), "control flow"
+        assert any(isinstance(n, ast.Attribute) and isinstance(n.value, ast.Subscript) for n in ast.walk(tree)), (
+            "an attribute-on-subscript chain, as in the tensile test"
+        )
 
     @pytest.mark.parametrize("path", contracts.corpus_files(), ids=lambda p: f"{p.parent.name}/{p.name}")
     def test_corpus_file_parses(self, path):
