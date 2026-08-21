@@ -103,7 +103,39 @@ def build_context(types: list[dict[str, Any]] | None = None) -> dict[str, Any]:
 
     for info in types or []:
         for field in info.get("fields", []):
-            coercion = _coercion_for(field.get("annotation"))
-            if coercion:
-                context[field["name"]] = {"@id": f"{AWL}{field['name']}", "@type": coercion}
+            term = _term_for(field)
+            if term is not None:
+                context[field["name"]] = term
     return {"@context": context}
+
+
+def _term_for(field: dict[str, Any]) -> dict[str, Any] | None:
+    """Return the context term a declared field needs, or None.
+
+    This is where a member's annotation is cashed in. Two coercions come out
+    of it, and both are the difference between a graph that joins and one that
+    only looks like it does.
+
+    A link field is coerced to ``@id``, so its value becomes an IRI rather
+    than a string. Without it a declared ``Link[Device]`` projects as
+    ``"https://ex.org/dev/17"^^xsd:string``, which no query can follow: the
+    annotation says the field is a reference and the projection says it is
+    text.
+
+    A link whose union admits a literal arm is **not** coerced. ``str | Device``
+    means an operator may legitimately be a name rather than a reference, and
+    coercing it would silently turn that name into a relative IRI. The declared
+    arms are what make this decidable, which is the reason to record them.
+    """
+    name = field["name"]
+    if field.get("isLink") and "literal" not in (field.get("arms") or []):
+        term: dict[str, Any] = {"@id": f"{AWL}{name}", "@type": "@id"}
+        if field.get("isMany"):
+            # A set, not a list: the annotation declares multiplicity, not order.
+            term["@container"] = "@set"
+        return term
+
+    coercion = _coercion_for(field.get("annotation"))
+    if coercion:
+        return {"@id": f"{AWL}{name}", "@type": coercion}
+    return None

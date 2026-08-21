@@ -210,3 +210,87 @@ def test_the_context_is_built_from_real_extracted_types():
     context = build_context(types)["@context"]
     assert context["target_voltage"]["@type"] == "xsd:double"
     assert context["c_rate"]["@type"] == "xsd:double"
+
+
+def _linked_context(**overrides):
+    field = {
+        "name": "device",
+        "isLink": True,
+        "isMany": False,
+        "target": "Device",
+        "annotation": "Link[Device] | None",
+        "declarationForm": "Link[T]",
+        "arms": ["reference", "embedded"],
+        **overrides,
+    }
+    return build_context([{"identity": {"iri": "ex:C", "scheme": "py"}, "fields": [field]}])["@context"]
+
+
+def test_a_declared_link_projects_as_an_iri_not_a_string():
+    """Cashing in the member's annotation.
+
+    Without the coercion a declared Link[Device] emits
+    "https://ex.org/dev/17"^^xsd:string, which no query can follow: the
+    annotation says reference and the projection says text.
+    """
+    from rdflib import URIRef
+
+    graph = _graph({
+        "@context": _linked_context(),
+        "_type": "Call",
+        "device": "https://ex.org/dev/17",
+    })
+    objects = [object_ for _, predicate, object_ in graph if "device" in str(predicate)]
+    assert objects == [URIRef("https://ex.org/dev/17")]
+
+
+def test_without_the_annotation_the_same_value_is_a_string():
+    """Shows the coercion is what does the work, not the value's shape."""
+    from rdflib import Literal
+
+    graph = _graph({
+        "@context": build_context()["@context"],
+        "_type": "Call",
+        "device": "https://ex.org/dev/17",
+    })
+    objects = [object_ for _, predicate, object_ in graph if "device" in str(predicate)]
+    assert objects == [Literal("https://ex.org/dev/17")]
+
+
+def test_a_linked_reference_actually_joins_to_the_referenced_node():
+    """The point of an IRI over a string: two documents become one graph."""
+    graph = _graph({
+        "@context": _linked_context(),
+        "_type": "Call",
+        "device": "https://ex.org/dev/17",
+    })
+    graph.parse(
+        data=json.dumps({
+            "@context": {"@vocab": "https://w3id.org/awl/schema/"},
+            "@id": "https://ex.org/dev/17",
+            "serial": "SN-4471",
+        }),
+        format="json-ld",
+    )
+    rows = graph.query("""
+        PREFIX awl: <https://w3id.org/awl/schema/>
+        SELECT ?serial WHERE { ?call awl:device ?device . ?device awl:serial ?serial }
+    """)
+    assert [str(row[0]) for row in rows] == ["SN-4471"], "the reference resolves"
+
+
+def test_a_union_with_a_literal_arm_is_not_coerced():
+    """`str | Device` means an operator may be a name rather than a reference.
+
+    Coercing it would silently turn that name into a relative IRI. The declared
+    arms are what make this decidable.
+    """
+    context = _linked_context(
+        name="operator", annotation="str | Device | None", arms=["literal", "reference", "embedded"]
+    )
+    assert "operator" not in context
+
+
+def test_a_repeated_link_declares_its_multiplicity():
+    """The annotation declares many, not ordered, so a set rather than a list."""
+    assert _linked_context(isMany=True)["device"]["@container"] == "@set"
