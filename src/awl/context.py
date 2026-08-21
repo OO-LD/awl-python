@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from awl.controlflow import EDGE_KINDS
 from awl.vocab import ORDERED_FIELDS
 
 __all__ = ["AWL", "XSD", "build_context"]
@@ -98,7 +99,10 @@ def build_context(types: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     # The write vocabulary names classes and members, so its values are IRIs
     # rather than text. Without this a query for "written to a member of
     # TensileTestSpecimen" has to string-match instead of joining.
-    for term in ("member", "memberOf", "rootType", "range"):
+    for term in ("member", "memberOf", "rootType", "range", "dependsOn", "id"):
+        context[term] = {"@id": f"{AWL}{term}", "@type": "@id"}
+    # Control-flow edges are predicates, so a path expression can cross them.
+    for term in EDGE_KINDS:
         context[term] = {"@id": f"{AWL}{term}", "@type": "@id"}
     # Taken from the vocabulary rather than restated, so a field added there
     # cannot silently lose its ordering here.
