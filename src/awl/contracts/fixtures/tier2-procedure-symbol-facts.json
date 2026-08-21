@@ -1,0 +1,137 @@
+{
+  "file": "tier2_dataclass/procedure.py",
+  "module": "tier2_dataclass.procedure",
+  "declarations": [
+    {
+      "kind": "function",
+      "name": "procedure",
+      "identity": {
+        "iri": "https://w3id.org/awl/py/tier2_dataclass.procedure/procedure",
+        "scheme": "py",
+        "module": "tier2_dataclass.procedure",
+        "symbol": "procedure",
+        "version": null,
+        "disambiguator": null,
+        "aliasOf": null,
+        "aliasRoot": null
+      },
+      "parameters": [
+        {
+          "name": "cycles",
+          "annotation": "int"
+        }
+      ],
+      "span": {
+        "file": "tier2_dataclass/procedure.py",
+        "startLine": 13,
+        "startCol": 0,
+        "endLine": 18,
+        "endCol": 14
+      }
+    }
+  ],
+  "imports": [
+    {
+      "localName": "charge",
+      "importedName": "charge",
+      "fromModule": "battery.device",
+      "isAlias": false,
+      "isStar": false,
+      "span": {
+        "file": "tier2_dataclass/procedure.py",
+        "startLine": 8,
+        "startCol": 0,
+        "endLine": 8,
+        "endCol": 39
+      }
+    },
+    {
+      "localName": "rest",
+      "importedName": "rest",
+      "fromModule": "battery.device",
+      "isAlias": false,
+      "isStar": false,
+      "span": {
+        "file": "tier2_dataclass/procedure.py",
+        "startLine": 8,
+        "startCol": 0,
+        "endLine": 8,
+        "endCol": 39
+      }
+    },
+    {
+      "localName": "ChargeParam",
+      "importedName": "ChargeParam",
+      "fromModule": ".params",
+      "isAlias": false,
+      "isStar": false,
+      "span": {
+        "file": "tier2_dataclass/procedure.py",
+        "startLine": 10,
+        "startCol": 0,
+        "endLine": 10,
+        "endCol": 31
+      }
+    }
+  ],
+  "aliases": [],
+  "exports": [
+    {
+      "exportedName": "charge",
+      "module": "tier2_dataclass.procedure",
+      "fromModule": "battery.device"
+    },
+    {
+      "exportedName": "rest",
+      "module": "tier2_dataclass.procedure",
+      "fromModule": "battery.device"
+    },
+    {
+      "exportedName": "ChargeParam",
+      "module": "tier2_dataclass.procedure",
+      "fromModule": ".params"
+    },
+    {
+      "exportedName": "procedure",
+      "module": "tier2_dataclass.procedure"
+    }
+  ],
+  "uses": [
+    {
+      "localName": "charge",
+      "span": {
+        "file": "tier2_dataclass/procedure.py",
+        "startLine": 16,
+        "startCol": 8,
+        "endLine": 16,
+        "endCol": 60
+      },
+      "argumentTypes": [
+        "ChargeParam"
+      ]
+    },
+    {
+      "localName": "ChargeParam",
+      "span": {
+        "file": "tier2_dataclass/procedure.py",
+        "startLine": 16,
+        "startCol": 15,
+        "endLine": 16,
+        "endCol": 59
+      },
+      "argumentTypes": []
+    },
+    {
+      "localName": "rest",
+      "span": {
+        "file": "tier2_dataclass/procedure.py",
+        "startLine": 17,
+        "startCol": 8,
+        "endLine": 17,
+        "endCol": 17
+      },
+      "argumentTypes": []
+    }
+  ],
+  "types": []
+}

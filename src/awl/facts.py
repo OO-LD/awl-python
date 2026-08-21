@@ -258,6 +258,7 @@ class _Walk(ast.NodeVisitor):
                     "aliasOf": alias.name,
                     "aliasRoot": f"{origin}.{alias.name}" if origin else alias.name,
                 })
+            self._export(local, origin=origin)
         self.generic_visit(node)
 
     def visit_Import(self, node: ast.Import) -> None:
@@ -277,6 +278,7 @@ class _Walk(ast.NodeVisitor):
                     "aliasOf": alias.name,
                     "aliasRoot": alias.name,
                 })
+            self._export(local, origin=alias.name)
         self.generic_visit(node)
 
     def visit_Call(self, node: ast.Call) -> None:
@@ -342,17 +344,30 @@ class _Walk(ast.NodeVisitor):
         self.generic_visit(node)
         self._depth -= 1
 
-    def _export(self, name: str) -> None:
+    def _export(self, name: str, *, origin: str = "") -> None:
         """Record a module-level name as importable from here.
 
-        Only top level: a method is not importable, and treating it as an
+        Parameters
+        ----------
+        name : str
+            The name as it is bound in this module.
+        origin : str, optional
+            Where the name came from, when it was imported rather than defined
+            here. A module-level ``from .impl import Thing`` genuinely makes
+            ``Thing`` importable from this module, and recording where it came
+            from is what lets a re-export be followed one hop. That is an
+            observation; deciding whether to follow it is resolution's call.
+
+        Notes
+        -----
+        Top level only. A method is not importable, and treating it as an
         export is how a re-export resolver ends up with duplicate nodes.
         """
-        if self._depth == 0 and not name.startswith("_"):
-            self.exports.append({
-                "exportedName": name,
-                "module": self.module,
-            })
+        if self._depth == 0 and not name.startswith("_") and name != "*":
+            entry = {"exportedName": name, "module": self.module}
+            if origin:
+                entry["fromModule"] = origin
+            self.exports.append(entry)
 
 
 def extract(source: str, *, module: str, file: str = "<source>") -> dict[str, Any]:

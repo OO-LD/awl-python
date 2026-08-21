@@ -1,0 +1,354 @@
+{
+  "file": "tier3_oold/params.py",
+  "module": "tier3_oold.params",
+  "declarations": [
+    {
+      "kind": "class",
+      "name": "Device",
+      "identity": {
+        "iri": "https://w3id.org/awl/py/tier3_oold.params/Device",
+        "scheme": "py",
+        "module": "tier3_oold.params",
+        "symbol": "Device",
+        "version": null,
+        "disambiguator": null,
+        "aliasOf": null,
+        "aliasRoot": null,
+        "declaredTypes": [
+          "ex:Device"
+        ]
+      },
+      "bases": [
+        "LinkedBaseModel"
+      ],
+      "fields": [
+        {
+          "name": "serial",
+          "isLink": false,
+          "isMany": false,
+          "target": null,
+          "annotation": "str | None",
+          "declarationForm": "plain",
+          "arms": [
+            "literal"
+          ]
+        }
+      ],
+      "span": {
+        "file": "tier3_oold/params.py",
+        "startLine": 18,
+        "startCol": 0,
+        "endLine": 21,
+        "endCol": 29
+      }
+    },
+    {
+      "kind": "class",
+      "name": "ChargeParam",
+      "identity": {
+        "iri": "https://w3id.org/awl/py/tier3_oold.params/ChargeParam",
+        "scheme": "py",
+        "module": "tier3_oold.params",
+        "symbol": "ChargeParam",
+        "version": null,
+        "disambiguator": null,
+        "aliasOf": null,
+        "aliasRoot": null,
+        "declaredTypes": [
+          "ex:ChargeParam"
+        ]
+      },
+      "bases": [
+        "LinkedBaseModel"
+      ],
+      "fields": [
+        {
+          "name": "target_voltage",
+          "isLink": false,
+          "isMany": false,
+          "target": null,
+          "annotation": "float",
+          "declarationForm": "plain",
+          "arms": [
+            "literal"
+          ]
+        },
+        {
+          "name": "c_rate",
+          "isLink": false,
+          "isMany": false,
+          "target": null,
+          "annotation": "float",
+          "declarationForm": "plain",
+          "arms": [
+            "literal"
+          ]
+        },
+        {
+          "name": "device",
+          "isLink": true,
+          "isMany": false,
+          "target": "Device",
+          "annotation": "Link[Device] | None",
+          "declarationForm": "Link[T]",
+          "arms": [
+            "reference",
+            "embedded"
+          ]
+        },
+        {
+          "name": "calibrated_against",
+          "isLink": true,
+          "isMany": false,
+          "target": "Device",
+          "annotation": "Device | None",
+          "declarationForm": "LinkedField(link=True)",
+          "arms": [
+            "reference",
+            "embedded"
+          ]
+        },
+        {
+          "name": "operator",
+          "isLink": true,
+          "isMany": false,
+          "target": "Device",
+          "annotation": "str | Device | None",
+          "declarationForm": "LinkedField(link=True)",
+          "arms": [
+            "literal",
+            "reference",
+            "embedded"
+          ]
+        }
+      ],
+      "span": {
+        "file": "tier3_oold/params.py",
+        "startLine": 24,
+        "startCol": 0,
+        "endLine": 38,
+        "endCol": 58
+      }
+    }
+  ],
+  "imports": [
+    {
+      "localName": "Link",
+      "importedName": "Link",
+      "fromModule": "oold.experimental.notation",
+      "isAlias": false,
+      "isStar": false,
+      "span": {
+        "file": "tier3_oold/params.py",
+        "startLine": 15,
+        "startCol": 0,
+        "endLine": 15,
+        "endCol": 73
+      }
+    },
+    {
+      "localName": "LinkedBaseModel",
+      "importedName": "LinkedBaseModel",
+      "fromModule": "oold.experimental.notation",
+      "isAlias": false,
+      "isStar": false,
+      "span": {
+        "file": "tier3_oold/params.py",
+        "startLine": 15,
+        "startCol": 0,
+        "endLine": 15,
+        "endCol": 73
+      }
+    },
+    {
+      "localName": "LinkedField",
+      "importedName": "LinkedField",
+      "fromModule": "oold.experimental.notation",
+      "isAlias": false,
+      "isStar": false,
+      "span": {
+        "file": "tier3_oold/params.py",
+        "startLine": 15,
+        "startCol": 0,
+        "endLine": 15,
+        "endCol": 73
+      }
+    }
+  ],
+  "aliases": [],
+  "exports": [
+    {
+      "exportedName": "Link",
+      "module": "tier3_oold.params",
+      "fromModule": "oold.experimental.notation"
+    },
+    {
+      "exportedName": "LinkedBaseModel",
+      "module": "tier3_oold.params",
+      "fromModule": "oold.experimental.notation"
+    },
+    {
+      "exportedName": "LinkedField",
+      "module": "tier3_oold.params",
+      "fromModule": "oold.experimental.notation"
+    },
+    {
+      "exportedName": "Device",
+      "module": "tier3_oold.params"
+    },
+    {
+      "exportedName": "ChargeParam",
+      "module": "tier3_oold.params"
+    }
+  ],
+  "uses": [
+    {
+      "localName": "LinkedField",
+      "span": {
+        "file": "tier3_oold/params.py",
+        "startLine": 35,
+        "startCol": 40,
+        "endLine": 35,
+        "endCol": 62
+      },
+      "argumentTypes": []
+    },
+    {
+      "localName": "LinkedField",
+      "span": {
+        "file": "tier3_oold/params.py",
+        "startLine": 38,
+        "startCol": 36,
+        "endLine": 38,
+        "endCol": 58
+      },
+      "argumentTypes": []
+    }
+  ],
+  "types": [
+    {
+      "identity": {
+        "iri": "https://w3id.org/awl/py/tier3_oold.params/Device",
+        "scheme": "py",
+        "module": "tier3_oold.params",
+        "symbol": "Device",
+        "version": null,
+        "disambiguator": null,
+        "aliasOf": null,
+        "aliasRoot": null,
+        "declaredTypes": [
+          "ex:Device"
+        ]
+      },
+      "declaredTypes": [
+        "ex:Device"
+      ],
+      "fields": [
+        {
+          "name": "serial",
+          "isLink": false,
+          "isMany": false,
+          "target": null,
+          "annotation": "str | None",
+          "declarationForm": "plain",
+          "arms": [
+            "literal"
+          ]
+        }
+      ],
+      "span": {
+        "file": "tier3_oold/params.py",
+        "startLine": 18,
+        "startCol": 0,
+        "endLine": 21,
+        "endCol": 29
+      }
+    },
+    {
+      "identity": {
+        "iri": "https://w3id.org/awl/py/tier3_oold.params/ChargeParam",
+        "scheme": "py",
+        "module": "tier3_oold.params",
+        "symbol": "ChargeParam",
+        "version": null,
+        "disambiguator": null,
+        "aliasOf": null,
+        "aliasRoot": null,
+        "declaredTypes": [
+          "ex:ChargeParam"
+        ]
+      },
+      "declaredTypes": [
+        "ex:ChargeParam"
+      ],
+      "fields": [
+        {
+          "name": "target_voltage",
+          "isLink": false,
+          "isMany": false,
+          "target": null,
+          "annotation": "float",
+          "declarationForm": "plain",
+          "arms": [
+            "literal"
+          ]
+        },
+        {
+          "name": "c_rate",
+          "isLink": false,
+          "isMany": false,
+          "target": null,
+          "annotation": "float",
+          "declarationForm": "plain",
+          "arms": [
+            "literal"
+          ]
+        },
+        {
+          "name": "device",
+          "isLink": true,
+          "isMany": false,
+          "target": "Device",
+          "annotation": "Link[Device] | None",
+          "declarationForm": "Link[T]",
+          "arms": [
+            "reference",
+            "embedded"
+          ]
+        },
+        {
+          "name": "calibrated_against",
+          "isLink": true,
+          "isMany": false,
+          "target": "Device",
+          "annotation": "Device | None",
+          "declarationForm": "LinkedField(link=True)",
+          "arms": [
+            "reference",
+            "embedded"
+          ]
+        },
+        {
+          "name": "operator",
+          "isLink": true,
+          "isMany": false,
+          "target": "Device",
+          "annotation": "str | Device | None",
+          "declarationForm": "LinkedField(link=True)",
+          "arms": [
+            "literal",
+            "reference",
+            "embedded"
+          ]
+        }
+      ],
+      "span": {
+        "file": "tier3_oold/params.py",
+        "startLine": 24,
+        "startCol": 0,
+        "endLine": 38,
+        "endCol": 58
+      }
+    }
+  ]
+}
