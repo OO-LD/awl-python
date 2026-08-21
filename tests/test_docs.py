@@ -65,6 +65,22 @@ def test_nothing_is_left_unrendered(page):
     assert "corpus_count()" not in page
 
 
+def test_the_landing_page_example_runs():
+    """The first thing a reader copies, executed rather than proofread.
+
+    It went stale unnoticed once already: the page documented a query against
+    a vocabulary the pipeline had stopped emitting, and it still passed review
+    because the code was never run.
+    """
+    import re
+
+    page = (Path(__file__).resolve().parents[1] / "docs" / "index.md").read_text(encoding="utf-8")
+    blocks = re.findall(r"```py\n(.*?)```", page, re.S)
+    assert blocks, "the page shows no example"
+    for index, block in enumerate(blocks):
+        exec(compile(block, f"docs/index.md[{index}]", "exec"), {})  # noqa: S102
+
+
 def test_the_built_page_renders_three_tab_labels_per_file():
     """Asserted on the HTML, not the markdown.
 

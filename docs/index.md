@@ -1,4 +1,5 @@
 # awl-python
+
 Python implementation of the [Abstract Workflow Language (AWL / AWL-LD)](https://github.com/OO-LD/awl-schema)
 
 ## Install
@@ -8,58 +9,52 @@ Python implementation of the [Abstract Workflow Language (AWL / AWL-LD)](https:/
 ## Usage
 
 ```py
-from awl import AstSerialization
+import ast
 
-ast_serialization = AstSerialization()
+from awl import compact, pipeline
 
-# python source code example
 source = """if a == 1:
-b = 1
+    b = 1
 else:
-b = 'test'"""
+    b = 'test'
+"""
 
-# generate ast document
-ast_dict = ast_serialization.parse(source)
-print(ast_serialization.dumps())
+# The editor model: one node per statement, literals inline.
+doc = pipeline.to_compact(source, module="example")
+print(compact.dumps(doc))
 
-# regenerate source code
-src_code = ast_serialization.unparse(ast_dict)
-assert src_code == source
+# It regenerates the source it came from.
+regenerated = ast.unparse(ast.fix_missing_locations(compact.decode(doc)))
+assert regenerated == ast.unparse(ast.parse(source))
 
-# manipulate ast_dict: set b = 2
-ast_dict["body"][0]["body"][0]["value"]["value"] = 2
-src_code = ast_serialization.unparse(ast_dict)
+# Edit it: b = 2 in the true branch.
+doc["body"][0]["body"][0]["value"] = {"literal": 2}
+assert "b = 2" in ast.unparse(ast.fix_missing_locations(compact.decode(doc)))
 
-assert src_code == """if a == 1:
-b = 2
-else:
-b = 'test'"""
+# The graph: the tree, the control-flow plan, the def-use edges and any
+# typed member writes, in one store.
+graph = pipeline.to_graph(source, module="example")
+print(graph.serialize(format="turtle"))
 
-# export as json-ld
-jsonld_doc = ast_serialization.to_jsonld()
-
-# import into a graph
-from rdflib import Graph
-g = Graph()
-g.parse(data=jsonld_doc, format="json-ld")
-
-# dump graph as turtle
-print(g.serialize(format="turtle"))
-
-# query for all possible values of b
-qres = g.query(
-    """
+# Which values can b take?
+values = graph.query("""
     PREFIX awl: <https://w3id.org/awl/schema/>
-    PREFIX ex: <https://example.org/>
-    SELECT ?v
-    WHERE {
-        ?a a awl:Assign .
-        ?a awl:HasTarget ex:b .
-        ?a awl:HasValue ?v .
+    SELECT ?value WHERE {
+      ?assign a awl:Assign ;
+              awl:targets [ awl:id "b" ] ;
+              awl:value [ awl:value ?value ] .
     }
-    """
-)
+""")
+assert sorted(str(row[0]) for row in values) == ["1", "test"]
 
-possible_values = [row[0].toPython() for row in qres]
-assert possible_values == [1, "test"]
+# Which definitions of b reach the end of the module? Asked of the def-use
+# graph rather than of the syntax, so it survives a rename or a reorder.
+definitions = graph.query("""
+    PREFIX awl: <https://w3id.org/awl/schema/>
+    SELECT ?definition WHERE { ?definition a awl:Definition ; awl:name "b" }
+""")
+assert len(list(definitions)) == 2
 ```
+
+See [Examples](examples.md) for the same treatment applied to every file in the
+validation corpus, source beside document beside RDF.

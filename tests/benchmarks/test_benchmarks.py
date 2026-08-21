@@ -1,6 +1,9 @@
 """Performance benchmarks; run with `make bench`, never with the unit tests."""
 
-from awl import AstSerialization
+import ast
+
+from awl import compact, pipeline
+from awl.astdoc import to_doc
 
 SOURCE = """from battery.params import ChargeParam
 from battery.device import charge, rest
@@ -16,21 +19,24 @@ def procedure(cycles: int) -> None:
 
 def test_parse_benchmark(benchmark) -> None:
     """Baseline for source to AST document conversion."""
-    result = benchmark(AstSerialization().parse, SOURCE)
+    result = benchmark(lambda: to_doc(ast.parse(SOURCE)))
     assert result["_type"] == "Module"
 
 
+def test_compact_benchmark(benchmark) -> None:
+    """Baseline for the editor model, which is what a UI holds."""
+    result = benchmark(pipeline.to_compact, SOURCE, module="battery.procedure")
+    assert result["@type"] == "Module"
+
+
 def test_unparse_benchmark(benchmark) -> None:
-    """Baseline for AST document back to source."""
-    serialization = AstSerialization()
-    ast_dict = serialization.parse(SOURCE)
-    result = benchmark(serialization.unparse, ast_dict)
+    """Baseline for the editor model back to source."""
+    doc = pipeline.to_compact(SOURCE, module="battery.procedure")
+    result = benchmark(lambda: ast.unparse(ast.fix_missing_locations(compact.decode(doc))))
     assert "def procedure" in result
 
 
-def test_to_jsonld_benchmark(benchmark) -> None:
-    """Baseline for the JSON-LD projection."""
-    serialization = AstSerialization()
-    serialization.parse(SOURCE)
-    result = benchmark(serialization.to_jsonld)
-    assert "@context" in result
+def test_to_graph_benchmark(benchmark) -> None:
+    """Baseline for the RDF projection: tree, plan and def-use edges."""
+    result = benchmark(pipeline.to_graph, SOURCE, module="battery.procedure")
+    assert len(result) > 0

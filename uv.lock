@@ -65,12 +65,9 @@ name = "awl"
 version = "0.3.2"
 source = { editable = "." }
 dependencies = [
-    { name = "ast2json" },
     { name = "asttokens" },
-    { name = "json2ast" },
     { name = "oold" },
     { name = "pyld" },
-    { name = "pyyaml" },
     { name = "rdflib" },
 ]
 
@@ -88,7 +85,9 @@ validate = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "ast2json" },
     { name = "deptry" },
+    { name = "json2ast" },
     { name = "jsonschema" },
     { name = "libcst" },
     { name = "mike" },
@@ -106,22 +105,21 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "ast2json" },
     { name = "asttokens" },
-    { name = "json2ast" },
     { name = "jsonschema", marker = "extra == 'validate'", specifier = ">=4.18.0" },
     { name = "libcst", marker = "extra == 'edit'" },
     { name = "oold", specifier = ">=0.8.0" },
     { name = "oold", extras = ["ui-panel"], marker = "extra == 'hitl'" },
     { name = "pyld" },
-    { name = "pyyaml" },
     { name = "rdflib" },
     { name = "referencing", marker = "extra == 'validate'" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "ast2json" },
     { name = "deptry", specifier = ">=0.25.0" },
+    { name = "json2ast" },
     { name = "jsonschema", specifier = ">=4.18.0" },
     { name = "libcst" },
     { name = "mike", git = "https://github.com/squidfunk/mike.git?rev=2.2.0%2Bzensical-0.1.0" },
