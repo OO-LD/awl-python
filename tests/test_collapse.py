@@ -83,7 +83,7 @@ def test_the_property_namespace_is_the_resolvable_iri():
 
 def test_a_type_without_a_declared_iri_falls_back_to_the_minted_one():
     """Tier 2 has no declared IRI, and must still collapse to something typed."""
-    types = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
+    types: dict[str, Any] = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
     out = collapse(_folded(), types=types, resolved=RESOLVED)
     node = _find(out, lambda item: "@type" in item)
     assert node["@type"] == ["ChargeParam"], "the class name alone still identifies it"
@@ -228,7 +228,7 @@ def test_the_compact_editor_form_is_class_name_plus_data():
     """
     from awl.compact import encode
 
-    types = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
+    types: dict[str, Any] = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
     doc = collapse(
         elide(ast2json(ast.parse(SOURCE)), profile="ast"),
         types=types,
@@ -243,7 +243,7 @@ def test_that_form_regenerates_the_original_python():
     """The whole point: export, hold as JSON, regenerate."""
     from awl.compact import decode, encode
 
-    types = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
+    types: dict[str, Any] = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
     doc = collapse(
         elide(ast2json(ast.parse(SOURCE)), profile="ast"),
         types=types,
@@ -258,7 +258,7 @@ def test_editing_the_json_changes_the_regenerated_python():
     """Edit a field as plain JSON, with no knowledge of the syntax tree."""
     from awl.compact import decode, encode
 
-    types = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
+    types: dict[str, Any] = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
     compact = encode(
         collapse(
             elide(ast2json(ast.parse(SOURCE)), profile="ast"),
@@ -282,7 +282,7 @@ def test_the_class_term_resolves_through_the_document_context():
 
     from awl.context import build_context
 
-    types = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
+    types: dict[str, Any] = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
     doc = collapse(
         elide(ast2json(ast.parse(SOURCE)), profile="ast"),
         types=types,
@@ -295,6 +295,5 @@ def test_the_class_term_resolves_through_the_document_context():
         data=json.dumps({"@context": build_context(list(types.values()))["@context"], **node}),
         format="json-ld",
     )
-    assert any(str(object_) == types["ChargeParam"]["identity"]["iri"] for _, _, object_ in graph), (
-        "the bare term resolved to the minted IRI"
-    )
+    minted = TYPES["ChargeParam"]["identity"]["iri"]
+    assert any(str(object_) == minted for _, _, object_ in graph), "the bare term resolved to the minted IRI"

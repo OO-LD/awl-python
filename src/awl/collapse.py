@@ -61,7 +61,7 @@ def collapse(
     dict or list
         A new document.
     """
-    options = {
+    options: dict[str, Any] = {
         "types": types,
         "resolved": resolved,
         "embed_context": embed_context,
