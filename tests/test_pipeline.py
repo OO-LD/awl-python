@@ -156,7 +156,7 @@ def test_a_condition_is_queryable_by_what_it_reads():
     rows = graph.query("""
         PREFIX awl: <https://w3id.org/awl/schema/>
         SELECT DISTINCT ?callee WHERE {
-          ?loop awl:conditionReads "cycles" ; awl:whenTrue/awl:next* ?step .
+          ?loop awl:condition/awl:reads "cycles" ; awl:whenTrue/awl:next* ?step .
           ?step awl:callee ?callee .
         } ORDER BY ?callee
     """)

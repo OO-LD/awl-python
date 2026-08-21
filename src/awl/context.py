@@ -40,6 +40,9 @@ _INTEGERS = (
 #: Keys whose value is an IRI naming another node, not text.
 _REFERENCES = ("member", "member_of", "root_type", "range", "depends_on", "id")
 
+#: The one property that carries a node's original text. There is exactly one.
+SOURCE_TEXT = "source_text"
+
 #: The remaining vocabulary this project introduces. Listed so the mapping is
 #: explicit: a key absent from here still projects, through @vocab, under its
 #: snake_case name, which is a worse IRI but never a lost triple.
@@ -49,7 +52,6 @@ _VOCABULARY = (
     "argument_name",
     "argument_types",
     "branch_taken",
-    "condition_reads",
     "declaration_form",
     "declared_types",
     "exported_name",

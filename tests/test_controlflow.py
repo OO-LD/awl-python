@@ -23,7 +23,8 @@ def _labelled(graph):
     by_id = {step["id"]: step for step in graph["steps"]}
 
     def label(step):
-        return step["callee"] or step["condition"] or step["parser_type_name"]
+        condition = step["condition"]
+        return step["callee"] or (condition or {}).get("source_text") or step["parser_type_name"]
 
     return {(label(by_id[edge["from"]]), edge["kind"], label(by_id[edge["to"]])) for edge in graph["edges"]}
 
@@ -84,7 +85,7 @@ def test_a_continue_goes_back_to_the_loop_header():
     by_id = {step["id"]: step for step in graph["steps"]}
     node = next(step for step in graph["steps"] if step["parser_type_name"] == "Continue")
     edges = [edge for edge in graph["edges"] if edge["from"] == node["id"]]
-    assert [(edge["kind"], by_id[edge["to"]]["condition"]) for edge in edges] == [("repeat", "cond")]
+    assert [(edge["kind"], by_id[edge["to"]]["condition"]["source_text"]) for edge in edges] == [("repeat", "cond")]
 
 
 def test_a_step_carries_its_callee_and_its_span():
@@ -156,17 +157,23 @@ def test_the_plan_is_queryable_as_a_path_expression():
     assert [str(row[0]) for row in rows] == ["charge", "rest"]
 
 
-def test_a_condition_records_the_names_it_reads():
-    """The queryable half of a condition; the text is for display only."""
+def test_a_condition_is_a_node_with_one_text_property():
+    """`source_text` is the only property carrying a node's own source.
+
+    A separate `condition` string would be a second spelling of it, and two
+    names for one thing is how a vocabulary drifts.
+    """
     step = next(item for item in _cfg("while i < cycles:\n    a()\n")["steps"] if item["condition"])
-    assert step["condition_reads"] == ["i", "cycles"]
-    assert step["condition"] == "i < cycles", "kept, but for rendering"
+    condition = step["condition"]
+    assert condition["source_text"] == "i < cycles", "kept, but for rendering"
+    assert condition["reads"] == ["i", "cycles"], "the queryable half"
+    assert condition["parser_type_name"] == "Compare"
 
 
 def test_the_back_edge_survives_the_projection():
     rows = _graph_of(TIER2).query("""
         PREFIX awl: <https://w3id.org/awl/schema/>
-        SELECT ?condition WHERE { ?step awl:repeat ?loop . ?loop awl:condition ?condition }
+        SELECT ?text WHERE { ?step awl:repeat ?loop . ?loop awl:condition [ awl:sourceText ?text ] }
     """)
     assert [str(row[0]) for row in rows] == ["i < cycles"]
 
@@ -176,7 +183,7 @@ def test_a_step_outside_the_loop_is_not_reachable_through_it():
     rows = _graph_of("setup()\nwhile cond:\n    a()\n").query("""
         PREFIX awl: <https://w3id.org/awl/schema/>
         SELECT ?callee WHERE {
-          ?loop awl:condition "cond" ; awl:whenTrue/awl:next* ?step .
+          ?loop awl:condition/awl:reads "cond" ; awl:whenTrue/awl:next* ?step .
           ?step awl:callee ?callee .
         }
     """)

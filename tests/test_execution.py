@@ -49,11 +49,11 @@ def run(tmp_path_factory):
     events = trace(lambda: module.procedure(3))
     plan = analyze(SOURCE, module="procedure", file=str(path))
     joined = join(plan, events)
-    return {
-        (entry["callee"] or entry["condition"]): entry
-        for entry in joined["executions"]
-        if entry["callee"] or entry["condition"]
-    }
+
+    def label(entry):
+        return entry["callee"] or (entry["condition"] or {}).get("source_text")
+
+    return {label(entry): entry for entry in joined["executions"] if label(entry)}
 
 
 def test_a_step_inside_a_guard_only_ran_on_the_iterations_that_passed_it(run):
