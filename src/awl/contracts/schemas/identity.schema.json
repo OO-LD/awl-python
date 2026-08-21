@@ -53,6 +53,13 @@
         "null"
       ],
       "description": "The resolved-to-root target, so queries choose their indirection level."
+    },
+    "declaredTypes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "IRIs or CURIEs a class declares for its instances, from x-oold-instance-rdf-type or the inline type field default. A list, because it co-types. Carried alongside iri and never instead of it: a declared type is usually a CURIE against a prefix this package does not control, so using it as the identity mints predicates that join with nothing."
     }
   },
   "required": [
