@@ -83,13 +83,14 @@ def _tabs(entries):
 
 
 def _turtle(source: str, module: str, path: Path) -> str:
-    """Return the graph this file projects to, as Turtle.
+    """Return the collapsed document's graph, as Turtle.
 
-    The whole chain, not the document alone: the syntax, the control-flow
-    plan, the def-use edges and the resolved member writes land in one graph,
-    which is what a query is actually run against.
+    The document layer alone, so this tab is the tab beside it in another
+    notation. Composing the control-flow plan, the def-use edges and the
+    resolved member writes in as well is what a query is run against, but on
+    this page it buries the thing the reader came to compare.
     """
-    graph = pipeline.to_graph(source, module=module, file=path.name, index=_siblings(path))
+    graph = pipeline.to_graph(source, module=module, file=path.name, index=_siblings(path), layers=("document",))
     graph.bind("awl", "https://w3id.org/awl/schema/")
     graph.bind("py", "https://w3id.org/awl/py/")
     return graph.serialize(format="turtle").strip()

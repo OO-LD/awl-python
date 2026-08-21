@@ -272,6 +272,36 @@ def test_the_gradient_shows_in_the_collapsed_node():
     assert at(linked) == ["ChargeParam", "ex:ChargeParam"]
 
 
+def test_the_layers_partition_the_graph():
+    """Asking for each in turn accounts for the whole of it.
+
+    A layer that overlapped another would double-count here, and one that was
+    silently dropped would leave a remainder.
+    """
+    source, index = _tier("tier3_oold")
+    whole = len(pipeline.to_graph(source, module="tier3_oold.procedure", index=index))
+    parts = sum(
+        len(pipeline.to_graph(source, module="tier3_oold.procedure", index=index, layers=(layer,)))
+        for layer in pipeline.LAYERS
+    )
+    assert parts == whole
+
+
+def test_the_document_layer_carries_the_tree_and_nothing_derived():
+    """What the RDF beside a document should show: the same thing, projected."""
+    source, index = _tier("tier3_oold")
+    graph = pipeline.to_graph(source, module="tier3_oold.procedure", index=index, layers=("document",))
+    types = {str(object_) for _, predicate, object_ in graph if predicate.endswith("ns#type")}
+    assert any(name.endswith("ChargeParam") for name in types), "the collapsed constructor is there"
+    assert not [name for name in types if name.endswith(("Step", "Definition"))], "nothing derived"
+
+
+def test_an_unknown_layer_is_refused():
+    """Rather than silently returning fewer triples than were asked for."""
+    with pytest.raises(ValueError, match="unknown layers"):
+        pipeline.to_graph("x = 1", module="m", layers=("provenance",))
+
+
 def test_a_relative_import_is_resolved_against_the_importing_module():
     """`from .params import X` inside battery.procedure names battery.params."""
     assert pipeline.resolve_module("battery.procedure", ".params") == "battery.params"

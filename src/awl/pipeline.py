@@ -21,7 +21,13 @@ from awl import collapse, compact, context, controlflow, dataflow, elide, execut
 from awl.astdoc import to_doc
 from awl.resolve import resolve, resolve_writes
 
-__all__ = ["analyze", "resolve_module", "to_ast_doc", "to_compact", "to_graph"]
+__all__ = ["LAYERS", "analyze", "resolve_module", "to_ast_doc", "to_compact", "to_graph"]
+
+#: What :func:`to_graph` composes, in the order it composes them. Separate
+#: because they answer different questions: the document is the tree as
+#: written, and each of the others is derived from it. A reader comparing the
+#: RDF against the document wants the first alone; a query wants all four.
+LAYERS = ("document", "plan", "writes", "definitions")
 
 
 def analyze(source: str, *, module: str = "", file: str = "<source>") -> dict[str, Any]:
@@ -189,6 +195,7 @@ def to_graph(
     profile: str = "ast",
     file: str = "<source>",
     index: dict[str, str] | None = None,
+    layers: tuple[str, ...] = LAYERS,
 ):
     """Run the chain and return the RDF graph.
 
@@ -199,14 +206,22 @@ def to_graph(
         provenance. The reduced profiles are paused: they elide by
         construction, and until each is defined by the class of question it
         must answer, choosing one only makes the graph smaller and no better.
+    layers : tuple of str, optional
+        Which of :data:`LAYERS` to project. All of them by default, which is
+        what a query is run against. Asking for ``("document",)`` alone gives
+        the collapsed tree and nothing derived from it, which is what a reader
+        comparing the RDF against the document needs to see.
 
     Returns
     -------
     rdflib.Graph
-        The document, its control-flow plan, its def-use edges and its typed
-        member writes, in one graph.
+        The requested layers, in one graph.
     """
     from rdflib import Graph
+
+    unknown = set(layers) - set(LAYERS)
+    if unknown:
+        raise ValueError(f"unknown layers {sorted(unknown)}; expected some of {list(LAYERS)}")
 
     observed = facts.extract(source, module=module, file=file)
     # The same resolution the collapse used. Building the context from this
@@ -216,19 +231,40 @@ def to_graph(
     types, _ = _collapsible(observed, module, index or {})
     document = context.build_context(list(types.values()))
 
-    flow = dataflow.analyze(source, module=module, file=file)
-    plan = controlflow.analyze(source, module=module, file=file)
-    _attach_condition_reads(plan, flow)
-
     graph = Graph()
-    for part in (
-        to_ast_doc(source, module=module, profile=profile, file=file, index=index),
-        controlflow.as_document(plan),
-        {"@graph": _write_nodes(resolve_writes(observed))},
-        {"@graph": _flow_nodes(flow)},
-    ):
+    for part in _layers(source, observed, layers, module=module, profile=profile, file=file, index=index):
         graph += rdf.to_graph(part, context=document)
     return graph
+
+
+def _layers(
+    source: str,
+    observed: dict[str, Any],
+    layers: tuple[str, ...],
+    *,
+    module: str,
+    profile: str,
+    file: str,
+    index: dict[str, str] | None,
+):
+    """Yield the requested layers as documents, building only what is asked for."""
+    if "document" in layers:
+        yield to_ast_doc(source, module=module, profile=profile, file=file, index=index)
+
+    flow = None
+    if {"plan", "definitions"} & set(layers):
+        flow = dataflow.analyze(source, module=module, file=file)
+
+    if "plan" in layers:
+        plan = controlflow.analyze(source, module=module, file=file)
+        _attach_condition_reads(plan, flow or {})
+        yield controlflow.as_document(plan)
+
+    if "writes" in layers:
+        yield {"@graph": _write_nodes(resolve_writes(observed))}
+
+    if "definitions" in layers and flow is not None:
+        yield {"@graph": _flow_nodes(flow)}
 
 
 def _attach_condition_reads(plan: dict[str, Any], flow: dict[str, Any]) -> None:
