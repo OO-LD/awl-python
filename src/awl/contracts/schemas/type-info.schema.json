@@ -44,6 +44,13 @@
             ],
             "description": "Target type for a link; null for a literal field."
           },
+          "annotation": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The annotation as written, e.g. float. Observation, not inference. M7 derives the xsd:double coercion from it, without which an integer-valued float field round-trips through JSON-LD as xsd:integer. Named annotation and not pythonType because declarations already uses that name for the same thing, and because a language-specific key would contradict the neutral vocabulary."
+          },
           "declarationForm": {
             "enum": [
               "Link[T]",
