@@ -164,9 +164,12 @@ def test_a_list_of_links_is_many():
 
 
 def test_the_type_field_default_is_recorded():
+    """As written. The reference schemas write a bare term and let the class's
+    own context say what it resolves to, so reading it is awl.context's job.
+    """
     facts = _facts(TIER3, "tier3_oold.params")
     charge = next(t for t in facts["types"] if t["identity"]["symbol"] == "ChargeParam")
-    assert charge["declared_types"] == ["ex:ChargeParam"]
+    assert charge["declared_types"] == ["ChargeParam"]
 
 
 def test_a_list_valued_type_default_is_kept_whole():
@@ -178,6 +181,72 @@ def test_a_list_valued_type_default_is_kept_whole():
         module="m",
     )
     assert facts["types"][0]["declared_types"] == ["Diameter", "qudt:Quantity"]
+
+
+def test_a_class_context_is_read_from_json_schema_extra():
+    """The class is the authority on what its own fields mean.
+
+    Read in the form the reference schemas use: a plain object holding a
+    prefix, the class term and the terms it declares.
+    """
+    facts = _facts(TIER3, "tier3_oold.params")
+    charge = next(t for t in facts["types"] if t["identity"]["symbol"] == "ChargeParam")
+    declared = charge["declared_context"]
+    assert declared["ex"] == "https://example.org/battery#"
+    assert declared["ChargeParam"] == "ex:ChargeParam"
+    assert declared["target_voltage"] == {"@id": "ex:targetVoltage", "@type": "xsd:double"}
+
+
+def test_a_class_that_declares_no_context_says_so_by_omission():
+    """Absent, not empty: nothing declared is not the same as declaring nothing."""
+    facts = _facts(TIER3, "tier3_oold.params")
+    device = next(t for t in facts["types"] if t["identity"]["symbol"] == "Device")
+    assert "declared_context" not in device
+
+
+def test_the_pydantic_v1_config_form_is_read_too():
+    """Both forms are in the corpus.
+
+    The generated OpenSemanticLab packages are pydantic v1, so they write a
+    nested Config with schema_extra rather than model_config.
+    """
+    facts = extract(
+        "from oold.experimental.notation import LinkedBaseModel\n"
+        "class D(LinkedBaseModel):\n"
+        "    class Config:\n"
+        "        schema_extra = {'@context': {'qudt': 'http://qudt.org/schema/qudt/'}}\n",
+        module="m",
+    )
+    assert facts["types"][0]["declared_context"] == {"qudt": "http://qudt.org/schema/qudt/"}
+
+
+def test_a_context_that_is_not_a_literal_is_not_guessed():
+    """An expression cannot be read statically, and inventing one would be worse."""
+    facts = extract(
+        "from oold.experimental.notation import LinkedBaseModel\n"
+        "class D(LinkedBaseModel):\n"
+        "    model_config = ConfigDict(json_schema_extra={'@context': build()})\n",
+        module="m",
+    )
+    assert "declared_context" not in facts["types"][0]
+
+
+def test_a_non_literal_neighbour_does_not_cost_the_context():
+    """Only the @context entry is evaluated, not the whole schema_extra.
+
+    The generated packages routinely put computed values beside it, and a
+    class whose title is an expression must not lose its semantics.
+    """
+    facts = extract(
+        "from oold.experimental.notation import LinkedBaseModel\n"
+        "class D(LinkedBaseModel):\n"
+        "    model_config = ConfigDict(json_schema_extra={\n"
+        "        'title': compute_title(),\n"
+        "        '@context': {'qudt': 'http://qudt.org/schema/qudt/'},\n"
+        "    })\n",
+        module="m",
+    )
+    assert facts["types"][0]["declared_context"] == {"qudt": "http://qudt.org/schema/qudt/"}
 
 
 def test_the_id_and_type_fields_are_not_data_fields():

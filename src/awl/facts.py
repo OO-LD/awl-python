@@ -32,6 +32,15 @@ _IDENTITY_FIELDS = frozenset({"id", "type"})
 _LINK_MARKER = "Link"
 _LINKED_FIELD = "LinkedField"
 
+#: Where a class states its own JSON-LD context. Pydantic v2 writes
+#: ``model_config = ConfigDict(json_schema_extra=...)``; v1 writes a nested
+#: ``class Config`` with ``schema_extra``. Both are in the corpus, so both are
+#: read: the generated OpenSemanticLab packages use the v1 form.
+_MODEL_CONFIG = "model_config"
+_CONFIG_CLASS = "Config"
+_SCHEMA_EXTRA = frozenset({"json_schema_extra", "schema_extra"})
+_CONTEXT_KEY = "@context"
+
 #: Annotation wrappers that add nullability but not multiplicity.
 _OPTIONAL = frozenset({"Optional", "typing.Optional"})
 
@@ -222,6 +231,10 @@ def _declared_types(default: ast.AST | None) -> list[str]:
     ``x-oold-instance-rdf-type`` on the schema takes precedence, but it lives
     in a schema file rather than in the Python source, so this module can only
     see the inline default. Stated rather than papered over.
+
+    Reading it, along with ``x-oold-version`` and remote ``@context``
+    references, is schema-side work that oold-python will do; this package
+    will consume it rather than growing a second reader of the same files.
     """
     if isinstance(default, ast.Constant) and isinstance(default.value, str):
         return [default.value]
@@ -232,6 +245,75 @@ def _declared_types(default: ast.AST | None) -> list[str]:
             if isinstance(element, ast.Constant) and isinstance(element.value, str)
         ]
     return []
+
+
+def _dict_value(node: ast.AST | None, key: str) -> ast.AST | None:
+    """Return the value a dict literal maps *key* to, or None."""
+    if not isinstance(node, ast.Dict):
+        return None
+    for written, value in zip(node.keys, node.values, strict=True):
+        if isinstance(written, ast.Constant) and written.value == key:
+            return value
+    return None
+
+
+def _assigns(statement: ast.AST, names: frozenset[str] | set[str]) -> ast.AST | None:
+    """Return the value assigned to one of *names*, or None."""
+    if not isinstance(statement, ast.Assign):
+        return None
+    if any(isinstance(target, ast.Name) and target.id in names for target in statement.targets):
+        return statement.value
+    return None
+
+
+def _from_model_config(value: ast.AST) -> ast.AST | None:
+    """Return the extras out of a ``model_config``, however it is written."""
+    if isinstance(value, ast.Call):
+        for keyword in value.keywords:
+            if keyword.arg in _SCHEMA_EXTRA:
+                return keyword.value
+    for name in _SCHEMA_EXTRA:
+        found = _dict_value(value, name)
+        if found is not None:
+            return found
+    return None
+
+
+def _schema_extra(node: ast.ClassDef) -> ast.AST | None:
+    """Return the ``json_schema_extra`` dict a class declares, in either form."""
+    for statement in node.body:
+        if isinstance(statement, ast.ClassDef) and statement.name == _CONFIG_CLASS:
+            for inner in statement.body:
+                found = _assigns(inner, _SCHEMA_EXTRA)
+                if found is not None:
+                    return found
+            continue
+        config = _assigns(statement, {_MODEL_CONFIG})
+        if config is not None:
+            found = _from_model_config(config)
+            if found is not None:
+                return found
+    return None
+
+
+def _declared_context(node: ast.ClassDef) -> Any | None:
+    """Return the JSON-LD context a class declares for itself, or None.
+
+    The class is the authority on what its own fields mean. Reading the
+    declaration is what lets awl.context use it instead of inventing a second
+    mapping beside it from the annotations.
+
+    Only the ``@context`` entry is evaluated, not the whole ``schema_extra``:
+    the surrounding dict routinely holds non-literal values, and a class whose
+    title happens to be a computed expression must not lose its context.
+    """
+    declared = _dict_value(_schema_extra(node), _CONTEXT_KEY)
+    if declared is None:
+        return None
+    try:
+        return ast.literal_eval(declared)
+    except (ValueError, SyntaxError, TypeError):
+        return None
 
 
 def _class_fields(node: ast.ClassDef) -> tuple[list[dict[str, Any]], list[str]]:
@@ -405,12 +487,16 @@ class _Walk(ast.NodeVisitor):
         })
         self._export(node.name)
         if LINKED_BASE in bases:
-            self.types.append({
+            info: dict[str, Any] = {
                 "identity": identity,
                 "declared_types": declared,
                 "fields": fields,
                 "span": _span(node, self.file),
-            })
+            }
+            declared_context = _declared_context(node)
+            if declared_context is not None:
+                info["declared_context"] = declared_context
+            self.types.append(info)
         self._descend(node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:

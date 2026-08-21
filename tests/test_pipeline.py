@@ -292,8 +292,40 @@ def test_the_collapsed_fields_reach_rdf_as_properties_of_the_type():
     source, index = _tier("tier3_oold")
     graph = pipeline.to_graph(source, module="tier3_oold.procedure", index=index)
     rows = graph.query("""
-        PREFIX awl: <https://w3id.org/awl/schema/>
         SELECT ?voltage WHERE { ?p a <https://w3id.org/awl/py/tier3_oold.params/ChargeParam> ;
-                                   awl:target_voltage ?voltage }
+                                   <https://example.org/battery#targetVoltage> ?voltage }
     """)
-    assert [float(row[0]) for row in rows] == [4.2]
+    assert [float(row[0]) for row in rows] == [4.2], "the term the class declared for itself"
+
+
+def test_a_field_the_class_says_nothing_about_lands_in_the_class_namespace():
+    """The other half: no declaration, so the property comes from @vocab.
+
+    Not a flat awl:c_rate, which would make one property of every c_rate in
+    every class in the document.
+    """
+    source, index = _tier("tier3_oold")
+    graph = pipeline.to_graph(source, module="tier3_oold.procedure", index=index)
+    rows = graph.query("""
+        SELECT ?rate WHERE {
+          ?p a <https://w3id.org/awl/py/tier3_oold.params/ChargeParam> ;
+             <https://w3id.org/awl/py/tier3_oold.params/ChargeParam#c_rate> ?rate }
+    """)
+    assert [float(row[0]) for row in rows] == [0.23]
+
+
+def test_the_class_is_co_typed_with_the_iri_it_declared():
+    """Two identities, both true: the Python class and the ontology class.
+
+    The minted one is what every other producer joins on, so it cannot be
+    replaced by the declaration; the declared one is what the class says it
+    means, so it cannot be dropped.
+    """
+    source, index = _tier("tier3_oold")
+    graph = pipeline.to_graph(source, module="tier3_oold.procedure", index=index)
+    rows = graph.query("""
+        SELECT ?declared WHERE {
+          ?p a <https://w3id.org/awl/py/tier3_oold.params/ChargeParam> ; a ?declared .
+          FILTER(?declared != <https://w3id.org/awl/py/tier3_oold.params/ChargeParam>) }
+    """)
+    assert [str(row[0]) for row in rows] == ["https://example.org/battery#ChargeParam"]

@@ -5,7 +5,7 @@
     "awl": "https://w3id.org/awl/schema/",
     "@vocab": "https://w3id.org/awl/schema/"
   },
-  "x-oold-version": "0.1.0",
+  "x-oold-version": "0.2.0",
   "title": "TypeInfo",
   "description": "What awl.facts reads statically from a LinkedBaseModel subclass. Both link declaration forms are first class; neither is canonical.",
   "type": "object",
@@ -18,7 +18,14 @@
       "items": {
         "type": "string"
       },
-      "description": "Instance rdf:types. From x-oold-instance-rdf-type when present, else the type field default. Under allOf the nearest declaration replaces rather than appends."
+      "description": "Instance rdf:types, as written. From x-oold-instance-rdf-type when present, else the type field default. Under allOf the nearest declaration replaces rather than appends. The reference schemas write a bare term and let declared_context say what it resolves to, so this is an observation and awl.context reads it."
+    },
+    "declared_context": {
+      "type": [
+        "object",
+        "array"
+      ],
+      "description": "The JSON-LD context the class declares for itself, in json_schema_extra. Present only when the class declares one. awl.context pulls it rather than deriving a second mapping from the annotations beside it, since the class is the authority on what its own fields mean. The array form is a context list, whose string entries are remote references and are not dereferenced."
     },
     "span": {
       "$ref": "https://w3id.org/awl/contracts/source-span.schema.json"

@@ -86,7 +86,7 @@ def test_the_property_namespace_is_the_resolvable_iri():
     """
     out = collapse(_folded(), types=TYPES, resolved=RESOLVED)
     node = _find(out, lambda item: "@context" in item)
-    assert node["@context"]["@vocab"].startswith("https://w3id.org/awl/")
+    assert node["@context"]["ChargeParam"]["@context"]["@vocab"].startswith("https://w3id.org/awl/")
     assert node["@type"] == ["ChargeParam", "ex:ChargeParam"], "class name first, then co-types"
 
 

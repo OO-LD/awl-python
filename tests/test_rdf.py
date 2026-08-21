@@ -137,7 +137,7 @@ def test_a_float_survives_the_projection_as_a_double():
 
     types = [
         {
-            "identity": {"iri": "ex:C", "scheme": "py"},
+            "identity": {"iri": "https://ex.org/C", "symbol": "C", "scheme": "py"},
             "fields": [
                 {
                     "name": "target_voltage",
@@ -149,7 +149,7 @@ def test_a_float_survives_the_projection_as_a_double():
             ],
         }
     ]
-    graph = to_graph({"_type": "Call", "target_voltage": 4}, context=build_context(types))
+    graph = to_graph({"_type": "C", "target_voltage": 4}, context=build_context(types))
     datatypes = {str(getattr(o, "datatype", "")) for _, _, o in graph}
     assert any("double" in datatype for datatype in datatypes), datatypes
 

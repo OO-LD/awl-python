@@ -122,11 +122,18 @@ def _typed_node(
     # The class name leads, as a bare term. A term resolves through the
     # context, so it is both the name to regenerate and, once mapped, the IRI;
     # the declared CURIEs follow it as co-types.
-    node: dict[str, Any] = {"@type": [callee, *(info.get("declared_types") or [])]}
+    # The same terms the document context would scope under this class, from
+    # the same producer. Two spellings of one property is the failure this
+    # guards: a node built here said ChargeParam#target_voltage while the
+    # document said awl:target_voltage, and nothing joined them.
+    from awl.context import declared_prefixes, declared_type_iris, type_terms
+
+    co_types = [name for name in declared_type_iris(info) if name != callee]
+    node: dict[str, Any] = {"@type": [callee, *co_types]}
     if embed_context:
         node["@context"] = {
-            "@vocab": info["identity"]["iri"] + "#",
-            callee: info["identity"]["iri"],
+            **declared_prefixes(info),
+            callee: {"@id": info["identity"]["iri"], "@context": type_terms(info)},
         }
     if keep_spans:
         node["span"] = [

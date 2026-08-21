@@ -3,8 +3,10 @@
   "$id": "https://w3id.org/awl/contracts/ast-doc.schema.json",
   "@context": {
     "awl": "https://w3id.org/awl/schema/",
+    "py": "https://w3id.org/awl/py/",
     "xsd": "http://www.w3.org/2001/XMLSchema#",
     "@vocab": "https://w3id.org/awl/schema/",
+    "@base": "https://w3id.org/awl/py/",
     "type": "@type",
     "_type": "@type",
     "literal": {
@@ -151,8 +153,7 @@
       "@type": "@id"
     },
     "id": {
-      "@id": "awl:id",
-      "@type": "@id"
+      "@id": "awl:id"
     },
     "next": {
       "@id": "awl:next",
@@ -213,7 +214,7 @@
       }
     }
   },
-  "x-oold-version": "0.2.0",
+  "x-oold-version": "0.3.0",
   "title": "AstDoc",
   "description": "The AST as a document. Deliberately permissive: node types are not enumerated, because pinning them would version AWL-LD against the CPython grammar and defeat the language-agnostic objective.",
   "type": "object",
