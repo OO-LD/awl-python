@@ -62,9 +62,13 @@ def test_operators_are_calls_with_reserved_names():
     assert operator_name_for("Call") is None
 
 
-def test_the_ast_profile_elides_nothing_structural():
-    """Guards the regression that turned named arguments into positional ones."""
-    assert TRANSPARENT["ast"] == frozenset()
+def test_the_faithful_profile_elides_only_what_it_can_restore():
+    """Guards the regression that turned named arguments into positional ones.
+
+    An Expr wrapper is derivable, so dropping it is reversible. An expression
+    reduced to its source text is not, so the faithful profile keeps those.
+    """
+    assert TRANSPARENT["ast"] == frozenset({"Expr"})
     assert OPAQUE["ast"] == frozenset()
 
 

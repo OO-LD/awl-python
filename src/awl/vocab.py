@@ -19,6 +19,7 @@ __all__ = [
     "TRANSPARENT",
     "node_type_for",
     "operator_name_for",
+    "statement_types",
 ]
 
 NODE_TYPES = frozenset({
@@ -140,13 +141,36 @@ ORDERED_FIELDS = ("body", "orelse", "finalbody")
 
 _WRAPPERS = frozenset({"Expr", "arguments", "alias"})
 
-#: Types unwrapped into their parent, per profile.
+
+def statement_types() -> frozenset[str]:
+    """Return the names of every statement node type.
+
+    Used to decide whether an item in a body needs an ``Expr`` wrapper put
+    back. Derived from the ``ast`` module rather than listed, so a new
+    statement type in a future Python needs no edit here.
+    """
+    import ast as _ast
+
+    return frozenset(
+        name
+        for name in dir(_ast)
+        if isinstance(getattr(_ast, name), type) and issubclass(getattr(_ast, name), _ast.stmt)
+    )
+
+
+#: Statement-position wrappers that are reversible, so every profile drops
+#: them. An ``Expr`` exists only because Python needs a statement to hold an
+#: expression; which items in a body need one is derivable, so re-wrapping on
+#: the way out loses nothing.
 #:
-#: ``ast`` elides nothing structural. An earlier design made ``Expr`` and
-#: ``keyword`` transparent everywhere, which turned named arguments into
-#: positional ones and flattened statements onto one line.
+#: ``keyword`` is deliberately absent: splicing a keyword out discards its
+#: name, which is a semantic change and not a wrapper removal. It folds
+#: instead.
+_REVERSIBLE_WRAPPERS = frozenset({"Expr"})
+
+#: Types unwrapped into their parent, per profile.
 TRANSPARENT = MappingProxyType({
-    "ast": frozenset(),
+    "ast": _REVERSIBLE_WRAPPERS,
     "workflow": _WRAPPERS,
     "provenance": _WRAPPERS,
     "signature": _WRAPPERS,

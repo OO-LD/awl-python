@@ -1,14 +1,34 @@
 """Compact AST codec: the editor model for AWL-LD workflows.
 
-Both ends speak ``AstDoc``, so this composes with the elision stage. An earlier
-draft dispatched on live ``ast.AST`` objects while its contract claimed
-``AstDoc``, which meant the two stages could not chain at all.
+Both ends speak ``AstDoc``, so this composes with the elision stage.
+
+Three node forms, named rather than punctuated:
+
+=========================  ==========================================
+``{"type": "While", ...}``  a typed node, the same key a collapsed
+                             constructor uses
+``{"literal": 4.2}``         a constant
+``{"var": "i"}``             a name reference
+=========================  ==========================================
+
+An earlier revision used ``_``, ``c`` and ``$``, chosen to save bytes before
+the document was JSON-LD. They saved about four percent and cost a reader
+having to learn a private punctuation scheme sitting next to ``type``, in a
+document meant to be edited by hand. ``type`` in particular now means one
+thing everywhere: an ``ast`` node type and a collapsed class name are both
+"what this is".
+
+``@value`` was the obvious JSON-LD choice for a literal and is unusable here:
+a value object may carry only ``@value``, ``type``, ``@language``, ``@index``
+and ``@direction``, so a literal could not also carry ``argumentIndex``.
 """
 
 from __future__ import annotations
 
 import ast
 from typing import Any
+
+from awl.vocab import ORDERED_FIELDS
 
 __all__ = ["decode", "encode"]
 
@@ -56,7 +76,7 @@ _DROP = frozenset({
 # The orderings materialized by the elision stage, plus the optional span, ride
 # alongside a shorthand node rather than forcing it back to the long form.
 _CARRY = ("order", "argumentIndex", "argumentName")
-_SHORTHAND_EXTRA = frozenset({"@", *_CARRY})
+_SHORTHAND_EXTRA = frozenset({"span", *_CARRY})
 
 
 def _span(doc: dict[str, Any]) -> list[Any]:
@@ -78,25 +98,31 @@ def _shorthand(doc: dict[str, Any]) -> dict[str, Any] | None:
     node_type = doc.get("_type")
     plain = set(doc) - _DROP - {"_type", *_CARRY}
     if node_type == "Constant" and plain <= {"value"}:
-        return {"c": doc.get("value")}
+        return {"literal": doc.get("value")}
     if node_type == "Name" and plain <= {"id"}:
-        return {"$": doc.get("id")}
+        return {"var": doc.get("id")}
     return None
 
 
 def _encode_long(doc: dict[str, Any], *, keep_spans: bool) -> dict[str, Any]:
     """Encode a node that does not qualify for a shorthand."""
     node_type = doc.get("_type")
-    node: dict[str, Any] = {"_": node_type} if node_type else {}
+    node: dict[str, Any] = {"type": node_type} if node_type else {}
     for key, value in doc.items():
         if key in _DROP or key == "_type":
+            continue
+        if key == "keywordArguments" and isinstance(value, dict):
+            # The keys here are the author's parameter names, not node fields,
+            # so the drop list must not touch them. `optimize.shgo(n=256)`
+            # lost its argument because `n` is a legacy AST field name.
+            node[key] = {name: encode(item, keep_spans=keep_spans) for name, item in value.items()}
             continue
         encoded = encode(value, keep_spans=keep_spans)
         if encoded is None or (isinstance(encoded, list) and not encoded):
             continue
         node[key] = encoded
     if keep_spans and "lineno" in doc:
-        node["@"] = _span(doc)
+        node["span"] = _span(doc)
     return node
 
 
@@ -108,7 +134,7 @@ def encode(doc: Any, *, keep_spans: bool = False) -> Any:
     doc : dict or list
         An ``AstDoc``, from ``ast2json`` or from the elision stage.
     keep_spans : bool, optional
-        Keep a compact ``"@"`` span array. The editor addresses edits by span
+        Keep a ``span`` array. The editor addresses edits by span
         and the trace overlay attributes events by span, so without it there is
         no join key between the editor, the trace and the source. Costs about
         two percentage points of size, so the RDF projection leaves it off.
@@ -120,8 +146,8 @@ def encode(doc: Any, *, keep_spans: bool = False) -> Any:
 
     Notes
     -----
-    Rules: ``_type`` becomes ``_``; a bare ``Constant`` becomes ``{"c": value}``;
-    a bare ``Name`` becomes ``{"$": id}``; ``ctx``, positions, nulls and empty
+    Rules: ``_type`` becomes ``type``; a bare ``Constant`` becomes
+    ``{"literal": value}``; a bare ``Name`` becomes ``{"var": id}``; ``ctx``, positions, nulls and empty
     lists are dropped. Orderings are carried through unchanged.
     """
     if isinstance(doc, list):
@@ -134,11 +160,33 @@ def encode(doc: Any, *, keep_spans: bool = False) -> Any:
         return _encode_long(doc, keep_spans=keep_spans)
 
     if keep_spans and "lineno" in doc:
-        node["@"] = _span(doc)
+        node["span"] = _span(doc)
     for field in _CARRY:
         if field in doc:
             node[field] = doc[field]
     return node
+
+
+def _rewrap(items: Any) -> Any:
+    """Put back the ``Expr`` wrappers elision dropped.
+
+    Which items in a body need one is derivable — anything that is not itself
+    a statement — so the wrapper costs nothing to drop and nothing to restore.
+    """
+    if not isinstance(items, list):
+        return items
+    return [ast.Expr(value=item) if isinstance(item, ast.expr) else item for item in items]
+
+
+def _is_ast_node(node: dict[str, Any]) -> bool:
+    """Return whether ``type`` names a syntax node rather than a class.
+
+    Both forms use ``type``, which is the point: one key means "what this
+    is". They are told apart by whether the name belongs to the ``ast``
+    module, so a collapsed ``ChargeParam`` and a ``While`` never collide.
+    """
+    declared = node.get("type")
+    return isinstance(declared, str) and isinstance(getattr(ast, declared, None), type)
 
 
 def _decode_collapsed(node: dict[str, Any]) -> ast.Call:
@@ -194,18 +242,22 @@ def decode(node: Any) -> Any:
     if not isinstance(node, dict):
         return node
 
-    if "@type" in node and "_" not in node:
+    if "type" in node and not _is_ast_node(node):
         return _decode_collapsed(node)
-    if "c" in node and set(node) <= {"c", *_SHORTHAND_EXTRA}:
-        return ast.Constant(value=node["c"])
-    if "$" in node and set(node) <= {"$", *_SHORTHAND_EXTRA}:
-        return ast.Name(id=node["$"], ctx=ast.Load())
+    if "literal" in node and set(node) <= {"literal", *_SHORTHAND_EXTRA}:
+        return ast.Constant(value=node["literal"])
+    if "var" in node and set(node) <= {"var", *_SHORTHAND_EXTRA}:
+        return ast.Name(id=node["var"], ctx=ast.Load())
 
-    cls = getattr(ast, node["_"])
+    from awl.elide import unfold_node
+
+    node = unfold_node(node, type_key="type")
+    cls = getattr(ast, node["type"])
     kwargs: dict[str, Any] = {}
     for field in cls._fields:
         if field in node:
-            kwargs[field] = decode(node[field])
+            decoded = decode(node[field])
+            kwargs[field] = _rewrap(decoded) if field in ORDERED_FIELDS else decoded
         elif field == "ctx":
             kwargs[field] = ast.Load()
         else:

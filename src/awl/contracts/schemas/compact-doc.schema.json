@@ -5,21 +5,23 @@
     "awl": "https://w3id.org/awl/schema/",
     "@vocab": "https://w3id.org/awl/schema/"
   },
-  "x-oold-version": "0.1.0",
+  "x-oold-version": "0.2.0",
   "title": "CompactDoc",
-  "description": "The compact AST encoding used as the editor model. Three node forms: a typed node, a literal, and a name. Required fields are reconstructed by the decoder, so this form does not carry them. All three forms may additionally carry the orderings materialized during elision and an optional span.",
+  "description": "The compact encoding used as the editor model. Three node forms: a typed node, a literal, and a name reference. Keys are words rather than punctuation, because this document is read and edited by hand and sits beside JSON-LD keywords; size is a matter for transport compression, not for the vocabulary. Required fields are reconstructed by the decoder, so this form does not carry them.",
   "type": "object",
-  "properties": {},
-  "required": [],
   "oneOf": [
     {
       "type": "object",
       "required": [
-        "_"
+        "type"
       ],
       "properties": {
-        "_": {
-          "type": "string"
+        "type": {
+          "type": [
+            "string",
+            "array"
+          ],
+          "description": "A syntax node type such as While, or, for a collapsed constructor, the class name as a bare term followed by any declared co-types. One key, because both answer the same question: what this is."
         },
         "order": {
           "type": "integer",
@@ -32,7 +34,7 @@
         "argumentName": {
           "type": "string"
         },
-        "@": {
+        "span": {
           "type": "array",
           "items": {
             "type": [
@@ -42,17 +44,7 @@
           },
           "minItems": 4,
           "maxItems": 4,
-          "description": "Optional span [lineno, col, end_lineno, end_col]; the join key for the editor and the trace overlay."
-        },
-        "_callee": {
-          "type": "string",
-          "description": "Local name as written; required to expand a collapsed node back to a Call."
-        },
-        "@type": {
-          "type": [
-            "string",
-            "array"
-          ]
+          "description": "Optional [lineno, col, endLineno, endCol]; the join key for the editor, the trace overlay and in-place patching. Needed only to patch the original file, not to regenerate code."
         },
         "@context": {
           "type": [
@@ -62,15 +54,15 @@
           ]
         }
       },
-      "description": "Typed node."
+      "description": "A typed node: a syntax node, or a collapsed constructor carrying its fields directly."
     },
     {
       "type": "object",
       "required": [
-        "c"
+        "literal"
       ],
       "properties": {
-        "c": {},
+        "literal": {},
         "order": {
           "type": "integer",
           "description": "Syntactic sibling slot, materialized during elision."
@@ -82,7 +74,7 @@
         "argumentName": {
           "type": "string"
         },
-        "@": {
+        "span": {
           "type": "array",
           "items": {
             "type": [
@@ -92,19 +84,19 @@
           },
           "minItems": 4,
           "maxItems": 4,
-          "description": "Optional span [lineno, col, end_lineno, end_col]; the join key for the editor and the trace overlay."
+          "description": "Optional [lineno, col, endLineno, endCol]; the join key for the editor, the trace overlay and in-place patching. Needed only to patch the original file, not to regenerate code."
         }
       },
       "additionalProperties": false,
-      "description": "Literal value."
+      "description": "A constant value."
     },
     {
       "type": "object",
       "required": [
-        "$"
+        "var"
       ],
       "properties": {
-        "$": {
+        "var": {
           "type": "string"
         },
         "order": {
@@ -118,7 +110,7 @@
         "argumentName": {
           "type": "string"
         },
-        "@": {
+        "span": {
           "type": "array",
           "items": {
             "type": [
@@ -128,64 +120,11 @@
           },
           "minItems": 4,
           "maxItems": 4,
-          "description": "Optional span [lineno, col, end_lineno, end_col]; the join key for the editor and the trace overlay."
+          "description": "Optional [lineno, col, endLineno, endCol]; the join key for the editor, the trace overlay and in-place patching. Needed only to patch the original file, not to regenerate code."
         }
       },
       "additionalProperties": false,
-      "description": "Name reference."
-    },
-    {
-      "type": "object",
-      "required": [
-        "@type",
-        "_callee"
-      ],
-      "properties": {
-        "_": {
-          "type": "string"
-        },
-        "order": {
-          "type": "integer",
-          "description": "Syntactic sibling slot, materialized during elision."
-        },
-        "argumentIndex": {
-          "type": "integer",
-          "description": "1..N positional; -1 when named."
-        },
-        "argumentName": {
-          "type": "string"
-        },
-        "@": {
-          "type": "array",
-          "items": {
-            "type": [
-              "integer",
-              "null"
-            ]
-          },
-          "minItems": 4,
-          "maxItems": 4,
-          "description": "Optional span [lineno, col, end_lineno, end_col]; the join key for the editor and the trace overlay."
-        },
-        "_callee": {
-          "type": "string",
-          "description": "Local name as written; required to expand a collapsed node back to a Call."
-        },
-        "@type": {
-          "type": [
-            "string",
-            "array"
-          ]
-        },
-        "@context": {
-          "type": [
-            "object",
-            "string",
-            "array"
-          ]
-        }
-      },
-      "description": "Collapsed typed node. _callee and @ make the collapse reversible."
+      "description": "A name reference."
     }
   ]
 }

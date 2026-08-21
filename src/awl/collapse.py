@@ -23,7 +23,7 @@ from awl.elide import unfold_node
 __all__ = ["RESERVED", "callee_of", "collapse", "expand"]
 
 #: Keys of a collapsed node that are structure rather than field data.
-RESERVED = frozenset({"@context", "@type", "@", "_callee", "order"})
+RESERVED = frozenset({"@context", "type", "span", "order"})
 _RESERVED = RESERVED
 
 
@@ -122,14 +122,14 @@ def _typed_node(
     # The class name leads, as a bare term. A term resolves through the
     # context, so it is both the name to regenerate and, once mapped, the IRI;
     # the declared CURIEs follow it as co-types.
-    node: dict[str, Any] = {"@type": [callee, *(info.get("declaredTypes") or [])]}
+    node: dict[str, Any] = {"type": [callee, *(info.get("declaredTypes") or [])]}
     if embed_context:
         node["@context"] = {
             "@vocab": info["identity"]["iri"] + "#",
             callee: info["identity"]["iri"],
         }
     if keep_spans:
-        node["@"] = [
+        node["span"] = [
             call.get("lineno"),
             call.get("col_offset"),
             call.get("end_lineno"),
@@ -175,15 +175,13 @@ def expand(node: Any) -> Any:
     if not isinstance(node, dict):
         return node
     callee = callee_of(node)
-    if "@type" in node and callee is None:
-        raise ValueError(
-            "typed node names no local class, so it cannot be expanded; expected a bare term in @type or a _callee"
-        )
+    if "type" in node and callee is None:
+        raise ValueError("typed node names no local class, so it cannot be expanded; expected a bare term in `type`")
     if callee is None:
         expanded = {key: expand(value) for key, value in node.items()}
         return unfold_node(expanded)
 
-    span = node.get("@") or [1, 0, 1, 0]
+    span = node.get("span") or [1, 0, 1, 0]
     position = {
         "lineno": span[0],
         "col_offset": span[1],
@@ -214,9 +212,7 @@ def callee_of(node: dict[str, Any]) -> str | None:
     IRI; a CURIE or absolute IRI is emitted verbatim and names no local class.
     That distinction is what removes the need for a separate ``_callee``.
     """
-    if "_callee" in node:
-        return node["_callee"]
-    declared = node.get("@type")
+    declared = node.get("type")
     if isinstance(declared, str):
         declared = [declared]
     for candidate in declared or []:

@@ -4,6 +4,7 @@ Imports only the module under test, the contracts package and ast2json.
 """
 
 import ast
+import gzip
 import json
 
 import pytest
@@ -75,34 +76,38 @@ def test_the_orderings_are_carried_through_unchanged():
     encoded = encode(doc)
     step = encoded["body"][0]["value"]
     assert step["order"] == 0
-    assert step["args"][0] == {"c": 1, "argumentIndex": 1}
-    assert step["keywords"][0]["value"] == {"c": 2, "argumentIndex": -1, "argumentName": "x"}
+    assert step["args"][0] == {"literal": 1, "argumentIndex": 1}
+    assert step["keywords"][0]["value"] == {"literal": 2, "argumentIndex": -1, "argumentName": "x"}
 
 
 def test_an_ordering_does_not_force_a_literal_back_to_the_long_form():
     """A shorthand carries its ordering alongside; if it fell back to
-    {"_": "Constant", ...} the compaction target would not be met.
+    {"type": "Constant", ...} the compaction target would not be met.
     """
     doc = ast2json(ast.parse("f(1)"))
     doc["body"][0]["value"]["args"][0]["argumentIndex"] = 1
-    assert "_" not in encode(doc)["body"][0]["value"]["args"][0]
+    assert "type" not in encode(doc)["body"][0]["value"]["args"][0]
 
 
 def test_compact_form_is_about_a_quarter_of_raw():
-    """Measured 24.5% on this file; 5425 bytes raw, 1329 compact."""
+    """Measured on this file: 5425 bytes raw against roughly 1400 compact."""
     raw_doc = ast2json(ast.parse(TIER2.read_text(encoding="utf-8")))
     raw = len(json.dumps(raw_doc))
-    assert len(json.dumps(encode(raw_doc))) / raw < 0.27
+    assert len(json.dumps(encode(raw_doc))) / raw < 0.30
 
 
 @pytest.mark.parametrize("path", contracts.corpus_files(), ids=lambda p: f"{p.parent.name}/{p.name}")
 def test_the_compaction_target_holds_across_the_corpus(path):
-    """Range measured 20.9% to 26.8%; the outlier is the smallest file, where
-    the fixed cost of the node labels is proportionally largest.
+    """The outlier is the smallest file, where the fixed cost of the node
+    labels is proportionally largest.
+
+    The bound is loose on purpose. Keys are words rather than punctuation
+    because the document is read and edited by hand, and the few percent that
+    costs is a transport concern: see the compression test below.
     """
     raw_doc = ast2json(ast.parse(path.read_text(encoding="utf-8")))
     raw = len(json.dumps(raw_doc))
-    assert len(json.dumps(encode(raw_doc))) / raw < 0.28
+    assert len(json.dumps(encode(raw_doc))) / raw < 0.35
 
 
 def test_spans_cost_roughly_fourteen_points_not_two():
@@ -120,15 +125,15 @@ def test_spans_cost_roughly_fourteen_points_not_two():
     without = len(json.dumps(encode(raw_doc))) / raw
     with_spans = len(json.dumps(encode(raw_doc, keep_spans=True))) / raw
     assert 0.10 < with_spans - without < 0.20
-    assert with_spans < 0.40
+    assert with_spans < 0.50
 
 
 def test_spans_are_available_when_requested():
     """Without these there is no join key between editor, trace and source."""
     doc = encode(ast2json(ast.parse("charge(ChargeParam(target_voltage=4.2))\n")), keep_spans=True)
     found = json.dumps(doc)
-    assert '"@"' in found
-    assert '"c": 4.2' in found
+    assert '"span"' in found
+    assert '"literal": 4.2' in found
 
 
 def test_a_span_locates_the_literal_it_belongs_to():
@@ -136,13 +141,13 @@ def test_a_span_locates_the_literal_it_belongs_to():
     source = "charge(ChargeParam(target_voltage=4.2))\n"
     doc = encode(ast2json(ast.parse(source)), keep_spans=True)
     literal = doc["body"][0]["value"]["args"][0]["keywords"][0]["value"]
-    line, col, end_line, end_col = literal["@"]
+    line, col, end_line, end_col = literal["span"]
     assert (line, end_line) == (1, 1)
     assert source[col:end_col] == "4.2"
 
 
 def test_spans_are_absent_by_default():
-    assert '"@"' not in json.dumps(encode(ast2json(ast.parse("x = 1\n"))))
+    assert '"span"' not in json.dumps(encode(ast2json(ast.parse("x = 1\n"))))
 
 
 def test_a_span_does_not_break_the_round_trip():
@@ -166,3 +171,17 @@ def test_every_encoded_node_matches_the_contract(keep_spans):
                 walk(value)
 
     walk(encode(ast2json(ast.parse(source)), keep_spans=keep_spans))
+
+
+def test_size_is_a_transport_concern_not_a_vocabulary_one():
+    """Why readable keys are worth their bytes.
+
+    Word keys repeat, so they compress almost perfectly. Choosing punctuation
+    to save space would trade a permanent cost in readability against a saving
+    that gzip already makes for free.
+    """
+    raw_doc = ast2json(ast.parse(TIER2.read_text(encoding="utf-8")))
+    raw = json.dumps(raw_doc).encode()
+    blob = json.dumps(encode(raw_doc)).encode()
+    assert len(gzip.compress(blob)) < len(gzip.compress(raw)) / 1.5
+    assert len(gzip.compress(blob)) < len(blob) / 2, "word keys compress away"

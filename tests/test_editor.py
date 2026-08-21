@@ -111,14 +111,14 @@ def test_setting_a_literal_returns_both_the_document_and_the_span():
     doc = _compact("charge(ChargeParam(target_voltage=4.2))\n")
     path = ["body", 0, "value", "args", 0, "keywords", 0, "value"]
 
-    assert _at(doc, path) == {"c": 4.2}, "the path is real"
+    assert _at(doc, path) == {"literal": 4.2}, "the path is real"
 
     new_doc, edits = set_literal(doc, path=path, value=4.1, span={"start": 34, "end": 37})
 
-    assert _at(new_doc, path) == {"c": 4.1}
+    assert _at(new_doc, path) == {"literal": 4.1}
     assert edits == [{"start": 34, "end": 37, "text": "4.1"}]
 
-    assert _at(doc, path) == {"c": 4.2}, "the input is not mutated"
+    assert _at(doc, path) == {"literal": 4.2}, "the input is not mutated"
 
 
 def test_the_returned_span_patch_is_what_the_writer_applies():
@@ -163,7 +163,7 @@ def test_deleting_a_step_renumbers_the_rest():
     doc = _compact("charge(4.2)\nrest(600)\n")
     new_doc, edits = delete_step(doc, path=["body", 0])
     assert [step["order"] for step in new_doc["body"]] == [0]
-    assert new_doc["body"][0]["value"]["func"] == {"$": "rest"}
+    assert new_doc["body"][0]["value"]["func"] == {"var": "rest"}
     assert edits[0]["code"] == "charge(4.2)", "the patch names what was removed"
 
 
@@ -173,7 +173,7 @@ def test_reordering_updates_order_not_just_position():
     """
     doc = _compact("charge(4.2)\nrest(600)\n")
     new_doc, _ = reorder(doc, path=["body"], frm=0, to=1)
-    assert [step["value"]["func"]["$"] for step in new_doc["body"]] == ["rest", "charge"]
+    assert [step["value"]["func"]["var"] for step in new_doc["body"]] == ["rest", "charge"]
     assert [step["order"] for step in new_doc["body"]] == [0, 1]
 
 

@@ -89,7 +89,14 @@ def build_context(types: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         # A fallback vocabulary, so an unmapped term still produces a triple
         # instead of being dropped.
         "@vocab": AWL,
+        # Keyword aliases, so the document needs no punctuation keys. The
+        # OO-LD notation spells its own instance type `type`, and matching it
+        # keeps one spelling across the schema, the instance and this graph.
+        "type": "@type",
         "_type": "@type",
+        "literal": {"@id": f"{AWL}literal"},
+        "var": {"@id": f"{AWL}var"},
+        "span": {"@id": f"{AWL}span"},
         "order": {"@id": f"{AWL}order", "@type": "xsd:integer"},
         "argumentIndex": {"@id": f"{AWL}argumentIndex", "@type": "xsd:integer"},
         "iteration": {"@id": f"{AWL}iteration", "@type": "xsd:integer"},

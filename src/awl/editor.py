@@ -163,7 +163,7 @@ def set_literal(
     """
     out = copy.deepcopy(doc)
     target = _descend(out, path[:-1]) if path[:-1] else out
-    target[path[-1]] = {"c": value}
+    target[path[-1]] = {"literal": value}
     return out, [{"start": span["start"], "end": span["end"], "text": repr(value)}]
 
 

@@ -17,9 +17,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from awl.vocab import FOLDS_KEYWORDS, OPAQUE, ORDERED_FIELDS, TRANSPARENT
+from awl.vocab import FOLDS_KEYWORDS, OPAQUE, ORDERED_FIELDS, TRANSPARENT, statement_types
 
-__all__ = ["elide", "unfold", "unfold_node"]
+__all__ = ["elide", "rewrap_statements", "unfold", "unfold_node"]
 
 
 def elide(doc: Any, *, profile: str = "ast", source: str = "") -> Any:
@@ -152,13 +152,17 @@ _POSITION = ("lineno", "col_offset", "end_lineno", "end_col_offset")
 _ORDERING = ("argumentName", "argumentIndex")
 
 
-def unfold_node(node: dict[str, Any]) -> dict[str, Any]:
+def unfold_node(node: dict[str, Any], *, type_key: str = "_type") -> dict[str, Any]:
     """Reverse keyword folding for one node.
 
     Parameters
     ----------
     node : dict
         A node that may carry ``keywordArguments``.
+    type_key : str, optional
+        The key naming a node type. The compact form spells it ``type`` and
+        the intermediate form ``_type``; parameterising it keeps one
+        implementation of how folding reverses, rather than two that drift.
 
     Returns
     -------
@@ -179,7 +183,7 @@ def unfold_node(node: dict[str, Any]) -> dict[str, Any]:
     position = {key: node[key] for key in _POSITION if key in node}
     out["keywords"] = [
         {
-            "_type": "keyword",
+            type_key: "keyword",
             "arg": name,
             "value": {k: v for k, v in value.items() if k not in _ORDERING} if isinstance(value, dict) else value,
             **position,
@@ -189,8 +193,37 @@ def unfold_node(node: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def rewrap_statements(node: dict[str, Any]) -> dict[str, Any]:
+    """Put back the ``Expr`` wrappers that elision dropped.
+
+    Python needs a statement to hold an expression in a body. *Which* items
+    need one is entirely derivable — anything in a statement list that is not
+    itself a statement — so dropping the wrapper costs nothing and restoring
+    it needs no record of what was removed. That is what makes ``Expr``
+    elidable on the profile that regenerates code, where a lossy elision would
+    not be.
+    """
+    statements = statement_types()
+    out = dict(node)
+    for field in ORDERED_FIELDS:
+        items = out.get(field)
+        if not isinstance(items, list):
+            continue
+        out[field] = [
+            item
+            if not isinstance(item, dict) or item.get("_type") in statements or "_type" not in item
+            else {
+                "_type": "Expr",
+                "value": item,
+                **{key: item[key] for key in _POSITION if key in item},
+            }
+            for item in items
+        ]
+    return out
+
+
 def unfold(doc: Any) -> Any:
-    """Reverse keyword folding throughout a document.
+    """Restore everything elision rewrote reversibly.
 
     Parameters
     ----------
@@ -200,10 +233,11 @@ def unfold(doc: Any) -> Any:
     Returns
     -------
     dict or list
-        A document whose calls carry ``keywords`` again, ready to unparse.
+        A document whose calls carry ``keywords`` again and whose bodies carry
+        their statement wrappers, ready to unparse.
     """
     if isinstance(doc, list):
         return [unfold(item) for item in doc]
     if not isinstance(doc, dict):
         return doc
-    return unfold_node({key: unfold(value) for key, value in doc.items()})
+    return rewrap_statements(unfold_node({key: unfold(value) for key, value in doc.items()}))

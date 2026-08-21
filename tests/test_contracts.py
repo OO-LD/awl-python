@@ -127,9 +127,9 @@ class TestValidation:
     @pytest.mark.parametrize(
         "node",
         [
-            {"_": "Call"},
-            {"c": 4.2},
-            {"$": "cycles"},
+            {"type": "Call"},
+            {"literal": 4.2},
+            {"var": "cycles"},
         ],
     )
     def test_accepts_each_compact_node_form(self, node):
@@ -138,8 +138,8 @@ class TestValidation:
     @pytest.mark.parametrize(
         "node",
         [
-            pytest.param({"c": 4.2, "extra": 1}, id="literal-with-stray-key"),
-            pytest.param({"$": "i", "extra": 1}, id="name-with-stray-key"),
+            pytest.param({"literal": 4.2, "extra": 1}, id="literal-with-stray-key"),
+            pytest.param({"var": "i", "extra": 1}, id="name-with-stray-key"),
             pytest.param({}, id="empty"),
             pytest.param({"_": 7}, id="non-string-node-type"),
         ],
@@ -147,7 +147,7 @@ class TestValidation:
     def test_rejects_a_node_matching_no_compact_form(self, node):
         """A compact node must match exactly one of the three forms.
 
-        Note {"_": "Constant", "c": 4.2} is deliberately *not* rejected: a
+        Note {"type": "Call"} is deliberately *not* rejected: a
         typed node carries arbitrary AST fields, one of which may be named c.
         """
         import jsonschema
