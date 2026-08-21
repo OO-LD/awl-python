@@ -180,3 +180,19 @@ def test_provenance_reaches_the_import_a_value_came_from():
     write = next(entry for entry in out["writes"] if entry["path"].endswith("e_mod"))
     reached = _closure(out, write["depends_on"])
     assert {"linregress", "dataset", "df", "linear"} <= reached, reached
+
+
+def test_a_comprehension_target_is_a_known_gap_that_does_not_break_the_chain():
+    """Pinning the limitation rather than leaving it to be rediscovered.
+
+    A comprehension has its own scope in Python 3, so binding its target in
+    the enclosing environment would be wrong. It is therefore unresolvable.
+    The dependency on the iterable survives regardless, because it is taken
+    from every name read across the whole expression.
+    """
+    out = _analyze("def f(xs, g):\n    ys = [g(x) for x in xs]\n")
+    names = {entry["name"] for entry in out["definitions"]}
+    assert "x" not in names, "the documented gap"
+
+    ys = next(entry for entry in out["definitions"] if entry["name"] == "ys")
+    assert _closure(out, ys["depends_on"]) >= {"xs", "g"}, "the chain still reaches the iterable"

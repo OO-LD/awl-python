@@ -15,6 +15,22 @@ impossible to type are ordinary to trace.
 **A name may have several reaching definitions.** Taking only the most recent
 one silently drops a dependency whenever a value is assigned in both arms of a
 branch, so definitions are tracked as sets and merged at every join.
+
+Known limitation: a comprehension target is not a definition
+------------------------------------------------------------
+
+``ys = [f(x) for x in xs]`` binds ``x``, and this module does not record it.
+Comprehensions have their own scope in Python 3, so binding ``x`` in the
+enclosing environment would be wrong, and binding it correctly needs a nested
+scope the walker does not model.
+
+The chain does **not** break: ``ys`` still depends on ``xs`` and on ``f``,
+because the dependency is taken from every name read across the whole
+expression. What is unresolvable is ``x`` itself, so a question of the form
+"which binding does this comprehension variable refer to" has no answer. The
+same applies to the target of a generator expression and to a walrus inside
+one. Worth fixing when comprehension-heavy code matters; the fix is a nested
+scope, not a special case.
 """
 
 from __future__ import annotations
