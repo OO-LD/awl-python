@@ -94,7 +94,17 @@ _SIGNATURE_HOLDERS = frozenset({"FunctionDef", "AsyncFunctionDef", "Lambda"})
 # The slots a signature is made of.
 _ARGUMENT_FIELDS = tuple(ast.arguments._fields)
 
-# Fields holding `arg` nodes, whose type is likewise fixed by the grammar.
+# Fields whose element type is fixed by the grammar, so the label says
+# nothing. Each maps to the node type it may only ever hold, and to the field
+# that alone is enough to name it.
+_IMPLIED_TYPES = {
+    "args": ("arg", "arg"),
+    "posonlyargs": ("arg", "arg"),
+    "kwonlyargs": ("arg", "arg"),
+    "vararg": ("arg", "arg"),
+    "kwarg": ("arg", "arg"),
+    "names": ("alias", "name"),
+}
 _ARG_FIELDS = frozenset({"args", "posonlyargs", "kwonlyargs", "vararg", "kwarg"})
 
 # Orderings are derivable from array position here and are **not** carried.
@@ -143,6 +153,9 @@ def _encode_long(doc: dict[str, Any], *, keep_spans: bool) -> dict[str, Any]:
             continue
         if key == "args" and _is_arguments(value):
             node.update(_encode_signature(value, keep_spans=keep_spans))
+            continue
+        if key == "names" and doc.get("_type") in ("Import", "ImportFrom"):
+            node[key] = _encode_implied(value, key, keep_spans=keep_spans)
             continue
         if key in _OPERATOR_FIELDS:
             node[key] = _encode_operator(value)
@@ -212,7 +225,9 @@ def _encode_signature(value: dict[str, Any], *, keep_spans: bool) -> dict[str, A
         if slot == "_type":
             continue
         encoded = (
-            _encode_arg(held, keep_spans=keep_spans) if slot in _ARG_FIELDS else encode(held, keep_spans=keep_spans)
+            _encode_implied(held, slot, keep_spans=keep_spans)
+            if slot in _ARG_FIELDS
+            else encode(held, keep_spans=keep_spans)
         )
         if encoded is None or (isinstance(encoded, list) and not encoded):
             continue
@@ -225,39 +240,37 @@ def _is_arguments(value: Any) -> bool:
     return isinstance(value, dict) and value.get("_type") == "arguments"
 
 
-def _encode_arg(value: Any, *, keep_spans: bool) -> Any:
-    """Write a parameter without repeating that it is one.
+def _encode_implied(value: Any, field: str, *, keep_spans: bool) -> Any:
+    """Write a node without repeating a type the grammar already fixes.
 
-    Everything in a signature slot is an ``arg``, so the label says nothing.
-    A parameter with nothing but a name becomes that name.
+    Everything in a signature slot is an ``arg``; everything in an import's
+    ``names`` is an ``alias``. Saying so adds nothing, and one carrying only
+    its own name becomes that name.
     """
+    node_type, naming_field = _IMPLIED_TYPES[field]
     if isinstance(value, list):
-        return [_encode_arg(item, keep_spans=keep_spans) for item in value]
-    if not isinstance(value, dict) or value.get("_type") != "arg":
+        return [_encode_implied(item, field, keep_spans=keep_spans) for item in value]
+    if not isinstance(value, dict) or value.get("_type") != node_type:
         return encode(value, keep_spans=keep_spans)
     out = {
         key: encode(held, keep_spans=keep_spans)
         for key, held in value.items()
         if key not in _DROP and key != "_type" and held is not None
     }
-    if set(out) == {"arg"}:
-        return out["arg"]
-    return out
+    return out[naming_field] if set(out) == {naming_field} else out
 
 
-def _decode_arg(value: Any) -> Any:
-    """Rebuild a parameter from its name or its slots."""
+def _decode_implied(value: Any, field: str) -> Any:
+    """Rebuild a node whose type the grammar implies."""
+    node_type, naming_field = _IMPLIED_TYPES[field]
+    cls = getattr(ast, node_type)
     if isinstance(value, list):
-        return [_decode_arg(item) for item in value]
+        return [_decode_implied(item, field) for item in value]
     if isinstance(value, str):
-        return ast.arg(arg=value, annotation=None, type_comment=None)
-    if isinstance(value, dict) and "@type" not in value:
-        return ast.arg(
-            arg=value.get("arg"),
-            annotation=decode(value["annotation"]) if "annotation" in value else None,
-            type_comment=None,
-        )
-    return decode(value)
+        value = {naming_field: value}
+    if not isinstance(value, dict) or "@type" in value:
+        return decode(value)
+    return cls(**{name: decode(value[name]) if name in value else None for name in cls._fields})
 
 
 def _decode_arguments(node: dict[str, Any]) -> ast.arguments:
@@ -267,7 +280,7 @@ def _decode_arguments(node: dict[str, Any]) -> ast.arguments:
         if field not in node:
             slots[field] = [] if field in _LIST_FIELDS else None
         elif field in _ARG_FIELDS:
-            slots[field] = _decode_arg(node[field])
+            slots[field] = _decode_implied(node[field], field)
         else:
             slots[field] = decode(node[field])
     return ast.arguments(**slots)
@@ -395,6 +408,8 @@ def _decode_field(node: dict[str, Any], cls: type, field: str) -> Any:
         if field == "ctx":
             return ast.Load()
         return [] if field in _LIST_FIELDS else None
+    if field == "names" and node["@type"] in ("Import", "ImportFrom"):
+        return _decode_implied(node[field], field)
     if field in _OPERATOR_FIELDS:
         return _decode_operator(node[field])
     decoded = decode(node[field])

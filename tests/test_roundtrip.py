@@ -166,3 +166,27 @@ def test_a_parameter_with_only_a_name_is_that_name():
 def test_an_annotated_parameter_keeps_its_annotation():
     doc = encode(elide(to_doc(ast.parse("def f(cycles: int): pass")), profile="ast"))
     assert doc["body"][0]["args"] == [{"arg": "cycles", "annotation": {"var": "int"}}]
+
+
+@pytest.mark.parametrize(
+    "source",
+    ["import os", "import numpy as np", "from a import b", "from a import b as c", "from . import d"],
+    ids=["plain", "aliased", "from", "from aliased", "relative"],
+)
+def test_an_import_name_needs_no_alias_label(source):
+    """Everything in an import's `names` is an `alias`, so saying so adds
+    nothing. The same rule that removed the `arg` label.
+    """
+    tree = ast.parse(source)
+    restored = decode(encode(elide(to_doc(tree), profile="ast")))
+    assert ast.unparse(ast.fix_missing_locations(restored)) == ast.unparse(tree)
+
+
+def test_a_plain_import_name_is_that_name():
+    doc = encode(elide(to_doc(ast.parse("from m import charge, rest")), profile="ast"))
+    assert doc["body"][0]["names"] == ["charge", "rest"]
+
+
+def test_an_aliased_import_keeps_both_names():
+    doc = encode(elide(to_doc(ast.parse("import numpy as np")), profile="ast"))
+    assert doc["body"][0]["names"] == [{"name": "numpy", "asname": "np"}]
