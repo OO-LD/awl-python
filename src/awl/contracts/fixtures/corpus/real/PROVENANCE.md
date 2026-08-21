@@ -39,3 +39,56 @@ three unrelated samples.
 Do not edit the file. If it needs refreshing, re-fetch from the source above
 and update the SHAs here, so a diff in the fixture is always traceable to a
 diff upstream.
+
+## tensile_test.py
+
+| | |
+| --- | --- |
+| Source | `opensemantic.characteristics.quantitative-python`, `examples/tensile_test.py` |
+| Repository | `OpenSemanticLab/osw-package-maintenance` |
+| Licence | same as the package it ships with; first-party to this organisation |
+| Retrieved | 2026-08-21 |
+| Size | 116 lines, 4 model classes, 1 analysis function |
+
+### Why this file
+
+It is the only sample in the corpus where the **semantic** question is
+answerable end to end, and it is answerable without following the hard chain.
+
+```py
+class TensileTestSpecimen(OswBaseModel):
+    e_mod: Optional[ModulusOfElasticity] = None
+
+class TensileTestDataset(OswBaseModel):
+    specimen: TensileTestSpecimen
+
+def tensile_test_analysis(dataset: TensileTestDataset) -> TensileTestDataset:
+    dataset.specimen.e_mod = ModulusOfElasticity.from_pint(slope.to("Pa"))
+```
+
+The parameter is annotated, and every hop of `dataset.specimen.e_mod` is a
+declared field with a declared annotation. So "where was the modulus of
+elasticity written, and to what" is a walk over declarations, and needs none of
+the `linregress` or `.pint.magnitude` dataflow.
+
+The same file also contains the chain that is **not** followable, in the same
+function, which is why it is worth having both in one fixture:
+
+```py
+slope, *_ = linregress(
+    linear["strain"].pint.to_base_units().pint.magnitude, ...
+)
+```
+
+Four independent breaks there: the arguments are attribute chains rather than
+typed constructor calls, so no argument types are observed; the name chain
+truncates at the `linear["strain"]` subscript; `slope, *_ =` is a starred
+destructuring; and `.pint.magnitude` deliberately erases the unit, which is
+what that line is for. The call therefore stays uncollapsed and its binding
+stays ambiguous, which is the intended outcome rather than a gap to paper over.
+
+### Classes derive from OswBaseModel, not the linked base
+
+So they produce declarations with fields and annotations, and no linked type
+info. That is the point: member-path resolution works from ordinary annotated
+classes, one rung below the linked notation.

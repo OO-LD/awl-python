@@ -92,7 +92,14 @@ def build_context(types: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         "order": {"@id": f"{AWL}order", "@type": "xsd:integer"},
         "argumentIndex": {"@id": f"{AWL}argumentIndex", "@type": "xsd:integer"},
         "iteration": {"@id": f"{AWL}iteration", "@type": "xsd:integer"},
+        "startLine": {"@id": f"{AWL}startLine", "@type": "xsd:integer"},
+        "startCol": {"@id": f"{AWL}startCol", "@type": "xsd:integer"},
     }
+    # The write vocabulary names classes and members, so its values are IRIs
+    # rather than text. Without this a query for "written to a member of
+    # TensileTestSpecimen" has to string-match instead of joining.
+    for term in ("member", "memberOf", "rootType", "range"):
+        context[term] = {"@id": f"{AWL}{term}", "@type": "@id"}
     # Taken from the vocabulary rather than restated, so a field added there
     # cannot silently lose its ordering here.
     for field in ORDERED_FIELDS:

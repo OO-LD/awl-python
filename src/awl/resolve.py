@@ -13,9 +13,10 @@ from __future__ import annotations
 
 from typing import Any
 
+from awl._writes import resolve_writes
 from awl.ids import mint
 
-__all__ = ["resolve"]
+__all__ = ["resolve", "resolve_writes"]
 
 EXTRACTED = "EXTRACTED"
 INFERRED = "INFERRED"
@@ -156,3 +157,45 @@ def resolve(
         bindings.append(binding)
 
     return {"file": facts["file"], "bindings": bindings}
+
+
+def _annotation_target(annotation: str | None) -> str | None:
+    """Return the class an annotation denotes, ignoring wrappers and None.
+
+    ``Optional[ModulusOfElasticity]`` denotes ``ModulusOfElasticity``. Written
+    against the annotation text rather than the syntax tree, because that is
+    what the observation records.
+    """
+    if not annotation:
+        return None
+    text = annotation.strip()
+    for wrapper in ("Optional[", "List[", "list[", "Sequence[", "Set[", "set["):
+        if text.startswith(wrapper) and text.endswith("]"):
+            text = text[len(wrapper) : -1].strip()
+    for arm in text.split("|"):
+        candidate = arm.strip().split("[")[0].strip()
+        if candidate and candidate != "None" and candidate[:1].isupper():
+            return candidate
+    return None
+
+
+def _class_index(facts: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Return the declared classes by name."""
+    return {entry["name"]: entry for entry in facts.get("declarations", []) if entry.get("kind") == "class"}
+
+
+def _root_types(facts: dict[str, Any]) -> dict[tuple[str | None, str], str]:
+    """Return the declared type of each parameter, keyed by function and name.
+
+    Keyed by enclosing function so two functions may annotate the same
+    parameter name differently, which is common and would otherwise collide.
+    """
+    roots: dict[tuple[str | None, str], str] = {}
+    for entry in facts.get("declarations", []):
+        if entry.get("kind") != "function":
+            continue
+        for parameter in entry.get("parameters", []):
+            target = _annotation_target(parameter.get("annotation"))
+            if target:
+                roots[(entry["name"], parameter["name"])] = target
+    return roots

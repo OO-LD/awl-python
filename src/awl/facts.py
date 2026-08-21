@@ -32,6 +32,23 @@ _IDENTITY_FIELDS = frozenset({"id", "type"})
 _LINK_MARKER = "Link"
 _LINKED_FIELD = "LinkedField"
 
+#: Annotation wrappers that add nullability but not multiplicity.
+_OPTIONAL = frozenset({"Optional", "typing.Optional"})
+
+#: Annotation wrappers that declare multiplicity.
+_MANY = frozenset({
+    "list",
+    "set",
+    "tuple",
+    "List",
+    "Set",
+    "Tuple",
+    "Sequence",
+    "Iterable",
+    "typing.List",
+    "typing.Sequence",
+})
+
 
 def _span(node: ast.AST, file: str) -> dict[str, Any] | None:
     """Return the source span of *node*, or None when it carries no position."""
@@ -78,6 +95,25 @@ def _is_none(node: ast.AST) -> bool:
     return isinstance(node, ast.Constant) and node.value is None
 
 
+def _attribute_path(node: ast.AST) -> list[str] | None:
+    """Return ``["dataset", "specimen", "e_mod"]`` for an attribute chain.
+
+    Returns None when the chain is rooted in anything other than a plain name,
+    for example ``df["strain"].pint``. A subscript has no declared field to
+    walk to, so the path would be unresolvable and recording it would imply
+    otherwise.
+    """
+    parts: list[str] = []
+    current = node
+    while isinstance(current, ast.Attribute):
+        parts.append(current.attr)
+        current = current.value
+    if not isinstance(current, ast.Name):
+        return None
+    parts.append(current.id)
+    return list(reversed(parts))
+
+
 class _Annotation:
     """One field annotation, reduced to what the contract records.
 
@@ -111,7 +147,14 @@ class _Annotation:
                 self.is_link = True
                 self.target = _name_of(arm.slice)
                 return
-            if container in ("list", "set", "tuple", "List", "Sequence", "Iterable"):
+            if container in _OPTIONAL:
+                # Optional[T] is T or None. Unwrapping it rather than treating
+                # it as an unknown container is what lets a member path walk
+                # through a nullable field, which is how most of them are
+                # declared.
+                self._read(arm.slice)
+                return
+            if container in _MANY:
                 self.is_many = True
                 self._read(arm.slice)
                 return
@@ -237,7 +280,10 @@ class _Walk(ast.NodeVisitor):
         self.exports: list[dict[str, Any]] = []
         self.uses: list[dict[str, Any]] = []
         self.types: list[dict[str, Any]] = []
+        self.writes: list[dict[str, Any]] = []
+        self.bindings: list[dict[str, Any]] = []
         self._depth = 0
+        self._functions: list[str] = []
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         prefix = "." * (node.level or 0)
@@ -295,6 +341,51 @@ class _Walk(ast.NodeVisitor):
             })
         self.generic_visit(node)
 
+    def visit_Assign(self, node: ast.Assign) -> None:
+        for target in node.targets:
+            self._record_write(target, node)
+        self.generic_visit(node)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        self._record_write(node.target, node)
+        self.generic_visit(node)
+
+    def _record_write(self, target: ast.AST, statement: ast.AST) -> None:
+        """Record an assignment, as either a member write or a local binding.
+
+        A subscript target such as ``df["strain"]`` is skipped: it has no
+        declared field to walk to, so recording it would suggest a resolution
+        that cannot be made.
+
+        A single-name target is a **binding**, not a write. ``s =
+        dataset.specimen`` gives ``s`` a type for the rest of the function, and
+        without it a later ``s.e_mod = ...`` is unresolvable even though every
+        annotation needed is present.
+        """
+        path = _attribute_path(target)
+        if path is None:
+            return
+        value = getattr(statement, "value", None)
+        callee = _name_of(value.func) if isinstance(value, ast.Call) else None
+        common = {
+            "inFunction": self._functions[-1] if self._functions else None,
+            "span": _span(statement, self.file),
+        }
+        if len(path) == 1:
+            self.bindings.append({
+                "name": path[0],
+                "valuePath": _attribute_path(value) if value is not None else None,
+                "valueCallee": callee,
+                "annotation": (
+                    ast.unparse(statement.annotation)
+                    if isinstance(statement, ast.AnnAssign) and statement.annotation
+                    else None
+                ),
+                **common,
+            })
+            return
+        self.writes.append({"path": path, "writtenBy": callee, **common})
+
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
         fields, declared = _class_fields(node)
         bases = [name for base in node.bases if (name := _name_of(base))]
@@ -337,7 +428,9 @@ class _Walk(ast.NodeVisitor):
             "span": _span(node, self.file),
         })
         self._export(node.name)
+        self._functions.append(node.name)
         self._descend(node)
+        self._functions.pop()
 
     def _descend(self, node: ast.AST) -> None:
         self._depth += 1
@@ -403,5 +496,7 @@ def extract(source: str, *, module: str, file: str = "<source>") -> dict[str, An
         "aliases": walk.aliases,
         "exports": walk.exports,
         "uses": walk.uses,
+        "writes": walk.writes,
+        "bindings": walk.bindings,
         "types": walk.types,
     }

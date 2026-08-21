@@ -241,3 +241,91 @@ def test_the_three_tiers_stay_distinguishable():
 def test_output_matches_the_contract():
     contracts.validate(resolve(FACTS), "resolved-names")
     contracts.validate(resolve(TIER2), "resolved-names")
+
+
+TENSILE = (contracts.CORPUS_DIR / "real" / "tensile_test.py").read_text(encoding="utf-8")
+
+ALIASED = TENSILE.replace(
+    '    dataset.specimen.e_mod = ModulusOfElasticity.from_pint(slope.to("Pa"))',
+    '    s = dataset.specimen\n    s.e_mod = ModulusOfElasticity.from_pint(slope.to("Pa"))',
+)
+
+
+def _writes(source):
+    from awl.facts import extract
+    from awl.resolve import resolve_writes
+
+    return resolve_writes(extract(source, module="tensile_test", file="tensile_test.py"))["writes"]
+
+
+def _modulus(writes):
+    return next(entry for entry in writes if entry.get("rangeName") == "ModulusOfElasticity")
+
+
+def test_a_member_write_is_resolved_to_its_declaring_class_and_range():
+    """The semantic question: not "an attribute named e_mod", but "the modulus
+    of elasticity of a tensile test specimen".
+    """
+    entry = _modulus(_writes(TENSILE))
+    assert entry["memberPath"] == "TensileTestDataset.specimen.e_mod"
+    assert entry["memberOf"].endswith("TensileTestSpecimen")
+    assert entry["member"].endswith("TensileTestSpecimen/e_mod")
+    assert entry["rootType"].endswith("TensileTestDataset")
+    assert entry["writtenBy"] == "ModulusOfElasticity.from_pint"
+    assert entry["confidence"] == "EXTRACTED"
+
+
+def test_the_write_carries_the_span_so_the_answer_is_actionable():
+    entry = _modulus(_writes(TENSILE))
+    assert entry["span"]["startLine"] == 74
+    assert TENSILE.splitlines()[73].strip().startswith("dataset.specimen.e_mod =")
+
+
+def test_a_local_alias_does_not_change_what_the_code_means():
+    """`s = dataset.specimen` then `s.e_mod = ...` must resolve identically.
+
+    Introducing a local variable is a developer's convenience. If it changed
+    the member, owner or root, every query would have to anticipate how the
+    code happened to be written.
+    """
+    direct = _modulus(_writes(TENSILE))
+    aliased = _modulus(_writes(ALIASED))
+    for key in ("memberPath", "member", "memberOf", "rootType", "range", "writtenBy"):
+        assert aliased[key] == direct[key], key
+
+
+def test_an_alias_is_still_marked_as_a_deduction():
+    """Transparent in the graph, distinguishable in confidence.
+
+    No flow analysis is done, so a binding made inside a branch is assumed to
+    reach a later write. That assumption has to stay visible.
+    """
+    assert _modulus(_writes(TENSILE))["confidence"] == "EXTRACTED"
+    assert _modulus(_writes(ALIASED))["confidence"] == "INFERRED"
+
+
+def test_an_unannotated_root_yields_no_member():
+    """No parameter annotation, so nothing to walk. Ambiguous, not invented."""
+    writes = _writes("def f(dataset):\n    dataset.specimen.e_mod = 1\n")
+    assert writes[0]["confidence"] == "AMBIGUOUS"
+    assert "member" not in writes[0]
+
+
+def test_a_rebinding_to_something_unknown_drops_the_stale_type():
+    """Otherwise a name keeps a type it no longer holds."""
+    source = "class A:\n    b: int\n\ndef f(a: A):\n    x = a\n    x = compute()\n    x.b = 1\n"
+    writes = _writes(source)
+    assert writes[0]["confidence"] == "AMBIGUOUS"
+
+
+def test_every_hop_of_the_chain_must_be_declared():
+    """A path through an undeclared field resolves to nothing."""
+    writes = _writes("class A:\n    b: int\n\ndef f(a: A):\n    a.nope.deeper = 1\n")
+    assert writes[0]["confidence"] == "AMBIGUOUS"
+
+
+def test_the_other_writes_in_the_real_file_resolve_too():
+    """Not a single hand-picked case."""
+    resolved = {entry["memberPath"]: entry["rangeName"] for entry in _writes(TENSILE) if entry.get("memberPath")}
+    assert resolved["TensileTestDataset.specimen.cross_section_area"] == "Area"
+    assert resolved["TensileTestDataset.result"] == "TensileTestResult"
