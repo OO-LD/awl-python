@@ -127,7 +127,7 @@ class TestValidation:
     @pytest.mark.parametrize(
         "node",
         [
-            {"type": "Call"},
+            {"@type": "Call"},
             {"literal": 4.2},
             {"var": "cycles"},
         ],
@@ -147,7 +147,7 @@ class TestValidation:
     def test_rejects_a_node_matching_no_compact_form(self, node):
         """A compact node must match exactly one of the three forms.
 
-        Note {"type": "Call"} is deliberately *not* rejected: a
+        Note {"@type": "Call"} is deliberately *not* rejected: a
         typed node carries arbitrary AST fields, one of which may be named c.
         """
         import jsonschema

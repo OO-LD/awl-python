@@ -5,34 +5,23 @@
     "awl": "https://w3id.org/awl/schema/",
     "@vocab": "https://w3id.org/awl/schema/"
   },
-  "x-oold-version": "0.2.0",
+  "x-oold-version": "0.3.0",
   "title": "CompactDoc",
-  "description": "The compact encoding used as the editor model. Three node forms: a typed node, a literal, and a name reference. Keys are words rather than punctuation, because this document is read and edited by hand and sits beside JSON-LD keywords; size is a matter for transport compression, not for the vocabulary. Required fields are reconstructed by the decoder, so this form does not carry them.",
+  "description": "The compact encoding used as the editor model. Three node forms: a typed node, a literal, and a name reference. Sequence position is the only ordering: order and argumentIndex are derivable from the arrays here and are materialized in the RDF projection instead, where position cannot be recovered. Required fields are rebuilt by the decoder, so this form does not carry them.",
   "type": "object",
   "oneOf": [
     {
       "type": "object",
       "required": [
-        "type"
+        "@type"
       ],
       "properties": {
-        "type": {
+        "@type": {
           "type": [
             "string",
             "array"
           ],
-          "description": "A syntax node type such as While, or, for a collapsed constructor, the class name as a bare term followed by any declared co-types. One key, because both answer the same question: what this is."
-        },
-        "order": {
-          "type": "integer",
-          "description": "Syntactic sibling slot, materialized during elision."
-        },
-        "argumentIndex": {
-          "type": "integer",
-          "description": "1..N positional; -1 when named."
-        },
-        "argumentName": {
-          "type": "string"
+          "description": "A syntax node type such as While, or, for a collapsed constructor, the class name as a bare term followed by any declared co-types. The JSON-LD keyword rather than a plain word because a node carries its fields as sibling keys and AST field names are arbitrary identifiers: ExceptHandler has a field called type."
         },
         "span": {
           "type": "array",
@@ -63,17 +52,6 @@
       ],
       "properties": {
         "literal": {},
-        "order": {
-          "type": "integer",
-          "description": "Syntactic sibling slot, materialized during elision."
-        },
-        "argumentIndex": {
-          "type": "integer",
-          "description": "1..N positional; -1 when named."
-        },
-        "argumentName": {
-          "type": "string"
-        },
         "span": {
           "type": "array",
           "items": {
@@ -88,7 +66,7 @@
         }
       },
       "additionalProperties": false,
-      "description": "A constant value."
+      "description": "A constant value. A bytes, complex or ellipsis constant is a single-key tagged object, since JSON has no native form for them."
     },
     {
       "type": "object",
@@ -97,17 +75,6 @@
       ],
       "properties": {
         "var": {
-          "type": "string"
-        },
-        "order": {
-          "type": "integer",
-          "description": "Syntactic sibling slot, materialized during elision."
-        },
-        "argumentIndex": {
-          "type": "integer",
-          "description": "1..N positional; -1 when named."
-        },
-        "argumentName": {
           "type": "string"
         },
         "span": {

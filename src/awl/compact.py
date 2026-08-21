@@ -4,12 +4,23 @@ Both ends speak ``AstDoc``, so this composes with the elision stage.
 
 Three node forms, named rather than punctuated:
 
-=========================  ==========================================
-``{"type": "While", ...}``  a typed node, the same key a collapsed
-                             constructor uses
-``{"literal": 4.2}``         a constant
-``{"var": "i"}``             a name reference
-=========================  ==========================================
+==========================  =========================================
+``{"@type": "While", ...}``  a typed node, the same key a collapsed
+                            constructor uses
+``{"literal": 4.2}``        a constant
+``{"var": "i"}``            a name reference
+==========================  =========================================
+
+The node type uses the JSON-LD keyword rather than a plain word, and that is
+a correctness requirement rather than a style choice. A node carries its
+fields as sibling keys, and AST field names are arbitrary identifiers:
+``ExceptHandler`` has a field literally called ``type``. Spelling the node
+type ``type`` silently destroyed every ``try``/``except`` in the standard
+library. ``@`` cannot appear in a Python identifier, so the keyword namespace
+is the only one a field can never occupy.
+
+``literal`` and ``var`` stay plain words because they are complete nodes on
+their own and never sit beside fields, so nothing can collide with them.
 
 An earlier revision used ``_``, ``c`` and ``$``, chosen to save bytes before
 the document was JSON-LD. They saved about four percent and cost a reader
@@ -32,51 +43,56 @@ from awl.vocab import ORDERED_FIELDS
 
 __all__ = ["decode", "encode"]
 
-# Fields the ast constructors require as sequences. Anything absent from a
-# compact document is rebuilt as an empty list, which is what lets the encoder
-# drop them.
-_LIST_FIELDS = frozenset({
-    "args",
-    "bases",
-    "body",
-    "comparators",
-    "decorator_list",
-    "defaults",
-    "elts",
-    "finalbody",
-    "generators",
-    "handlers",
-    "items",
-    "keywords",
-    "kw_defaults",
-    "kwonlyargs",
-    "names",
-    "ops",
-    "orelse",
-    "posonlyargs",
-    "targets",
-    "type_ignores",
-    "type_params",
-    "values",
-})
+
+def _list_fields() -> frozenset[str]:
+    """Return every field the grammar declares as a sequence.
+
+    Derived from the ``ast`` annotations rather than listed by hand. The hand
+    list was missing seven of the twenty-nine, including ``keys`` on a dict
+    literal and ``ifs`` on a comprehension, so those rebuilt as ``None`` and
+    raised deep inside the unparser. A list that has to be maintained against
+    a moving grammar will drift; this cannot.
+    """
+    found = set()
+    for name in dir(ast):
+        cls = getattr(ast, name)
+        if not (isinstance(cls, type) and issubclass(cls, ast.AST)):
+            continue
+        for field, annotation in getattr(cls, "__annotations__", {}).items():
+            if "list" in str(annotation):
+                found.add(field)
+    return frozenset(found)
+
+
+_LIST_FIELDS = _list_fields()
 
 # Derivable or positional; never carried.
 _DROP = frozenset({
+    "argumentIndex",
+    "argumentName",
     "col_offset",
     "ctx",
     "end_col_offset",
     "end_lineno",
-    "kind",
     "lineno",
     "n",
+    "order",
     "s",
     "type_comment",
 })
 
-# The orderings materialized by the elision stage, plus the optional span, ride
-# alongside a shorthand node rather than forcing it back to the long form.
-_CARRY = ("order", "argumentIndex", "argumentName")
-_SHORTHAND_EXTRA = frozenset({"span", *_CARRY})
+# Fields holding an operator node, which carries nothing but its own type, so
+# it is written as a bare name. Derived from the grammar rather than guessed:
+# these are the only two fields typed by operator, unaryop, boolop or cmpop.
+_OPERATOR_FIELDS = frozenset({"op", "ops"})
+
+# Orderings are derivable from array position here and are **not** carried.
+# They are materialized in the RDF projection, where position is not
+# recoverable: an rdf:List yields members, and SPARQL property paths cannot
+# count. Carrying them in this document would duplicate what the array already
+# says, and let an editor reorder the array while leaving the numbers stale.
+_ORDERINGS = ("order", "argumentIndex", "argumentName")
+_SHORTHAND_EXTRA = frozenset({"span"})
 
 
 def _span(doc: dict[str, Any]) -> list[Any]:
@@ -96,7 +112,10 @@ def _shorthand(doc: dict[str, Any]) -> dict[str, Any] | None:
     field, so an annotated or collapsed node is never silently flattened.
     """
     node_type = doc.get("_type")
-    plain = set(doc) - _DROP - {"_type", *_CARRY}
+    # None-valued fields are dropped by the encoder anyway, so they must not
+    # stop a node qualifying for a shorthand. `kind` carries the u-prefix of a
+    # u-string and is almost always null; dropping it outright lost `u''`.
+    plain = {key for key, value in doc.items() if value is not None} - _DROP - {"_type"}
     if node_type == "Constant" and plain <= {"value"}:
         return {"literal": doc.get("value")}
     if node_type == "Name" and plain <= {"id"}:
@@ -107,9 +126,12 @@ def _shorthand(doc: dict[str, Any]) -> dict[str, Any] | None:
 def _encode_long(doc: dict[str, Any], *, keep_spans: bool) -> dict[str, Any]:
     """Encode a node that does not qualify for a shorthand."""
     node_type = doc.get("_type")
-    node: dict[str, Any] = {"type": node_type} if node_type else {}
+    node: dict[str, Any] = {"@type": node_type} if node_type else {}
     for key, value in doc.items():
         if key in _DROP or key == "_type":
+            continue
+        if key in _OPERATOR_FIELDS:
+            node[key] = _encode_operator(value)
             continue
         if key == "keywordArguments" and isinstance(value, dict):
             # The keys here are the author's parameter names, not node fields,
@@ -147,8 +169,9 @@ def encode(doc: Any, *, keep_spans: bool = False) -> Any:
     Notes
     -----
     Rules: ``_type`` becomes ``type``; a bare ``Constant`` becomes
-    ``{"literal": value}``; a bare ``Name`` becomes ``{"var": id}``; ``ctx``, positions, nulls and empty
-    lists are dropped. Orderings are carried through unchanged.
+    ``{"literal": value}``; a bare ``Name`` becomes ``{"var": id}``; an
+    operator becomes its bare name; ``ctx``, positions, nulls, empty lists and
+    the derivable orderings are dropped.
     """
     if isinstance(doc, list):
         return [encode(item, keep_spans=keep_spans) for item in doc]
@@ -161,10 +184,30 @@ def encode(doc: Any, *, keep_spans: bool = False) -> Any:
 
     if keep_spans and "lineno" in doc:
         node["span"] = _span(doc)
-    for field in _CARRY:
-        if field in doc:
-            node[field] = doc[field]
     return node
+
+
+def _encode_operator(value: Any) -> Any:
+    """Write an operator as its bare name.
+
+    ``{"type": "Add"}`` carries nothing but the name, and ``i += 1`` spends
+    three nodes on saying "plus". An operator node has no fields at all, so
+    the name is the whole of it.
+    """
+    if isinstance(value, list):
+        return [_encode_operator(item) for item in value]
+    if isinstance(value, dict) and "_type" in value:
+        return value["_type"]
+    return value
+
+
+def _decode_operator(value: Any) -> Any:
+    """Rebuild an operator node from its bare name."""
+    if isinstance(value, list):
+        return [_decode_operator(item) for item in value]
+    if isinstance(value, str):
+        return getattr(ast, value)()
+    return decode(value)
 
 
 def _rewrap(items: Any) -> Any:
@@ -185,7 +228,7 @@ def _is_ast_node(node: dict[str, Any]) -> bool:
     is". They are told apart by whether the name belongs to the ``ast``
     module, so a collapsed ``ChargeParam`` and a ``While`` never collide.
     """
-    declared = node.get("type")
+    declared = node.get("@type")
     return isinstance(declared, str) and isinstance(getattr(ast, declared, None), type)
 
 
@@ -242,20 +285,25 @@ def decode(node: Any) -> Any:
     if not isinstance(node, dict):
         return node
 
-    if "type" in node and not _is_ast_node(node):
+    if "@type" in node and not _is_ast_node(node):
         return _decode_collapsed(node)
     if "literal" in node and set(node) <= {"literal", *_SHORTHAND_EXTRA}:
-        return ast.Constant(value=node["literal"])
+        from awl.astdoc import from_doc
+
+        return ast.Constant(value=from_doc(node["literal"]))
     if "var" in node and set(node) <= {"var", *_SHORTHAND_EXTRA}:
         return ast.Name(id=node["var"], ctx=ast.Load())
 
     from awl.elide import unfold_node
 
-    node = unfold_node(node, type_key="type")
-    cls = getattr(ast, node["type"])
+    node = unfold_node(node, type_key="@type")
+    cls = getattr(ast, node["@type"])
     kwargs: dict[str, Any] = {}
     for field in cls._fields:
         if field in node:
+            if field in _OPERATOR_FIELDS:
+                kwargs[field] = _decode_operator(node[field])
+                continue
             decoded = decode(node[field])
             kwargs[field] = _rewrap(decoded) if field in ORDERED_FIELDS else decoded
         elif field == "ctx":

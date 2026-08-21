@@ -60,11 +60,13 @@ def test_round_trips_every_corpus_file(path):
     assert ast.unparse(ast.fix_missing_locations(restored)) == ast.unparse(tree)
 
 
-def test_the_orderings_are_carried_through_unchanged():
-    """The same guarantee as above, asserted without the elision stage.
+def test_the_derivable_orderings_are_not_carried():
+    """Array position already says it, so carrying a number repeats it.
 
-    Hand-annotating the input keeps this independent of the elision stage:
-    the encoder must not decide which orderings are real, only carry them.
+    Duplicating it lets the two disagree: an editor that reorders a body and
+    forgets to renumber leaves a document whose text and whose integers say
+    different things. The RDF projection materializes them instead, because
+    there position genuinely cannot be recovered.
     """
     doc = ast2json(ast.parse("f(1, x=2)"))
     call = doc["body"][0]["value"]
@@ -73,20 +75,17 @@ def test_the_orderings_are_carried_through_unchanged():
     call["keywords"][0]["value"]["argumentName"] = "x"
     call["order"] = 0
 
-    encoded = encode(doc)
-    step = encoded["body"][0]["value"]
-    assert step["order"] == 0
-    assert step["args"][0] == {"literal": 1, "argumentIndex": 1}
-    assert step["keywords"][0]["value"] == {"literal": 2, "argumentIndex": -1, "argumentName": "x"}
+    blob = json.dumps(encode(doc))
+    assert "argumentIndex" not in blob
+    assert "argumentName" not in blob
+    assert '"order"' not in blob
 
 
 def test_an_ordering_does_not_force_a_literal_back_to_the_long_form():
-    """A shorthand carries its ordering alongside; if it fell back to
-    {"type": "Constant", ...} the compaction target would not be met.
-    """
+    """A literal stays a literal; an ordering must not push it to the long form."""
     doc = ast2json(ast.parse("f(1)"))
     doc["body"][0]["value"]["args"][0]["argumentIndex"] = 1
-    assert "type" not in encode(doc)["body"][0]["value"]["args"][0]
+    assert encode(doc)["body"][0]["value"]["args"][0] == {"literal": 1}
 
 
 def test_compact_form_is_about_a_quarter_of_raw():

@@ -117,17 +117,35 @@ def _index_arguments(out: dict[str, Any], folds_keywords: bool) -> None:
     if not folds_keywords:
         return
 
+    keywords = out.get("keywords", []) or []
+    if any(isinstance(item, dict) and not item.get("arg") for item in keywords):
+        # A `**kwargs` entry has no name to fold under, and its position among
+        # the named arguments is significant: `f(**rest, a=1)` and `f(a=1,
+        # **rest)` are different calls. A map cannot express that, so the call
+        # keeps its list. Folding is a compaction, and skipping it costs
+        # nothing but bytes.
+        return
+
     folded: dict[str, Any] = {}
-    for keyword in out.get("keywords", []) or []:
+    unfoldable: list[Any] = []
+    for keyword in keywords:
         if isinstance(keyword, dict) and keyword.get("arg"):
             value = keyword.get("value")
             if isinstance(value, dict):
                 value["argumentName"] = keyword["arg"]
                 value["argumentIndex"] = -1
             folded[keyword["arg"]] = value
+        else:
+            # `**kwargs` is a keyword with no name, so it has no key to fold
+            # under. Dropping the whole list once anything folded deleted it
+            # silently: `f(a=1, **rest)` regenerated as `f(a=1)`.
+            unfoldable.append(keyword)
     if folded:
         out["keywordArguments"] = folded
-        out.pop("keywords", None)
+        if unfoldable:
+            out["keywords"] = unfoldable
+        else:
+            out.pop("keywords", None)
 
 
 def _source_text(node: dict[str, Any], source: str) -> str:
@@ -181,6 +199,9 @@ def unfold_node(node: dict[str, Any], *, type_key: str = "_type") -> dict[str, A
         return node
     out = {key: value for key, value in node.items() if key != "keywordArguments"}
     position = {key: node[key] for key in _POSITION if key in node}
+    # Anything already here had no name to fold under, `**kwargs` being the
+    # only case. Overwriting the list rather than extending it dropped it.
+    survived = list(out.get("keywords", []) or [])
     out["keywords"] = [
         {
             type_key: "keyword",
@@ -189,7 +210,7 @@ def unfold_node(node: dict[str, Any], *, type_key: str = "_type") -> dict[str, A
             **position,
         }
         for name, value in folded.items()
-    ]
+    ] + survived
     return out
 
 
