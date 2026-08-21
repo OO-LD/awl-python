@@ -49,6 +49,7 @@ _VOCABULARY = (
     "argument_name",
     "argument_types",
     "branch_taken",
+    "condition_reads",
     "declaration_form",
     "declared_types",
     "exported_name",

@@ -129,19 +129,47 @@ def test_the_plan_and_the_document_describe_the_same_steps():
     assert plan_spans & spans, "no span joins the plan to the document"
 
 
-def test_the_ordering_query_the_design_was_measured_against():
-    """The concrete measure of success, over the whole chain rather than a
-    hand-built document: which steps run in the loop, in order.
+def test_which_steps_repeat_and_what_governs_the_repetition():
+    """The concrete measure of success, asked structurally.
+
+    A loop is identified by having a back edge, not by the text of its test.
+    Matching `awl:condition "i < cycles"` would work and would be worthless:
+    it is unparsed source, so it breaks on a space or a rename, and it says
+    nothing. What is queryable about a condition is the names it reads.
     """
     graph = pipeline.to_graph(_source(TIER2), module="battery.procedure", file="procedure.py")
     rows = graph.query("""
         PREFIX awl: <https://w3id.org/awl/schema/>
         SELECT ?callee ?line WHERE {
-          ?loop awl:condition "i < cycles" ; awl:whenTrue/awl:next* ?step .
+          ?loop ^awl:repeat ?back ; awl:whenTrue/awl:next* ?step .
           ?step awl:callee ?callee ; awl:span [ awl:startLine ?line ] .
         } ORDER BY ?line
     """)
     assert [str(row[0]) for row in rows] == ["charge", "rest"]
+
+
+def test_a_condition_is_queryable_by_what_it_reads():
+    """ "Which loops depend on cycles" is a question; "which loops are spelled
+    i < cycles" is not.
+    """
+    graph = pipeline.to_graph(_source(TIER2), module="battery.procedure", file="procedure.py")
+    rows = graph.query("""
+        PREFIX awl: <https://w3id.org/awl/schema/>
+        SELECT DISTINCT ?callee WHERE {
+          ?loop awl:conditionReads "cycles" ; awl:whenTrue/awl:next* ?step .
+          ?step awl:callee ?callee .
+        } ORDER BY ?callee
+    """)
+    assert [str(row[0]) for row in rows] == ["charge", "rest"]
+
+
+def test_which_step_follows_another():
+    graph = pipeline.to_graph(_source(TIER2), module="battery.procedure", file="procedure.py")
+    rows = graph.query("""
+        PREFIX awl: <https://w3id.org/awl/schema/>
+        SELECT ?next WHERE { ?a awl:callee "charge" ; awl:next ?b . ?b awl:callee ?next }
+    """)
+    assert [str(row[0]) for row in rows] == ["rest"]
 
 
 def test_the_semantic_question_over_the_whole_chain():

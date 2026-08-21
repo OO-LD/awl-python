@@ -70,14 +70,43 @@ def _callee_of(node: ast.stmt) -> str | None:
     return None
 
 
-def _condition_of(node: ast.stmt) -> str | None:
-    """Return the test of a conditional or loop, as written."""
+def _test_of(node: ast.stmt) -> ast.expr | None:
+    """Return the expression a conditional or loop tests."""
     test = getattr(node, "test", None)
     if test is not None:
-        return ast.unparse(test)
+        return test
     if isinstance(node, ast.For | ast.AsyncFor):
-        return ast.unparse(node.iter)
+        return node.iter
     return None
+
+
+def _condition_of(node: ast.stmt) -> str | None:
+    """Return the test as written, for display only.
+
+    Deliberately not a query surface. It is unparsed source text, so it is
+    sensitive to spacing and dies the moment a variable is renamed. What a
+    query wants is the structure, which reaches it two ways: the names the
+    test reads, below, and the document's own subtree, joined by span.
+    """
+    test = _test_of(node)
+    return ast.unparse(test) if test is not None else None
+
+
+def _condition_reads(node: ast.stmt) -> list[str]:
+    """Return the names a condition reads.
+
+    The queryable half of a condition. "Which loops depend on `cycles`" is a
+    question about this; "which loops are spelled `i < cycles`" is not a
+    question anyone asks.
+    """
+    test = _test_of(node)
+    if test is None:
+        return []
+    seen = []
+    for child in ast.walk(test):
+        if isinstance(child, ast.Name) and isinstance(child.ctx, ast.Load) and child.id not in seen:
+            seen.append(child.id)
+    return seen
 
 
 class _Graph:
@@ -106,6 +135,7 @@ class _Graph:
             "scope": scope,
             "callee": _callee_of(node),
             "condition": _condition_of(node),
+            "condition_reads": _condition_reads(node),
             "span": _span(node, self.file),
         })
         return identity
@@ -331,7 +361,7 @@ def as_document(graph: dict[str, Any]) -> dict[str, Any]:
             "parser_type_name": step["parser_type_name"],
             "span": step["span"],
         }
-        for key in ("callee", "condition", "scope"):
+        for key in ("callee", "condition", "condition_reads", "scope"):
             if step.get(key):
                 node[key] = step[key]
         for kind, targets in outgoing.get(step["id"], {}).items():

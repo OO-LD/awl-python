@@ -143,15 +143,24 @@ def test_the_plan_is_queryable_as_a_path_expression():
 
     Reifying would need two joins to cross one edge and would put the reason
     behind a literal comparison, so this query could not be written at all.
+    The loop is selected by having a back edge, which is a structural fact,
+    rather than by the text of its test, which is not.
     """
     rows = _graph_of(TIER2).query("""
         PREFIX awl: <https://w3id.org/awl/schema/>
         SELECT ?callee ?line WHERE {
-          ?loop awl:condition "i < cycles" ; awl:whenTrue/awl:next* ?step .
+          ?loop ^awl:repeat ?back ; awl:whenTrue/awl:next* ?step .
           ?step awl:callee ?callee ; awl:span [ awl:startLine ?line ] .
         } ORDER BY ?line
     """)
     assert [str(row[0]) for row in rows] == ["charge", "rest"]
+
+
+def test_a_condition_records_the_names_it_reads():
+    """The queryable half of a condition; the text is for display only."""
+    step = next(item for item in _cfg("while i < cycles:\n    a()\n")["steps"] if item["condition"])
+    assert step["condition_reads"] == ["i", "cycles"]
+    assert step["condition"] == "i < cycles", "kept, but for rendering"
 
 
 def test_the_back_edge_survives_the_projection():
