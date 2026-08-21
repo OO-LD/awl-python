@@ -152,8 +152,15 @@ TRANSPARENT = MappingProxyType({
     "signature": _WRAPPERS,
 })
 
-#: ``keyword`` is never transparent: folding preserves the argument name.
-FOLDS_KEYWORDS = MappingProxyType({"ast": False, "workflow": True, "provenance": True, "signature": True})
+#: ``keyword`` is never transparent: folding preserves the argument name,
+#: where splicing the value out discards it.
+#:
+#: Every profile folds, including the faithful one, because folding is a
+#: reversible rewrite rather than a loss: ``awl.collapse.expand`` restores the
+#: keyword list. Leaving it off for ``ast`` bought nothing and prevented the
+#: constructor collapse from ever firing on the profile that regenerates code,
+#: which is the one place it is most useful.
+FOLDS_KEYWORDS = MappingProxyType({"ast": True, "workflow": True, "provenance": True, "signature": True})
 
 _EXPRESSIONS = frozenset({"BinOp", "BoolOp", "UnaryOp", "Compare", "ListComp", "DictComp", "SetComp", "GeneratorExp"})
 

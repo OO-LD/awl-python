@@ -66,7 +66,6 @@ def test_the_ast_profile_elides_nothing_structural():
     """Guards the regression that turned named arguments into positional ones."""
     assert TRANSPARENT["ast"] == frozenset()
     assert OPAQUE["ast"] == frozenset()
-    assert FOLDS_KEYWORDS["ast"] is False
 
 
 def test_keyword_is_never_transparent():
@@ -75,8 +74,13 @@ def test_keyword_is_never_transparent():
         assert "keyword" not in TRANSPARENT[profile]
 
 
-@pytest.mark.parametrize("profile", ["workflow", "provenance", "signature"])
-def test_reduced_profiles_fold_keywords(profile):
+@pytest.mark.parametrize("profile", ["ast", "workflow", "provenance", "signature"])
+def test_every_profile_folds_keywords(profile):
+    """Folding reverses, so no profile has a reason to skip it.
+
+    The faithful profile in particular: without folding, the constructor
+    collapse could never fire on the one profile that regenerates code.
+    """
     assert FOLDS_KEYWORDS[profile] is True
 
 

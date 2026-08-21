@@ -19,7 +19,7 @@ from typing import Any
 
 from awl.vocab import FOLDS_KEYWORDS, OPAQUE, ORDERED_FIELDS, TRANSPARENT
 
-__all__ = ["elide"]
+__all__ = ["elide", "unfold", "unfold_node"]
 
 
 def elide(doc: Any, *, profile: str = "ast", source: str = "") -> Any:
@@ -142,3 +142,68 @@ def _source_text(node: dict[str, Any], source: str) -> str:
     if start == end:
         return lines[start - 1][node.get("col_offset", 0) : node.get("end_col_offset")]
     return "\n".join(lines[start - 1 : end])
+
+
+#: Position keys copied onto a reconstructed keyword node.
+_POSITION = ("lineno", "col_offset", "end_lineno", "end_col_offset")
+
+#: Markers folding adds. They are derivable from the restored keyword list, so
+#: carrying them back would duplicate what the structure already says.
+_ORDERING = ("argumentName", "argumentIndex")
+
+
+def unfold_node(node: dict[str, Any]) -> dict[str, Any]:
+    """Reverse keyword folding for one node.
+
+    Parameters
+    ----------
+    node : dict
+        A node that may carry ``keywordArguments``.
+
+    Returns
+    -------
+    dict
+        The node with its ``keywords`` list restored, or unchanged.
+
+    Notes
+    -----
+    Folding is a rewrite, not a loss, and this is what makes that true. Every
+    profile folds because of it, including the faithful one: without a working
+    inverse the profile that regenerates code could not fold, and the
+    constructor collapse could never fire where it is most useful.
+    """
+    folded = node.get("keywordArguments")
+    if not isinstance(folded, dict):
+        return node
+    out = {key: value for key, value in node.items() if key != "keywordArguments"}
+    position = {key: node[key] for key in _POSITION if key in node}
+    out["keywords"] = [
+        {
+            "_type": "keyword",
+            "arg": name,
+            "value": {k: v for k, v in value.items() if k not in _ORDERING} if isinstance(value, dict) else value,
+            **position,
+        }
+        for name, value in folded.items()
+    ]
+    return out
+
+
+def unfold(doc: Any) -> Any:
+    """Reverse keyword folding throughout a document.
+
+    Parameters
+    ----------
+    doc : dict or list
+        An ``AstDoc`` produced by :func:`elide`.
+
+    Returns
+    -------
+    dict or list
+        A document whose calls carry ``keywords`` again, ready to unparse.
+    """
+    if isinstance(doc, list):
+        return [unfold(item) for item in doc]
+    if not isinstance(doc, dict):
+        return doc
+    return unfold_node({key: unfold(value) for key, value in doc.items()})

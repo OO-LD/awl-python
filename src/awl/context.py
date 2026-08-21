@@ -113,11 +113,26 @@ def build_context(types: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         context[node_type] = {"@id": f"{AWL}{node_type}", "@context": terms}
 
     for info in types or []:
-        for field in info.get("fields", []):
-            term = _term_for(field)
-            if term is not None:
-                context[field["name"]] = term
+        _add_type(context, info)
     return {"@context": context}
+
+
+def _add_type(context: dict[str, Any], info: dict[str, Any]) -> None:
+    """Add one declared class to the context: its name, then its fields.
+
+    Naming the class as a term is what lets a collapsed node be written
+    ``{"@type": "ChargeParam", ...}`` rather than carrying an IRI and a
+    separate copy of the local name. The term resolves to the minted IRI, so
+    the compact form and the RDF agree without repeating anything.
+    """
+    identity = (info.get("identity") or {}).get("iri")
+    name = (info.get("identity") or {}).get("symbol")
+    if identity and name:
+        context[name] = identity
+    for field in info.get("fields", []):
+        term = _term_for(field)
+        if term is not None:
+            context[field["name"]] = term
 
 
 def _term_for(field: dict[str, Any]) -> dict[str, Any] | None:

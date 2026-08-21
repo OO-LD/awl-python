@@ -21,6 +21,7 @@ TYPES: dict[str, Any] = {
     "ChargeParam": {
         "identity": {
             "iri": "https://w3id.org/awl/py/battery.params/ChargeParam",
+            "symbol": "ChargeParam",
             "scheme": "py",
         },
         "declaredTypes": ["ex:ChargeParam"],
@@ -61,7 +62,7 @@ def _find(doc, predicate):
 
 def test_a_resolved_constructor_becomes_one_typed_node():
     out = collapse(_folded(), types=TYPES, resolved=RESOLVED)
-    node = _find(out, lambda item: item.get("@type") == "ex:ChargeParam")
+    node = _find(out, lambda item: "ex:ChargeParam" in (item.get("@type") or []))
     assert node is not None
     assert node["target_voltage"] == 4.2
     assert node["c_rate"] == 0.23
@@ -77,16 +78,15 @@ def test_the_property_namespace_is_the_resolvable_iri():
     out = collapse(_folded(), types=TYPES, resolved=RESOLVED)
     node = _find(out, lambda item: "@context" in item)
     assert node["@context"]["@vocab"].startswith("https://w3id.org/awl/")
-    assert node["@type"] == "ex:ChargeParam", "the declared type is still asserted"
+    assert node["@type"] == ["ChargeParam", "ex:ChargeParam"], "class name first, then co-types"
 
 
 def test_a_type_without_a_declared_iri_falls_back_to_the_minted_one():
     """Tier 2 has no declared IRI, and must still collapse to something typed."""
-    minted = TYPES["ChargeParam"]["identity"]["iri"]
     types = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
     out = collapse(_folded(), types=types, resolved=RESOLVED)
-    node = _find(out, lambda item: "_callee" in item)
-    assert node["@type"] == minted
+    node = _find(out, lambda item: "@type" in item)
+    assert node["@type"] == ["ChargeParam"], "the class name alone still identifies it"
 
 
 def test_an_unresolved_callee_is_left_alone():
@@ -106,10 +106,18 @@ def test_an_undeclared_keyword_prevents_collapse():
     assert _find(out, lambda item: "@type" in item) is None
 
 
-def test_an_unfolded_document_is_left_alone():
-    """The round-trippable profile does not fold, so there is nothing to key on."""
+def test_the_faithful_profile_also_collapses():
+    """Folding is reversible, so every profile folds and the collapse can fire
+    where it matters most: the one that regenerates code.
+    """
     out = collapse(elide(ast2json(ast.parse(SOURCE)), profile="ast"), types=TYPES, resolved=RESOLVED)
-    assert _find(out, lambda item: "@type" in item) is None
+    assert _find(out, lambda item: "@type" in item) is not None
+
+
+def test_a_document_with_no_folded_keywords_is_left_alone():
+    """Nothing to key on, so nothing is invented."""
+    doc = {"_type": "Call", "func": {"_type": "Name", "id": "ChargeParam"}, "args": []}
+    assert collapse(doc, types=TYPES, resolved=RESOLVED) == doc
 
 
 def test_a_nested_call_inside_an_uncollapsed_one_still_collapses():
@@ -117,12 +125,12 @@ def test_a_nested_call_inside_an_uncollapsed_one_still_collapses():
     out = collapse(_folded(), types=TYPES, resolved=RESOLVED)
     outer = _find(out, lambda item: item.get("func", {}).get("id") == "charge")
     assert outer is not None, "charge is not a known type, so it stays a call"
-    assert _find(outer, lambda item: item.get("@type") == "ex:ChargeParam") is not None
+    assert _find(outer, lambda item: "ex:ChargeParam" in (item.get("@type") or [])) is not None
 
 
 def test_collapse_is_reversible():
     """Collapse, expand, unparse: back to the source that produced it."""
-    collapsed = collapse(_folded(), types=TYPES, resolved=RESOLVED)
+    collapsed = collapse(_folded(), types=TYPES, resolved=RESOLVED, keep_spans=True)
     restored = ast.unparse(ast.fix_missing_locations(json2ast(expand(collapsed))))
     assert restored.strip() == SOURCE.strip()
 
@@ -132,7 +140,7 @@ def test_an_edit_made_in_the_form_survives_expansion():
     collapsed = collapse(_folded(), types=TYPES, resolved=RESOLVED)
 
     edited = json.loads(json.dumps(collapsed))  # as a form would return it
-    node = _find(edited, lambda item: "_callee" in item)
+    node = _find(edited, lambda item: "@type" in item)
     node["target_voltage"] = 4.1
 
     out = ast.unparse(ast.fix_missing_locations(json2ast(expand(edited))))
@@ -147,23 +155,28 @@ def test_the_collapsed_node_is_a_flat_editable_dict():
     `keywords[0].value.value`.
     """
     collapsed = collapse(_folded(), types=TYPES, resolved=RESOLVED)
-    node = _find(collapsed, lambda item: "_callee" in item)
+    node = _find(collapsed, lambda item: "@type" in item)
     fields = {key: value for key, value in node.items() if key not in ("@context", "@type", "@", "_callee", "order")}
     assert fields == {"target_voltage": 4.2, "c_rate": 0.23}
     assert all(isinstance(value, float) for value in fields.values()), "scalars, not subtrees"
 
 
 def test_the_span_is_carried_so_a_patch_can_be_applied_in_place():
-    collapsed = collapse(_folded(), types=TYPES, resolved=RESOLVED)
-    node = _find(collapsed, lambda item: "_callee" in item)
+    """Opt-in: needed to patch the file in place, not to regenerate code."""
+    collapsed = collapse(_folded(), types=TYPES, resolved=RESOLVED, keep_spans=True)
+    node = _find(collapsed, lambda item: "@type" in item)
     line, col, end_line, end_col = node["@"]
     assert (line, end_line) == (1, 1)
     assert SOURCE[col:end_col].startswith("ChargeParam(")
 
 
-def test_a_node_without_callee_cannot_be_expanded():
-    """Guards the reversibility contract itself."""
-    with pytest.raises(ValueError, match="_callee"):
+def test_a_node_naming_no_local_class_cannot_be_expanded():
+    """Guards the reversibility contract itself.
+
+    A CURIE is emitted verbatim and names no local class, so there is no name
+    to write. Guessing one would be worse than refusing.
+    """
+    with pytest.raises(ValueError, match="no local class"):
         expand({"@type": "ex:ChargeParam", "target_voltage": 4.2})
 
 
@@ -181,7 +194,7 @@ def test_the_collapsed_node_survives_the_rdf_projection():
     from rdflib import Graph
 
     collapsed = collapse(_folded(), types=TYPES, resolved=RESOLVED)
-    node = _find(collapsed, lambda item: "_callee" in item)
+    node = _find(collapsed, lambda item: "@type" in item)
     graph = Graph()
     graph.parse(data=json.dumps(node), format="json-ld")
     predicates = {str(predicate) for _, predicate, _ in graph}
@@ -193,7 +206,7 @@ def test_the_projected_values_are_the_ones_written():
     from rdflib import Graph
 
     collapsed = collapse(_folded(), types=TYPES, resolved=RESOLVED)
-    node = _find(collapsed, lambda item: "_callee" in item)
+    node = _find(collapsed, lambda item: "@type" in item)
     graph = Graph()
     graph.parse(data=json.dumps(node), format="json-ld")
     values = {str(object_) for _, _, object_ in graph}
@@ -205,3 +218,83 @@ def test_the_input_document_is_not_mutated():
     before = json.dumps(doc)
     collapse(doc, types=TYPES, resolved=RESOLVED)
     assert json.dumps(doc) == before
+
+
+def test_the_compact_editor_form_is_class_name_plus_data():
+    """The target shape: no AST plumbing around a constructor.
+
+    A document-level context supplies the class term, so the node itself is
+    just what it is and what it holds.
+    """
+    from awl.compact import encode
+
+    types = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
+    doc = collapse(
+        elide(ast2json(ast.parse(SOURCE)), profile="ast"),
+        types=types,
+        resolved=RESOLVED,
+        embed_context=False,
+    )
+    node = _find(encode(doc), lambda item: "@type" in item)
+    assert node == {"@type": ["ChargeParam"], "target_voltage": 4.2, "c_rate": 0.23}
+
+
+def test_that_form_regenerates_the_original_python():
+    """The whole point: export, hold as JSON, regenerate."""
+    from awl.compact import decode, encode
+
+    types = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
+    doc = collapse(
+        elide(ast2json(ast.parse(SOURCE)), profile="ast"),
+        types=types,
+        resolved=RESOLVED,
+        embed_context=False,
+    )
+    restored = ast.unparse(ast.fix_missing_locations(decode(encode(doc))))
+    assert restored.strip() == SOURCE.strip()
+
+
+def test_editing_the_json_changes_the_regenerated_python():
+    """Edit a field as plain JSON, with no knowledge of the syntax tree."""
+    from awl.compact import decode, encode
+
+    types = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
+    compact = encode(
+        collapse(
+            elide(ast2json(ast.parse(SOURCE)), profile="ast"),
+            types=types,
+            resolved=RESOLVED,
+            embed_context=False,
+        )
+    )
+    edited = json.loads(json.dumps(compact))
+    node = _find(edited, lambda item: "@type" in item)
+    node["target_voltage"] = 4.1
+
+    out = ast.unparse(ast.fix_missing_locations(decode(edited)))
+    assert "target_voltage=4.1" in out
+    assert "c_rate=0.23" in out, "the untouched field is unharmed"
+
+
+def test_the_class_term_resolves_through_the_document_context():
+    """Dropping the embedded context must not cost the RDF its IRI."""
+    from rdflib import Graph
+
+    from awl.context import build_context
+
+    types = {"ChargeParam": {**TYPES["ChargeParam"], "declaredTypes": []}}
+    doc = collapse(
+        elide(ast2json(ast.parse(SOURCE)), profile="ast"),
+        types=types,
+        resolved=RESOLVED,
+        embed_context=False,
+    )
+    node = _find(doc, lambda item: "@type" in item)
+    graph = Graph()
+    graph.parse(
+        data=json.dumps({"@context": build_context(list(types.values()))["@context"], **node}),
+        format="json-ld",
+    )
+    assert any(str(object_) == types["ChargeParam"]["identity"]["iri"] for _, _, object_ in graph), (
+        "the bare term resolved to the minted IRI"
+    )

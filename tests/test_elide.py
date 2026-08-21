@@ -12,7 +12,7 @@ from ast2json import ast2json
 from json2ast import json2ast
 
 from awl import contracts
-from awl.elide import elide
+from awl.elide import elide, unfold
 
 TIER2 = contracts.CORPUS_DIR / "tier2_dataclass" / "procedure.py"
 
@@ -43,7 +43,7 @@ def test_the_ast_profile_round_trips(path):
     fidelity belongs to write-back, by patching spans.
     """
     tree = ast.parse(path.read_text(encoding="utf-8"))
-    restored = json2ast(elide(ast2json(tree), profile="ast"))
+    restored = json2ast(unfold(elide(ast2json(tree), profile="ast")))
     assert ast.unparse(ast.fix_missing_locations(restored)) == ast.unparse(tree)
 
 
@@ -55,7 +55,7 @@ def test_a_named_argument_never_becomes_positional():
     nothing to match on.
     """
     source = "charge(ChargeParam(target_voltage=4.2, c_rate=0.23))\n"
-    doc = elide(ast2json(ast.parse(source)), profile="ast")
+    doc = unfold(elide(ast2json(ast.parse(source)), profile="ast"))
     restored = ast.unparse(ast.fix_missing_locations(json2ast(doc)))
     assert "target_voltage=4.2" in restored
     assert "ChargeParam(4.2" not in restored
@@ -94,12 +94,28 @@ def test_a_folded_keyword_keeps_its_name_and_is_marked_named():
     assert "keywords" not in call, "folded, so the wrapper list is gone"
 
 
-def test_the_ast_profile_does_not_fold():
-    """Folding rewrites the call, so the round-trippable profile must not."""
+def test_every_profile_folds_because_folding_reverses():
+    """Folding is a rewrite, not a loss.
+
+    Leaving it off for the faithful profile bought nothing and stopped the
+    constructor collapse from ever firing on the one profile that regenerates
+    code.
+    """
     doc = elide(ast2json(ast.parse("f(x=1)\n")), profile="ast")
     call = _find(doc, lambda node: node.get("_type") == "Call")
-    assert "keywordArguments" not in call
-    assert call["keywords"][0]["arg"] == "x"
+    assert "keywordArguments" in call
+    assert "keywords" not in call
+
+    restored = _find(unfold(doc), lambda node: node.get("_type") == "Call")
+    assert restored["keywords"][0]["arg"] == "x"
+    assert "keywordArguments" not in restored
+
+
+def test_unfolding_drops_the_markers_it_added():
+    """argumentName and argumentIndex are derivable from the restored list."""
+    doc = unfold(elide(ast2json(ast.parse("f(x=1)\n")), profile="ast"))
+    value = _find(doc, lambda node: node.get("_type") == "Call")["keywords"][0]["value"]
+    assert "argumentName" not in value and "argumentIndex" not in value
 
 
 def test_positional_arguments_are_numbered_from_one():

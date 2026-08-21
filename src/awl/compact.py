@@ -141,6 +141,33 @@ def encode(doc: Any, *, keep_spans: bool = False) -> Any:
     return node
 
 
+def _decode_collapsed(node: dict[str, Any]) -> ast.Call:
+    """Rebuild the constructor call a collapsed node stands for.
+
+    The compact editor form of a typed constructor is its class name and its
+    data and nothing else. Regenerating code has to start from exactly that
+    document, so the decoder recognises it rather than requiring the caller to
+    undo the collapse first.
+
+    The name comes from ``awl.collapse``: which key names the class is one
+    decision, and two implementations of it would drift.
+    """
+    from awl.collapse import RESERVED, callee_of
+
+    name = callee_of(node)
+    if name is None:
+        raise ValueError("collapsed node names no local class, so no constructor can be rebuilt")
+    keywords = [
+        ast.keyword(
+            arg=key,
+            value=decode(value) if isinstance(value, dict) else ast.Constant(value=value),
+        )
+        for key, value in node.items()
+        if key not in RESERVED
+    ]
+    return ast.Call(func=ast.Name(id=name, ctx=ast.Load()), args=[], keywords=keywords)
+
+
 def decode(node: Any) -> Any:
     """Decode the compact form back into a live AST node.
 
@@ -167,6 +194,8 @@ def decode(node: Any) -> Any:
     if not isinstance(node, dict):
         return node
 
+    if "@type" in node and "_" not in node:
+        return _decode_collapsed(node)
     if "c" in node and set(node) <= {"c", *_SHORTHAND_EXTRA}:
         return ast.Constant(value=node["c"])
     if "$" in node and set(node) <= {"$", *_SHORTHAND_EXTRA}:
