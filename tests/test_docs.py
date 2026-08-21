@@ -83,5 +83,5 @@ def test_the_built_page_renders_three_tab_labels_per_file():
 
     labels = re.findall(r"<label[^>]*>([^<]+)</label>", built.read_text(encoding="utf-8"))
     expected = len(contracts.corpus_files())
-    for title in ("Python", "AWL AST, collapsed", "AWL AST, plain"):
+    for title in ("Python", "AWL AST, collapsed", "AWL AST, plain", "RDF"):
         assert labels.count(title) == expected, f"{title}: {labels.count(title)} of {expected}"

@@ -64,6 +64,7 @@ def _views(path: Path) -> list[tuple[str, str]]:
             dumps(pipeline.to_compact(source, module=module, index=_siblings(path)), width=128),
         ),
         ("AWL AST, plain", dumps(encode(elide(to_doc(ast.parse(source)), profile="ast")), width=128)),
+        ("RDF", _turtle(source, module, path)),
     ]
 
 
@@ -81,6 +82,19 @@ def _tabs(entries):
     )
 
 
+def _turtle(source: str, module: str, path: Path) -> str:
+    """Return the graph this file projects to, as Turtle.
+
+    The whole chain, not the document alone: the syntax, the control-flow
+    plan, the def-use edges and the resolved member writes land in one graph,
+    which is what a query is actually run against.
+    """
+    graph = pipeline.to_graph(source, module=module, file=path.name, index=_siblings(path))
+    graph.bind("awl", "https://w3id.org/awl/schema/")
+    graph.bind("py", "https://w3id.org/awl/py/")
+    return graph.serialize(format="turtle").strip()
+
+
 def _split_view(path: Path) -> str:
     """Return one file's source beside its representations."""
     return "\n".join([
@@ -96,7 +110,7 @@ def _split_view(path: Path) -> str:
         "",
         '<div markdown="1">',
         "",
-        _tabs([(title, rendered, "json") for title, rendered in _views(path)]),
+        _tabs([(title, body, "turtle" if title == "RDF" else "json") for title, body in _views(path)]),
         "",
         "</div>",
         "",
