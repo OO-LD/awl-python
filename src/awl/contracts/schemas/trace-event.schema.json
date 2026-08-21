@@ -39,7 +39,7 @@
     },
     "callee": {
       "type": "string",
-      "description": "On a c_call or c_return event: the fully qualified name of the C callee, which settrace cannot see and setprofile can. The same string M2 mints an identity from."
+      "description": "On a c_call or c_return event: the fully qualified name of the C callee, which settrace cannot see and setprofile can. The same string awl.ids mints an identity from."
     },
     "index": {
       "type": "integer",

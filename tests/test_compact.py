@@ -1,4 +1,4 @@
-"""M9: the compact AST codec, which is the editor's model.
+"""The compact AST codec, which is the editor's model.
 
 Imports only the module under test, the contracts package and ast2json.
 """
@@ -51,7 +51,7 @@ def test_round_trips_every_corpus_file(path):
 
     ast.unparse normalises formatting and discards comments, so == source is
     unachievable and was measured failing on all 8 corpus files even with a
-    correct implementation. Byte-level fidelity is M10's guarantee, delivered
+    correct implementation. Byte-level fidelity is the write-back guarantee, delivered
     by patching spans rather than by regenerating.
     """
     tree = ast.parse(path.read_text(encoding="utf-8"))
@@ -60,10 +60,10 @@ def test_round_trips_every_corpus_file(path):
 
 
 def test_the_orderings_are_carried_through_unchanged():
-    """The same guarantee as above, asserted without M5.
+    """The same guarantee as above, asserted without the elision stage.
 
-    Hand-annotating the input is what makes this runnable in phase 2: the
-    encoder must not decide which orderings are real, only carry them.
+    Hand-annotating the input keeps this independent of the elision stage:
+    the encoder must not decide which orderings are real, only carry them.
     """
     doc = ast2json(ast.parse("f(1, x=2)"))
     call = doc["body"][0]["value"]
@@ -108,12 +108,12 @@ def test_the_compaction_target_holds_across_the_corpus(path):
 def test_spans_cost_roughly_fourteen_points_not_two():
     """Correcting a spec claim that was measured wrong.
 
-    The spec said spans cost "about two percentage points". Measured on this
+    Spans were expected to cost about two percentage points. Measured on this
     file they cost 13.8 (24.5% to 38.3%), and up to 16.4 on the real corpus
     file, because a span rides on every expression node and not only on
     statements. Statement-only spans would be cheaper and would break the
-    thing spans exist for: M11 attributes trace events at expression level via
-    co_positions(), and M12 edits a literal by its own span.
+    thing spans exist for: the tracer attributes events at expression level via
+    co_positions(), and the editor edits a literal by its own span.
     """
     raw_doc = ast2json(ast.parse(TIER2.read_text(encoding="utf-8")))
     raw = len(json.dumps(raw_doc))

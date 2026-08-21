@@ -7,7 +7,7 @@
   },
   "x-oold-version": "0.1.0",
   "title": "ContextDoc",
-  "description": "The JSON-LD context M7 emits. Ordered bodies use @container @list, numeric terms are explicitly typed so a float survives the RDF round trip, and collapsed nodes carry an embedded context.",
+  "description": "The JSON-LD context awl.context emits. Ordered bodies use @container @list, numeric terms are explicitly typed so a float survives the RDF round trip, and collapsed nodes carry an embedded context.",
   "type": "object",
   "properties": {
     "@context": {

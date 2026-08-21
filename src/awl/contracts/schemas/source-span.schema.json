@@ -7,7 +7,7 @@
   },
   "x-oold-version": "0.1.0",
   "title": "SourceSpan",
-  "description": "A range in a source file, as produced by ast.co_positions(). The unit of attribution shared by tracing (M11) and write-back (M10).",
+  "description": "A range in a source file, as produced by ast.co_positions(). The unit of attribution shared by tracing and write-back.",
   "type": "object",
   "properties": {
     "file": {

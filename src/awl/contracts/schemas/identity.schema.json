@@ -7,7 +7,7 @@
   },
   "x-oold-version": "0.1.0",
   "title": "Identity",
-  "description": "A minted, globally unique name for a code entity. Produced only by M2, the single normalization authority: two producers that disagree here split one entity into disconnected nodes.",
+  "description": "A minted, globally unique name for a code entity. Produced only by awl.ids, the single normalization authority: two producers that disagree here split one entity into disconnected nodes.",
   "type": "object",
   "properties": {
     "iri": {

@@ -1,4 +1,4 @@
-"""M0: the contract schemas and the validation corpus.
+"""The contract schemas and the validation corpus.
 
 Imports nothing but the module under test, which is the property that keeps
 every other module independently implementable.

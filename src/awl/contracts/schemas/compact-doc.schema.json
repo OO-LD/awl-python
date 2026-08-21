@@ -7,7 +7,7 @@
   },
   "x-oold-version": "0.1.0",
   "title": "CompactDoc",
-  "description": "The compact AST encoding used as the editor model. Three node forms: a typed node, a literal, and a name. Required fields are reconstructed by the decoder, so this form does not carry them. All three forms may additionally carry M5 orderings and an optional span.",
+  "description": "The compact AST encoding used as the editor model. Three node forms: a typed node, a literal, and a name. Required fields are reconstructed by the decoder, so this form does not carry them. All three forms may additionally carry the orderings materialized during elision and an optional span.",
   "type": "object",
   "properties": {},
   "required": [],
@@ -23,7 +23,7 @@
         },
         "order": {
           "type": "integer",
-          "description": "Syntactic sibling slot, materialized by M5."
+          "description": "Syntactic sibling slot, materialized during elision."
         },
         "argumentIndex": {
           "type": "integer",
@@ -73,7 +73,7 @@
         "c": {},
         "order": {
           "type": "integer",
-          "description": "Syntactic sibling slot, materialized by M5."
+          "description": "Syntactic sibling slot, materialized during elision."
         },
         "argumentIndex": {
           "type": "integer",
@@ -109,7 +109,7 @@
         },
         "order": {
           "type": "integer",
-          "description": "Syntactic sibling slot, materialized by M5."
+          "description": "Syntactic sibling slot, materialized during elision."
         },
         "argumentIndex": {
           "type": "integer",
@@ -146,7 +146,7 @@
         },
         "order": {
           "type": "integer",
-          "description": "Syntactic sibling slot, materialized by M5."
+          "description": "Syntactic sibling slot, materialized during elision."
         },
         "argumentIndex": {
           "type": "integer",

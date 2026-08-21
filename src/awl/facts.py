@@ -4,7 +4,7 @@ Extraction that guesses cannot be audited, and a wrong guess is
 indistinguishable from an observation once it is in the graph. So this module
 records ``from battery.params import ChargeParam`` as an import fact with an
 alias hop and stops. Whether ``ChargeParam`` at a given call site *is* that
-class is M4's judgement, and it carries a confidence tier.
+class is awl.resolve's judgement, and it carries a confidence tier.
 
 User code is never imported. Tier 3 of the corpus references an experimental
 oold branch that need not be installed, and the notation is statically visible,
@@ -223,8 +223,9 @@ def _parameters(node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[dict[str, 
 class _Walk(ast.NodeVisitor):
     """One pass, producing every SymbolFacts member.
 
-    A draft populated only ``imports`` and left the rest empty, which left M4
-    with nothing to bind and made every downstream test pass vacuously.
+    Populating only ``imports`` and leaving the rest empty would leave name
+    resolution with nothing to bind, and make every downstream test pass
+    vacuously.
     """
 
     def __init__(self, module: str, file: str) -> None:

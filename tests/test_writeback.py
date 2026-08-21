@@ -1,4 +1,4 @@
-"""M10: applying editor changes back to source without disturbing trivia.
+"""Applying editor changes back to source without disturbing trivia.
 
 Imports only the module under test.
 """

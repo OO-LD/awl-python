@@ -281,7 +281,7 @@ def trace(fn: Callable[[], Any], *, capture_c_calls: bool = True) -> list[dict[s
     capture_c_calls : bool, optional
         Also install a profile hook, so C callees are named. ``settrace`` alone
         cannot see them, and ``arg.__module__ + arg.__qualname__`` is exactly
-        the identity M2 mints.
+        the identity awl.ids mints.
 
     Returns
     -------

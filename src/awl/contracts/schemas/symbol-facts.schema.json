@@ -7,7 +7,7 @@
   },
   "x-oold-version": "0.1.0",
   "title": "SymbolFacts",
-  "description": "Observation only: what M3 saw in the source, with no inference applied. M4 turns these into ResolvedNames.",
+  "description": "Observation only: what awl.facts saw in the source, with no inference applied. awl.resolve turns these into ResolvedNames.",
   "type": "object",
   "properties": {
     "file": {

@@ -1,4 +1,4 @@
-"""M3: observation of what the source says, with nothing inferred.
+"""Observation of what the source says, with nothing inferred.
 
 Imports only the module under test, awl.ids and the contracts package.
 """
@@ -47,7 +47,7 @@ def test_a_star_import_is_recorded_and_never_resolved():
 
 
 def test_every_call_site_becomes_a_use():
-    """M4 binds uses, so an unpopulated list silently disables resolution."""
+    """awl.resolve binds uses, so an unpopulated list silently disables resolution."""
     facts = _facts(TIER2, "tier2_dataclass.procedure")
     used = {entry["localName"] for entry in facts["uses"]}
     assert {"charge", "rest", "ChargeParam"} <= used
@@ -56,7 +56,7 @@ def test_every_call_site_becomes_a_use():
 
 
 def test_a_use_records_its_argument_type_names():
-    """M2 mints the typed instantiation from these, so an untyped call is
+    """awl.ids mints the typed instantiation from these, so an untyped call is
     distinguishable from a call on a known type.
     """
     facts = extract("charge(ChargeParam(target_voltage=4.2))\n", module="m")
@@ -73,7 +73,7 @@ def test_a_function_becomes_a_declaration():
 
 
 def test_module_level_names_become_exports():
-    """What another module could import from here; M4's re-export input."""
+    """What another module could import from here; the re-export input for resolution."""
     facts = _facts(TIER2, "tier2_dataclass.procedure")
     assert "procedure" in {entry["exportedName"] for entry in facts["exports"]}
 
@@ -122,7 +122,7 @@ def test_a_plain_field_is_not_a_link():
 
 
 def test_a_numeric_field_carries_its_annotation():
-    """M7's xsd:double coercion is derived from this.
+    """The xsd:double coercion in awl.context is derived from this.
 
     Without it an integer-valued float field round-trips through JSON-LD as
     xsd:integer, which is the cross-language hazard the context exists to fix.
@@ -188,7 +188,7 @@ def test_the_id_and_type_fields_are_not_data_fields():
 
 
 def test_a_dataclass_yields_fields_but_no_type_info():
-    """Tier 2 is a rung, not a gap. F2's acceptance criterion.
+    """Tier 2 is a rung, not a gap.
 
     A plain dataclass has no IRIs, so no TypeInfo. It does have fields,
     annotations and an import-path identity, so it must still produce a

@@ -1,4 +1,4 @@
-"""M11: runtime tracing, attributed to AST nodes by span.
+"""Runtime tracing, attributed to AST nodes by span.
 
 Imports only the module under test and the contracts package.
 """
@@ -43,7 +43,7 @@ def test_no_position_packing_survives_anywhere():
 
 
 def test_c_callees_are_named():
-    """settrace cannot see these; setprofile can, and gives the FQN M2 mints."""
+    """settrace cannot see these; setprofile can, and gives the FQN awl.ids mints."""
     import math
 
     events = trace(lambda: math.sqrt(2))

@@ -1,4 +1,4 @@
-"""M2: the single identity-minting authority.
+"""The single identity-minting authority.
 
 Imports only the module under test and the contracts package.
 """
@@ -122,7 +122,7 @@ def test_identity_validates_against_the_contract():
 def test_a_class_identity_validates_against_the_contract():
     """declaredTypes is part of the contract, not an undeclared extra.
 
-    M3 and M6 read it, so it needs a schema entry or they are consuming a
+    awl.facts and awl.collapse read it, so it needs a schema entry or they are consuming a
     field no contract describes.
     """
     from awl import contracts

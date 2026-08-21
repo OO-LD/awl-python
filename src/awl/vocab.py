@@ -135,7 +135,7 @@ def operator_name_for(ast_node_name: str) -> str | None:
     return _OPERATORS.get(ast_node_name)
 
 
-#: Statement lists whose order is semantic, so M5 materializes an index on them.
+#: Statement lists whose order is semantic, so the elision stage materializes an index on them.
 ORDERED_FIELDS = ("body", "orelse", "finalbody")
 
 _WRAPPERS = frozenset({"Expr", "arguments", "alias"})

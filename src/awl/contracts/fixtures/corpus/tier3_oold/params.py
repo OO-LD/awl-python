@@ -1,6 +1,6 @@
 """Tier 3: parameter object in the OO-LD notation.
 
-Exercises every declaration form M3 must recognise:
+Exercises every declaration form the extraction pass must recognise:
 
 - a declared instance type, via the ``type`` field default;
 - ``Link[T]`` inside the annotation;
@@ -9,7 +9,7 @@ Exercises every declaration form M3 must recognise:
 
 This module is parsed statically and is deliberately not imported: the
 notation lives on an experimental oold-python branch, so it may not be
-installed. M3 does static analysis, so that is sufficient.
+installed. Extraction is static, so that is sufficient.
 """
 
 from oold.experimental.notation import Link, LinkedBaseModel, LinkedField

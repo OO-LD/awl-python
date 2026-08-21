@@ -7,7 +7,7 @@
   },
   "x-oold-version": "0.1.0",
   "title": "TypeInfo",
-  "description": "What M3 reads statically from a LinkedBaseModel subclass. Both link declaration forms are first class; neither is canonical.",
+  "description": "What awl.facts reads statically from a LinkedBaseModel subclass. Both link declaration forms are first class; neither is canonical.",
   "type": "object",
   "properties": {
     "identity": {
@@ -49,7 +49,7 @@
               "string",
               "null"
             ],
-            "description": "The annotation as written, e.g. float. Observation, not inference. M7 derives the xsd:double coercion from it, without which an integer-valued float field round-trips through JSON-LD as xsd:integer. Named annotation and not pythonType because declarations already uses that name for the same thing, and because a language-specific key would contradict the neutral vocabulary."
+            "description": "The annotation as written, e.g. float. Observation, not inference. awl.context derives the xsd:double coercion from it, without which an integer-valued float field round-trips through JSON-LD as xsd:integer. Named annotation and not pythonType because declarations already uses that name for the same thing, and because a language-specific key would contradict the neutral vocabulary."
           },
           "declarationForm": {
             "enum": [

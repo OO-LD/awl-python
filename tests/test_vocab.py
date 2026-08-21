@@ -1,4 +1,4 @@
-"""M1: the language-neutral vocabulary, orderings and profile sets.
+"""The language-neutral vocabulary, orderings and profile sets.
 
 Imports only the module under test.
 """
