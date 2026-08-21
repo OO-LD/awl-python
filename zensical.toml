@@ -10,9 +10,14 @@ copyright = 'Maintained by <a href="https://github.com/OO-LD">OO-LD</a>.'
 
 nav = [
     { "Home" = "index.md" },
+    { "Worked examples" = "examples.md" },
     { "API Reference" = "awl.md" },
     { "Development" = "dev.md" },
 ]
+
+[project.plugins.macros]
+# The worked-examples page is built from the corpus at render time.
+module_name = "docs/macros"
 
 [project.plugins.mkdocstrings.handlers.python]
 paths = ["src/awl"]
@@ -78,6 +83,11 @@ format = "pymdownx.superfences.fence_code_format"
 
 [project.markdown_extensions.pymdownx.tabbed]
 alternate_style = true
+
+[project.markdown_extensions.pymdownx.details]
+
+[project.markdown_extensions.pymdownx.highlight]
+anchor_linenums = true
 
 [project.markdown_extensions.toc]
 permalink = true

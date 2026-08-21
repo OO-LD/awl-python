@@ -37,11 +37,14 @@ and ``@direction``, so a literal could not also carry ``argument_index``.
 from __future__ import annotations
 
 import ast
+import json
 from typing import Any
 
 from awl.vocab import ORDERED_FIELDS
 
-__all__ = ["decode", "encode"]
+__all__ = ["decode", "dumps", "encode"]
+
+NEWLINE = chr(10)
 
 
 def _list_fields() -> frozenset[str]:
@@ -414,3 +417,59 @@ def _decode_field(node: dict[str, Any], cls: type, field: str) -> Any:
         return _decode_operator(node[field])
     decoded = decode(node[field])
     return _rewrap(decoded) if field in ORDERED_FIELDS else decoded
+
+
+def dumps(doc: Any, *, width: int = 88, indent: int = 1, _depth: int = 0) -> str:
+    """Serialize a compact document, inlining whatever fits.
+
+    Parameters
+    ----------
+    doc : Any
+        A ``CompactDoc``, or any JSON-serializable value.
+    width : int, optional
+        The column a line may reach before its structure is broken open.
+    indent : int, optional
+        Spaces per level.
+
+    Returns
+    -------
+    str
+        JSON in which a small structure stays on one line and a large one
+        breaks.
+
+    Notes
+    -----
+    ``json.dumps(indent=...)`` puts every element of every structure on its own
+    line, so ``{"var": "i"}`` costs three lines and a two-argument call costs a
+    page. That is not more readable, only taller: the shape of a node is
+    easiest to see when the node fits on one line.
+    """
+    pad = " " * (indent * _depth)
+    inner = " " * (indent * (_depth + 1))
+
+    if isinstance(doc, dict):
+        if not doc:
+            return "{}"
+        flat = (
+            "{"
+            + ", ".join(json.dumps(key) + ": " + dumps(value, width=width, indent=0) for key, value in doc.items())
+            + "}"
+        )
+        if len(pad) + len(flat) <= width and NEWLINE not in flat:
+            return flat
+        parts = [
+            inner + json.dumps(key) + ": " + dumps(value, width=width, indent=indent, _depth=_depth + 1)
+            for key, value in doc.items()
+        ]
+        return "{" + NEWLINE + ("," + NEWLINE).join(parts) + NEWLINE + pad + "}"
+
+    if isinstance(doc, list):
+        if not doc:
+            return "[]"
+        flat = "[" + ", ".join(dumps(item, width=width, indent=0) for item in doc) + "]"
+        if len(pad) + len(flat) <= width and NEWLINE not in flat:
+            return flat
+        parts = [inner + dumps(item, width=width, indent=indent, _depth=_depth + 1) for item in doc]
+        return "[" + NEWLINE + ("," + NEWLINE).join(parts) + NEWLINE + pad + "]"
+
+    return json.dumps(doc)

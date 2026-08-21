@@ -238,3 +238,6 @@ node_modules/
 # python profile: benchmark artifacts
 .benchmarks/
 benchmark_results.json
+
+# Built documentation
+site/
