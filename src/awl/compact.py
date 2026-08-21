@@ -86,6 +86,17 @@ _DROP = frozenset({
 # these are the only two fields typed by operator, unaryop, boolop or cmpop.
 _OPERATOR_FIELDS = frozenset({"op", "ops"})
 
+# Nodes whose `args` field is an `arguments` wrapper. The wrapper exists only
+# to group a signature's seven slots, and which node type sits there is fixed
+# by the grammar, so it is spliced into the parent and rebuilt on the way out.
+_SIGNATURE_HOLDERS = frozenset({"FunctionDef", "AsyncFunctionDef", "Lambda"})
+
+# The slots a signature is made of.
+_ARGUMENT_FIELDS = tuple(ast.arguments._fields)
+
+# Fields holding `arg` nodes, whose type is likewise fixed by the grammar.
+_ARG_FIELDS = frozenset({"args", "posonlyargs", "kwonlyargs", "vararg", "kwarg"})
+
 # Orderings are derivable from array position here and are **not** carried.
 # They are materialized in the RDF projection, where position is not
 # recoverable: an rdf:List yields members, and SPARQL property paths cannot
@@ -129,6 +140,9 @@ def _encode_long(doc: dict[str, Any], *, keep_spans: bool) -> dict[str, Any]:
     node: dict[str, Any] = {"@type": node_type} if node_type else {}
     for key, value in doc.items():
         if key in _DROP or key == "_type":
+            continue
+        if key == "args" and _is_arguments(value):
+            node.update(_encode_signature(value, keep_spans=keep_spans))
             continue
         if key in _OPERATOR_FIELDS:
             node[key] = _encode_operator(value)
@@ -185,6 +199,78 @@ def encode(doc: Any, *, keep_spans: bool = False) -> Any:
     if keep_spans and "lineno" in doc:
         node["span"] = _span(doc)
     return node
+
+
+def _encode_signature(value: dict[str, Any], *, keep_spans: bool) -> dict[str, Any]:
+    """Splice the signature's slots up into the function itself.
+
+    So a parameter list reads as ``args: [...]`` rather than as
+    ``args: {"@type": "arguments", "args": [...]}``.
+    """
+    out: dict[str, Any] = {}
+    for slot, held in value.items():
+        if slot == "_type":
+            continue
+        encoded = (
+            _encode_arg(held, keep_spans=keep_spans) if slot in _ARG_FIELDS else encode(held, keep_spans=keep_spans)
+        )
+        if encoded is None or (isinstance(encoded, list) and not encoded):
+            continue
+        out[slot] = encoded
+    return out
+
+
+def _is_arguments(value: Any) -> bool:
+    """Return whether *value* is the signature wrapper."""
+    return isinstance(value, dict) and value.get("_type") == "arguments"
+
+
+def _encode_arg(value: Any, *, keep_spans: bool) -> Any:
+    """Write a parameter without repeating that it is one.
+
+    Everything in a signature slot is an ``arg``, so the label says nothing.
+    A parameter with nothing but a name becomes that name.
+    """
+    if isinstance(value, list):
+        return [_encode_arg(item, keep_spans=keep_spans) for item in value]
+    if not isinstance(value, dict) or value.get("_type") != "arg":
+        return encode(value, keep_spans=keep_spans)
+    out = {
+        key: encode(held, keep_spans=keep_spans)
+        for key, held in value.items()
+        if key not in _DROP and key != "_type" and held is not None
+    }
+    if set(out) == {"arg"}:
+        return out["arg"]
+    return out
+
+
+def _decode_arg(value: Any) -> Any:
+    """Rebuild a parameter from its name or its slots."""
+    if isinstance(value, list):
+        return [_decode_arg(item) for item in value]
+    if isinstance(value, str):
+        return ast.arg(arg=value, annotation=None, type_comment=None)
+    if isinstance(value, dict) and "@type" not in value:
+        return ast.arg(
+            arg=value.get("arg"),
+            annotation=decode(value["annotation"]) if "annotation" in value else None,
+            type_comment=None,
+        )
+    return decode(value)
+
+
+def _decode_arguments(node: dict[str, Any]) -> ast.arguments:
+    """Rebuild the signature wrapper from the slots spliced into its parent."""
+    slots: dict[str, Any] = {}
+    for field in _ARGUMENT_FIELDS:
+        if field not in node:
+            slots[field] = [] if field in _LIST_FIELDS else None
+        elif field in _ARG_FIELDS:
+            slots[field] = _decode_arg(node[field])
+        else:
+            slots[field] = decode(node[field])
+    return ast.arguments(**slots)
 
 
 def _encode_operator(value: Any) -> Any:
@@ -298,16 +384,18 @@ def decode(node: Any) -> Any:
 
     node = unfold_node(node, type_key="@type")
     cls = getattr(ast, node["@type"])
-    kwargs: dict[str, Any] = {}
-    for field in cls._fields:
-        if field in node:
-            if field in _OPERATOR_FIELDS:
-                kwargs[field] = _decode_operator(node[field])
-                continue
-            decoded = decode(node[field])
-            kwargs[field] = _rewrap(decoded) if field in ORDERED_FIELDS else decoded
-        elif field == "ctx":
-            kwargs[field] = ast.Load()
-        else:
-            kwargs[field] = [] if field in _LIST_FIELDS else None
-    return cls(**kwargs)
+    return cls(**{field: _decode_field(node, cls, field) for field in cls._fields})
+
+
+def _decode_field(node: dict[str, Any], cls: type, field: str) -> Any:
+    """Rebuild one field, supplying what the encoder was able to leave out."""
+    if field == "args" and node["@type"] in _SIGNATURE_HOLDERS:
+        return _decode_arguments(node)
+    if field not in node:
+        if field == "ctx":
+            return ast.Load()
+        return [] if field in _LIST_FIELDS else None
+    if field in _OPERATOR_FIELDS:
+        return _decode_operator(node[field])
+    decoded = decode(node[field])
+    return _rewrap(decoded) if field in ORDERED_FIELDS else decoded

@@ -14,6 +14,7 @@ invisible to it and obvious here:
 """
 
 import ast
+import json
 import os
 import pathlib
 import sysconfig
@@ -127,3 +128,41 @@ def test_no_ast_field_is_named_like_a_reserved_shorthand_key():
             fields |= set(getattr(cls, "_fields", ()))
     assert not fields & {"literal", "var", "span"}
     assert "type" in fields, "the collision that motivated @type is still real"
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "def f(a): pass",
+        "def f(a: int = 1) -> None: pass",
+        "def f(a, b=1, /, c=2, *rest, d, e=3, **kw): pass",
+        "g = lambda x, *a, **k: x",
+        "async def f(a: int): pass",
+    ],
+    ids=["plain", "annotated", "every slot", "lambda", "async"],
+)
+def test_a_signature_survives_losing_its_wrapper(source):
+    """`arguments` groups a signature's seven slots and says nothing else.
+
+    Which node type sits at `FunctionDef.args` is fixed by the grammar, so the
+    wrapper is derivable and splicing it away is reversible. Every slot is
+    covered here because the wrapper is the only thing that kept them apart.
+    """
+    tree = ast.parse(source)
+    restored = decode(encode(elide(to_doc(tree), profile="ast")))
+    assert ast.unparse(ast.fix_missing_locations(restored)) == ast.unparse(tree)
+
+
+def test_a_parameter_with_only_a_name_is_that_name():
+    """Everything in a signature slot is an `arg`, so the label says nothing."""
+    doc = encode(elide(to_doc(ast.parse("def f(a, *rest, **kw): pass")), profile="ast"))
+    function = doc["body"][0]
+    assert function["args"] == ["a"]
+    assert function["vararg"] == "rest"
+    assert function["kwarg"] == "kw"
+    assert "arguments" not in json.dumps(doc)
+
+
+def test_an_annotated_parameter_keeps_its_annotation():
+    doc = encode(elide(to_doc(ast.parse("def f(cycles: int): pass")), profile="ast"))
+    assert doc["body"][0]["args"] == [{"arg": "cycles", "annotation": {"var": "int"}}]
