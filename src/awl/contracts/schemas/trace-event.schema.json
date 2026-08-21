@@ -33,6 +33,14 @@
       ],
       "description": "Loop ordinal. PROV has no loop counter, so it is carried here."
     },
+    "taken": {
+      "type": "boolean",
+      "description": "On a branch event: whether control entered the body. Nothing in the surveyed prior art records this, so it is the module's acceptance criterion rather than a by-product."
+    },
+    "callee": {
+      "type": "string",
+      "description": "On a c_call or c_return event: the fully qualified name of the C callee, which settrace cannot see and setprofile can. The same string M2 mints an identity from."
+    },
     "index": {
       "type": "integer",
       "description": "Position in the event sequence: the query surface for order."
