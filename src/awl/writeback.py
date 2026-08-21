@@ -50,8 +50,12 @@ def span_of(source: str, predicate: Callable[[ast.AST], bool]) -> tuple[int, int
     """
     import asttokens
 
-    atok = asttokens.ASTTokens(source, parse=True)
-    for node in ast.walk(atok.tree):
+    # Parsed here rather than via parse=True so the tree is known to exist:
+    # ASTTokens.tree is Optional, and a None slipping into ast.walk would fail
+    # far from the cause.
+    tree = ast.parse(source)
+    atok = asttokens.ASTTokens(source, tree=tree)
+    for node in ast.walk(tree):
         if predicate(node):
             return atok.get_text_range(node)
     raise LookupError("no node matched the predicate")

@@ -66,10 +66,13 @@ dev = [
     "ty>=0.0.1a21",
     "zensical>=0.0.46",
     "mkdocstrings-python>=1.0.3",
-    # The validate extra, so the contract tests run under a plain `uv sync`,
-    # which does not install extras.
+    # The validate and edit extras, so their tests run under a plain
+    # `uv sync`, which does not install extras. CI syncs with --frozen and no
+    # extras, so without these the structural write-back tier would be skipped
+    # there and silently untested.
     "jsonschema>=4.18.0",
     "referencing",
+    "libcst",
     # M13 UI variants are exercised in a browser.
     "pytest-playwright",
 ]

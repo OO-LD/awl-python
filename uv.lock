@@ -90,6 +90,7 @@ validate = [
 dev = [
     { name = "deptry" },
     { name = "jsonschema" },
+    { name = "libcst" },
     { name = "mike" },
     { name = "mkdocstrings-python" },
     { name = "pre-commit" },
@@ -122,6 +123,7 @@ requires-dist = [
 dev = [
     { name = "deptry", specifier = ">=0.25.0" },
     { name = "jsonschema", specifier = ">=4.18.0" },
+    { name = "libcst" },
     { name = "mike", git = "https://github.com/squidfunk/mike.git?rev=2.2.0%2Bzensical-0.1.0" },
     { name = "mkdocstrings-python", specifier = ">=1.0.3" },
     { name = "pre-commit", specifier = ">=4.0.0" },

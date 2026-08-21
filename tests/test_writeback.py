@@ -7,7 +7,7 @@ import ast
 
 import pytest
 
-from awl.writeback import apply_edits, span_of
+from awl.writeback import apply_edits, insert_statement, span_of
 
 SOURCE = """def procedure(cycles: int) -> None:
     # ramp to 4.2 V, CC phase only
@@ -95,3 +95,47 @@ def test_span_of_raises_when_nothing_matches():
     """A silent no-op edit would be the worst failure mode here."""
     with pytest.raises(LookupError):
         span_of(SOURCE, lambda n: False)
+
+
+def test_libcst_parses_and_reprints_byte_identically():
+    """The premise the structural tier rests on, asserted rather than assumed.
+
+    If this ever fails, insert_statement is silently reformatting the file.
+    """
+    import libcst as cst
+
+    assert cst.parse_module(SOURCE).code == SOURCE
+
+
+def test_inserting_a_step_preserves_the_rest_of_the_file():
+    patched = insert_statement(
+        SOURCE,
+        into="while",
+        code="rest(600)",
+        leading_comment="# hold 10 min, per SOP-114",
+    )
+    assert "rest(600)" in patched
+    assert "# hold 10 min, per SOP-114" in patched
+    assert "# ramp to 4.2 V, CC phase only" in patched
+    assert "# cell limit per datasheet" in patched
+
+
+def test_the_inserted_step_lands_inside_the_loop_body():
+    """ "Preserves the comments" is not the same as "put it in the right place"."""
+    patched = insert_statement(SOURCE, into="while", code="rest(600)")
+    tree = ast.parse(patched)
+    loop = next(n for n in ast.walk(tree) if isinstance(n, ast.While))
+    assert ast.unparse(loop.body[-1]) == "rest(600)"
+
+
+def test_insertion_changes_nothing_but_the_inserted_lines():
+    """Every original line survives, in order, with its original indentation."""
+    patched = insert_statement(SOURCE, into="while", code="rest(600)", leading_comment="# hold 10 min")
+    added = [line for line in patched.splitlines() if line not in SOURCE.splitlines()]
+    assert [line.strip() for line in added] == ["# hold 10 min", "rest(600)"]
+
+
+def test_an_unimplemented_target_raises_rather_than_no_op():
+    """Returning the source unchanged would look like a successful edit."""
+    with pytest.raises(NotImplementedError, match="for"):
+        insert_statement(SOURCE, into="for", code="rest(600)")
