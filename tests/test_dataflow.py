@@ -132,3 +132,51 @@ def test_the_whole_corpus_analyses_without_error():
     for path in contracts.corpus_files():
         out = analyze(path.read_text(encoding="utf-8"), module=path.stem, file=path.name)
         assert isinstance(out["definitions"], list), path
+
+
+def test_an_import_is_a_definition():
+    """An import is where a name comes from, so it is a binding like any other.
+
+    Leaving it out left every imported callee with no reaching definition, so
+    a chain ended at `linregress` instead of saying it came from scipy.
+    """
+    out = _analyze("from scipy.stats import linregress\nx = linregress(a)\n")
+    entry = next(item for item in out["definitions"] if item["name"] == "linregress")
+    assert entry["kind"] == "import"
+    assert entry["produced_by"] == "scipy.stats.linregress"
+
+
+def test_a_relative_import_keeps_the_origin_as_written():
+    out = _analyze("from .params import ChargeParam\n")
+    assert out["definitions"][0]["produced_by"] == ".params.ChargeParam"
+
+
+def test_a_star_import_binds_nothing():
+    """Nothing resolves these soundly, so no name is invented for one."""
+    assert _analyze("from m import *\n")["definitions"] == []
+
+
+def test_a_function_body_sees_the_module_bindings():
+    """A call lives inside a function, and its callee is imported at module
+    level. Starting the body from nothing made the two unreachable from each
+    other, which is where provenance actually breaks.
+    """
+    out = _analyze("from m import g\n\ndef f(a):\n    return g(a)\n")
+    call_site = next(item for item in out["definitions"] if item["name"] == "g")
+    assert call_site["kind"] == "import"
+    assert "g" in _closure(out, [call_site["id"]])
+
+
+def test_a_caught_exception_is_bound():
+    out = _analyze("try:\n    a()\nexcept E as err:\n    log(err)\n")
+    assert [(e["name"], e["kind"]) for e in out["definitions"]] == [("err", "exception")]
+
+
+def test_provenance_reaches_the_import_a_value_came_from():
+    """The full chain on the real file, ending at a package rather than
+    trailing off at a bare name.
+    """
+    out = analyze(TENSILE, module="tensile_test", file="tensile_test.py")
+    write = next(entry for entry in out["writes"] if entry["path"].endswith("e_mod"))
+    reached = _closure(out, write["depends_on"])
+    assert {"linregress", "dataset", "df", "linear"} <= reached, reached

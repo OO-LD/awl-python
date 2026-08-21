@@ -264,6 +264,39 @@ class _Walker:
             })
         return environment
 
+    def _on_Import(self, node, environment, scope):
+        return self._import(node, environment, scope, "")
+
+    def _on_ImportFrom(self, node, environment, scope):
+        return self._import(node, environment, scope, "." * (node.level or 0) + (node.module or ""))
+
+    def _import(self, node, environment, scope, origin: str) -> Environment:
+        """Bind each imported name.
+
+        An import is where a name comes from, so it is a definition like any
+        other. Leaving it out left every imported callee with no reaching
+        definition, which broke provenance at exactly the point it becomes
+        interesting: a chain that ends at `linregress` should say the value
+        came from `scipy.stats`, not simply stop.
+        """
+        environment = dict(environment)
+        for alias in node.names:
+            if alias.name == "*":
+                # Nothing in the surveyed prior art resolves these soundly, so
+                # no name is invented for one.
+                continue
+            local = alias.asname or alias.name.split(".")[0]
+            environment[local] = frozenset({
+                self.analysis.define(
+                    local,
+                    kind="import",
+                    scope=scope,
+                    node=node,
+                    produced_by=f"{origin}.{alias.name}" if origin else alias.name,
+                )
+            })
+        return environment
+
     def _on_Expr(self, node, environment, scope):
         return environment
 
@@ -327,14 +360,24 @@ class _Walker:
     def _on_Try(self, node, environment, scope):
         after = self.block(node.body, dict(environment), scope)
         for handler in node.handlers:
-            after = _merge(after, self.block(handler.body, dict(environment), scope))
+            caught = dict(environment)
+            if handler.name:
+                # `except E as err` binds err, and the handler body reads it.
+                caught[handler.name] = frozenset({
+                    self.analysis.define(handler.name, kind="exception", scope=scope, node=handler)
+                })
+            after = _merge(after, self.block(handler.body, caught, scope))
         after = _merge(after, self.block(node.orelse, dict(after), scope))
         return self.block(node.finalbody, after, scope)
 
     # Scopes -------------------------------------------------------------
 
     def _on_FunctionDef(self, node, environment, scope):
-        inner: Environment = {}
+        # A function body sees the module's bindings, so it starts from them
+        # rather than from nothing. Starting empty made every imported callee
+        # unreachable from inside the function that used it, which is where
+        # calls actually live.
+        inner: Environment = dict(environment)
         arguments = node.args
         for argument in (
             *arguments.posonlyargs,
