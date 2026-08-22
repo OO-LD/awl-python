@@ -19,7 +19,44 @@ from collections.abc import Callable
 from itertools import pairwise
 from typing import Any
 
-__all__ = ["apply_edits", "insert_statement", "span_of"]
+__all__ = ["apply_edits", "insert_statement", "offsets", "span_of"]
+
+
+def offsets(source: str, span: list[int]) -> dict[str, int]:
+    """Return the character offsets of a document span.
+
+    Parameters
+    ----------
+    source : str
+        The original text.
+    span : list of int
+        ``[start_line, start_col, end_line, end_col]``, one-based lines and
+        zero-based columns, as a document carries them.
+
+    Returns
+    -------
+    dict
+        ``start`` and ``end`` character offsets, which is what a patch needs.
+
+    Notes
+    -----
+    Two coordinate systems meet here and neither can be dropped. A document
+    locates a node by line and column, because that is what a parser reports
+    and what survives an edit elsewhere in the file. A patch has to name
+    character offsets, because that is the only way to replace a range without
+    reflowing anything around it. Columns are byte-free: Python reports
+    ``col_offset`` in UTF-8 bytes on some paths and in characters here, and
+    this uses the character reading the document was built with.
+    """
+    start_line, start_col, end_line, end_col = span
+    lines = source.splitlines(keepends=True)
+    starts = [0]
+    for line in lines:
+        starts.append(starts[-1] + len(line))
+    return {
+        "start": starts[start_line - 1] + start_col,
+        "end": starts[end_line - 1] + end_col,
+    }
 
 
 def span_of(source: str, predicate: Callable[[ast.AST], bool]) -> tuple[int, int]:

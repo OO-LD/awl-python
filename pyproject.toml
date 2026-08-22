@@ -70,6 +70,7 @@ dev = [
     "jsonschema>=4.18.0",
     "referencing",
     "libcst",
+    "anywidget",
     # The editor variants are exercised in a browser.
     "pytest-playwright",
     # Only the tests convert through these: awl.astdoc replaced ast2json

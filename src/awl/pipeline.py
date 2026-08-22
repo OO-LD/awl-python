@@ -190,16 +190,28 @@ def _tree(
     module: str,
     profile: str,
     index: dict[str, str],
+    spans: bool = False,
 ) -> Any:
     """Elide and collapse against facts that have already been read.
 
     Split out so a document can be built with one pass of extraction. Calling
     the public entry points in sequence read every module twice and every
     module they import four times, for one answer.
+
+    The span reaches the collapse as well as the encoder. A collapsed node is
+    built here and not by the encoder, so with the two apart it was the one
+    node in a located document with no position: an editor could show a
+    constructor's voltage and then had nowhere to write the change back to.
     """
     types, resolved = _collapsible(observed, module, index)
     doc = elide.elide(to_doc(ast.parse(source)), profile=profile, source=source)
-    return collapse.collapse(doc, types=types, resolved=resolved, embed_context=vocab.EMBEDS_CONTEXT[profile])
+    return collapse.collapse(
+        doc,
+        types=types,
+        resolved=resolved,
+        embed_context=vocab.EMBEDS_CONTEXT[profile],
+        keep_spans=spans,
+    )
 
 
 def to_compact(
@@ -219,10 +231,9 @@ def to_compact(
         Keep source spans, which are the join key for in-place patching and
         for the trace overlay. Not needed to regenerate code.
     """
-    return compact.encode(
-        to_ast_doc(source, module=module, profile=profile, file=file, index=index),
-        keep_spans=spans,
-    )
+    observed = facts.extract(source, module=module, file=file)
+    tree = _tree(source, observed, module=module, profile=profile, index=index or {}, spans=spans)
+    return compact.encode(tree, keep_spans=spans)
 
 
 def to_document(
@@ -344,7 +355,7 @@ def _layers(
         # named. Both are the profile's call, and both leave the editor's own
         # model alone.
         tree = compact.encode(
-            _tree(source, observed, module=module, profile=profile, index=index or {}),
+            _tree(source, observed, module=module, profile=profile, index=index or {}, spans=spans),
             keep_spans=spans,
         )
         if vocab.MATERIALIZES_ORDERINGS[profile]:
