@@ -70,6 +70,13 @@ jobs:
       - name: Check if documentation can be built
         run: make docs-test
 
+      # In the same job as the build, because the tests that read the built
+      # HTML skip when site/ is missing. The tests job has no site/, so
+      # elsewhere they never run at all, and a page that shipped its own macro
+      # call to the reader passed every gate.
+      - name: Check what it built
+        run: uv run python -m pytest tests/test_docs.py
+
   version-preview:
     # Show contributors what a merge would release, based on the conventional
     # commits on the branch. Pull requests only; informational.

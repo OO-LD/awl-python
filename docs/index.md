@@ -31,8 +31,8 @@ assert regenerated == ast.unparse(ast.parse(source))
 doc["body"][0]["body"][0]["value"] = {"literal": 2}
 assert "b = 2" in ast.unparse(ast.fix_missing_locations(compact.decode(doc)))
 
-# The graph: the tree, the control-flow plan, the def-use edges and any
-# typed member writes, in one store.
+# The graph: the same document, plus the control-flow plan, the def-use edges
+# and any typed member writes, in one store.
 graph = pipeline.to_graph(source, module="example")
 print(graph.serialize(format="turtle"))
 
@@ -41,8 +41,8 @@ values = graph.query("""
     PREFIX awl: <https://w3id.org/awl/schema/>
     SELECT ?value WHERE {
       ?assign a awl:Assign ;
-              awl:targets [ awl:id "b" ] ;
-              awl:value [ awl:value ?value ] .
+              awl:targets [ awl:var "b" ] ;
+              awl:value [ awl:literal ?value ] .
     }
 """)
 assert sorted(str(row[0]) for row in values) == ["1", "test"]

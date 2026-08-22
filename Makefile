@@ -49,7 +49,11 @@ docs: ## Build and serve the documentation
 	@uv run zensical serve
 
 .PHONY: ci
-ci: check test docs-test ## Run everything CI runs, before pushing
+ci: check docs-test test ## Run everything CI runs, before pushing
+	@# docs-test before test, not after: the tests that read the built HTML
+	@# skip when site/ is missing, so in the other order they never run on a
+	@# clean tree, and a page that shipped its own macro call to the reader
+	@# passed the gate.
 	@# Name the branch: `make ci` is the last thing run before pushing, and a
 	@# green gate on the wrong branch is an easy mistake to make.
 	@branch=$$(git branch --show-current 2>/dev/null); \
