@@ -333,20 +333,24 @@ def test_a_structural_edit_is_recorded_rather_than_refused():
     assert len(model.flow("procedure")["steps"]) == before + 1
 
 
-def test_a_structural_edit_cannot_be_spliced_and_says_so():
+def test_a_structural_edit_regenerates_and_says_so_in_advance():
     """Adding a statement is not a range of characters.
 
-    Nothing routes a structural patch through a concrete-syntax rewrite yet,
-    so the only way to produce the code is to regenerate, which reformats the
-    file and drops its comments. That is the caller's choice to make, not
-    something to discover from a KeyError raised inside the patcher.
+    Nothing routes a structural patch through a concrete-syntax rewrite, so
+    the whole module is regenerated and its comments do not survive. That loss
+    is accepted for now rather than hidden: `reformats()` says the next call
+    will take that path, so a canvas can warn before it happens rather than a
+    reader finding it in a diff.
     """
     model = ui.open_sample()
-    model.apply("delete_step", path=["body", 7, "body", 4])
+    assert not model.reformats()
 
-    with pytest.raises(NotImplementedError, match="structural"):
-        model.to_source()
-    assert model.regenerate(), "and the way through is named in the error"
+    model.apply("delete_step", path=["body", 7, "body", 4])
+    assert model.reformats(), "and it says so before it is asked"
+
+    produced = model.to_source()
+    assert produced, "which is the code, not a refusal"
+    assert "Charge and rest" in produced, "the docstring survives; a comment would not"
 
 
 def test_a_resolved_class_is_not_the_same_as_an_unread_call():
