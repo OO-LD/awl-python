@@ -20,6 +20,9 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1] / ".claude" / "worktrees" / "agent-a9f5840cbb88abf26"
 
+#: Fixed, so the address survives a restart.
+PORT = 8102
+
 
 def _load(name: str, path: Path) -> Any:
     """Return the module at *path*, loaded under *name*."""
@@ -40,7 +43,21 @@ def main() -> None:
 
     sample = Path(__file__).resolve().parents[1] / "src" / "awl" / "ui" / "sample.py"
     model = ui.load(sample.read_text(encoding="utf-8"), module="awl.ui.sample", file="sample.py")
-    live = harness.Harness(model, scope="procedure")
+    # The harness binds port 0, so it lands somewhere new on every restart and
+    # the URL you were given a minute ago is dead. Pinning the port here rather
+    # than editing the variant: a test wants a free port, a person wants the
+    # same address twice.
+    original = harness._Server
+
+    class _Fixed(original):  # type: ignore[misc, valid-type]
+        def __init__(self, address: tuple[str, int], handler: Any) -> None:
+            super().__init__(("127.0.0.1", PORT), handler)
+
+    harness._Server = _Fixed
+    # Without a runner the button renders and reports no entry point, which
+    # reads as a broken widget. The host supplies it because the host is
+    # what knows how to run the thing.
+    live = harness.Harness(model, scope="procedure", runner=lambda edited: edited.run("procedure", 3))
     print("reactflow:", live.url, flush=True)
     while True:
         time.sleep(3600)

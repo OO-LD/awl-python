@@ -431,6 +431,52 @@ class EditorModel:
                 return identity["module"], identity["symbol"]
         return None
 
+    def text_at(self, span: list[int]) -> str:
+        """Return the source a span covers.
+
+        Parameters
+        ----------
+        span : list of int
+            ``[start_line, start_col, end_line, end_col]``.
+        """
+        from awl import writeback
+
+        offsets = writeback.offsets(self.source, span)
+        return self.source[offsets["start"] : offsets["end"]]
+
+    def replace_at(self, span: list[int], text: str) -> dict[str, Any]:
+        """Replace what a span covers with *text*, and rebuild.
+
+        Parameters
+        ----------
+        span : list of int
+            ``[start_line, start_col, end_line, end_col]``.
+        text : str
+            What to put there.
+
+        Returns
+        -------
+        dict
+            ``ok`` and the new ``document``, or ``ok: False`` and the parse
+            error, exactly as :meth:`set_source`.
+
+        Notes
+        -----
+        The escape hatch for everything the structured editors cannot reach. A
+        loop's test, a return expression, a bare assignment: these are steps a
+        canvas can draw, delete and move, and there is no form for them,
+        because a form over an arbitrary expression is a Python editor with
+        extra steps.
+
+        Editing the text a node covers is honest about that. It reparses like
+        any other source edit, so a change that does not compile changes
+        nothing, and it costs the file's layout only in the range it replaces.
+        """
+        from awl import writeback
+
+        offsets = writeback.offsets(self.source, span)
+        return self.set_source(self.source[: offsets["start"]] + text + self.source[offsets["end"] :])
+
     def set_value(self, path: list[Any], value: Any) -> dict[str, Any]:
         """Set a value the canvas has selected, and record how to write it back.
 
@@ -530,26 +576,29 @@ class EditorModel:
         its comments. Patching by span touches only what was edited, which is
         the difference between an editor and a code generator.
 
-        Raises
-        ------
-        NotImplementedError
-            If a structural edit is pending. Adding, deleting or moving a
-            statement is not a range of characters, and nothing yet routes one
-            through a concrete-syntax rewrite, so there is no way to apply it
-            without reformatting. :meth:`regenerate` will produce the code and
-            lose the file's comments and layout, which is a choice the caller
-            should make rather than find out about afterwards.
+        A structural edit cannot be spliced: adding, deleting or moving a
+        statement is not a range of characters, and nothing routes one through
+        a concrete-syntax rewrite. When one is pending the whole module is
+        regenerated instead, which **drops its comments and its layout**.
+
+        That loss is accepted for now rather than hidden. :meth:`reformats`
+        says in advance whether the next call will take that path, so a canvas
+        can warn before it happens rather than a reader discovering it in a
+        diff.
         """
         from awl import writeback
 
-        pending = self.structural()
-        if pending:
-            operations = ", ".join(sorted({str(edit.get("operation")) for edit in pending}))
-            raise NotImplementedError(
-                f"{len(pending)} structural edit(s) pending ({operations}); span splicing cannot apply them. "
-                "Use regenerate(), which reformats the file and drops its comments."
-            )
+        if self.reformats():
+            return self.regenerate()
         return writeback.apply_edits(self.source, self.edits) if self.edits else self.source
+
+    def reformats(self) -> bool:
+        """Return whether :meth:`to_source` will regenerate rather than splice.
+
+        True once a structural edit is pending, because the file then has to be
+        rewritten whole and its comments do not survive that.
+        """
+        return bool(self.structural())
 
     def regenerate(self) -> str:
         """Return the document unparsed, ignoring the original formatting."""

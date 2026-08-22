@@ -26,8 +26,25 @@ from typing import Any
 
 #: The bridge each variant's harness calls, and the traits it round-trips.
 BRIDGES = {
-    "blockly": ("awlSync", ("level", "palette", "overlay", "source", "error", "loop_mode")),
+    # Every trait the variant's own tests sync. A short list is not a smaller
+    # widget, it is a broken one: leaving out `highlighted` served a blank
+    # source pane, which reads as an unimplemented requirement rather than as
+    # a launcher that forgot to carry it.
+    "blockly": (
+        "awlSync",
+        ("level", "palette", "overlay", "source", "highlighted", "error", "status", "loop_mode"),
+    ),
     "reactflow_jedison": ("awlDispatch", ("selection", "pending_edit", "open_step", "close_to")),
+}
+
+#: What each variant needs before its run button can do anything. Without it
+#: the button renders and says there is no entry point, which reads as a
+#: broken widget rather than as an unconfigured host: the host decides what
+#: running means, because a stand-in for a module that drives hardware is an
+#: object and no JSON channel carries one.
+RUNS = {
+    "blockly": {"entry": "procedure", "arguments": (3,)},
+    "reactflow_jedison": {"run_with": {"entry": "procedure", "arguments": (3,)}},
 }
 
 #: Injected before the harness's own module runs, so the binding exists by the
@@ -76,7 +93,9 @@ def serve(variant: str, root: Path, port: int) -> None:
 
     bridge, traits = BRIDGES[variant]
     widget = next(
-        getattr(module, name)(_model(root), scope="procedure") for name in dir(module) if name.endswith("Editor")
+        getattr(module, name)(_model(root), scope="procedure", **RUNS.get(variant, {}))
+        for name in dir(module)
+        if name.endswith("Editor")
     )
 
     harness = (root / "tests" / "ui" / "harness.html").read_text(encoding="utf-8")
