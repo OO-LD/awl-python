@@ -19,7 +19,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from awl import compact, editor, pipeline
+from awl import compact, controlflow, editor, facts, pipeline
+from awl.resolve import resolve
 
 __all__ = ["OPERATIONS", "VARIANTS", "EditorModel", "load"]
 
@@ -84,6 +85,12 @@ class EditorModel:
         self.index = index or {}
         self.document = pipeline.to_compact(source, module=module, file=file, index=self.index, spans=True)
         self.edits: list[dict[str, Any]] = []
+        # The plan is the flow a canvas draws, and it already carries the scope
+        # each step belongs to, so a level is a scope rather than a structure
+        # this has to build.
+        self.plan = controlflow.analyze(source, module=module, file=file)
+        self.names = resolve(facts.extract(source, module=module, file=file))
+        self._descended: dict[str, EditorModel] = {}
 
     def apply(self, operation: str, **arguments: Any) -> dict[str, Any]:
         """Run one edit operation and keep its patch.
@@ -111,6 +118,97 @@ class EditorModel:
         self.document, patches = getattr(editor, operation)(self.document, **arguments)
         self.edits.extend(patches)
         return self.document
+
+    def flow(self, scope: str = "") -> dict[str, Any]:
+        """Return one level of the flow: the steps at *scope*, and their edges.
+
+        Parameters
+        ----------
+        scope : str, optional
+            The function whose body to show. ``""`` is the module itself.
+
+        Returns
+        -------
+        dict
+            ``steps`` in source order and ``edges`` between them. An edge is
+            ``next``, ``when_true``, ``when_false``, ``each_item``,
+            ``exhausted``, ``repeat`` or ``on_error``, which is what a canvas
+            draws: two calls in sequence are ``a -> b``, and a conditional or a
+            loop is a step of its own between them with edges out of it.
+
+        Notes
+        -----
+        A level is a scope, and every level is drawn the same way. There is no
+        depth limit, because nothing here counts depth: a scope is a name, and
+        descending produces another scope.
+        """
+        here = {step["id"] for step in self.plan["steps"] if step.get("scope", "") == scope}
+        return {
+            "scope": scope,
+            "steps": [step for step in self.plan["steps"] if step["id"] in here],
+            "edges": [edge for edge in self.plan["edges"] if edge.get("from") in here and edge.get("to") in here],
+        }
+
+    def opens(self, step: dict[str, Any]) -> tuple[str, str] | None:
+        """Return the module and scope a step descends into, or None.
+
+        Parameters
+        ----------
+        step : dict
+            A step from :meth:`flow`.
+
+        Returns
+        -------
+        tuple or None
+            ``(module, scope)`` when the step calls a function whose source is
+            available, so the next level can be drawn. ``None`` when it does
+            not call anything, or calls something this run cannot see.
+
+        Notes
+        -----
+        The distinction is worth showing rather than hiding. A call into a
+        library that was never read is not the same as a call into a function
+        with an empty body, and a canvas that draws both as leaves says they
+        are.
+        """
+        callee = step.get("callee")
+        if not callee:
+            return None
+        identity = self._identity(callee)
+        if identity is None:
+            return None
+        module, symbol = identity
+        if module != self.module and module not in self.index:
+            return None
+        source = self.source if module == self.module else self.index[module]
+        return (module, symbol) if _declares(source, symbol) else None
+
+    def descend(self, step: dict[str, Any]) -> EditorModel | None:
+        """Return the model holding the level a step opens into, or None.
+
+        The same class, so every level offers the same operations: this is one
+        principle applied at each depth rather than a special case for the
+        first.
+        """
+        opened = self.opens(step)
+        if opened is None:
+            return None
+        module, _scope = opened
+        if module == self.module:
+            return self
+        if module not in self._descended:
+            self._descended[module] = EditorModel(self.index[module], module=module, file=module, index=self.index)
+        return self._descended[module]
+
+    def _identity(self, name: str) -> tuple[str, str] | None:
+        """Return the module and symbol a local name resolves to."""
+        for binding in self.names["bindings"]:
+            if binding.get("local_name") != name:
+                continue
+            identity = binding.get("identity") or {}
+            if identity.get("module") and identity.get("symbol"):
+                return identity["module"], identity["symbol"]
+        return None
 
     def set_value(self, path: list[Any], value: Any) -> dict[str, Any]:
         """Set a value the canvas has selected, and record how to write it back.
@@ -196,6 +294,16 @@ class EditorModel:
         with, so a variant lays the result over the nodes it already has.
         """
         return pipeline.trace_run(self.source, call, module=self.module, file=self.file)
+
+
+def _declares(source: str, symbol: str) -> bool:
+    """Return whether *source* declares a function called *symbol*."""
+    import ast
+
+    return any(
+        isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and node.name == symbol
+        for node in ast.walk(ast.parse(source))
+    )
 
 
 def _descend(doc: Any, path: list[Any]) -> Any:
