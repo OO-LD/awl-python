@@ -42,7 +42,7 @@ from typing import Any
 
 from awl.vocab import ORDERED_FIELDS
 
-__all__ = ["decode", "dumps", "encode"]
+__all__ = ["decode", "dumps", "encode", "link_names", "name_spans", "number_items"]
 
 NEWLINE = chr(10)
 
@@ -117,6 +117,154 @@ _ARG_FIELDS = frozenset({"args", "posonlyargs", "kwonlyargs", "vararg", "kwarg"}
 # says, and let an editor reorder the array while leaving the numbers stale.
 _ORDERINGS = ("order", "argument_index", "argument_name")
 _SHORTHAND_EXTRA = frozenset({"span"})
+
+
+def number_items(doc: Any) -> Any:
+    """Return *doc* with every ordered statement carrying its sibling slot.
+
+    Parameters
+    ----------
+    doc : dict or list or scalar
+        A ``CompactDoc``.
+
+    Returns
+    -------
+    dict or list or scalar
+        A new document.
+
+    Notes
+    -----
+    The editor model leaves the number out, because the array already says it
+    and an editor that reorders a body would leave it stale. A document that is
+    going to be projected cannot: ``@container: @list`` yields an RDF
+    collection, a collection yields members rather than positions, and SPARQL
+    1.1 property paths have only ``*``, ``+`` and ``?``, so a query downstream
+    cannot count the ``rdf:rest`` hops back. This integer is the query surface,
+    added at the one point where position stops being recoverable.
+    """
+    if isinstance(doc, list):
+        return [number_items(item) for item in doc]
+    if not isinstance(doc, dict):
+        return doc
+
+    numbered = {key: number_items(value) for key, value in doc.items()}
+    for field in ORDERED_FIELDS:
+        sequence = numbered.get(field)
+        if not isinstance(sequence, list):
+            continue
+        numbered[field] = [
+            {**item, "order": position} if isinstance(item, dict) else item for position, item in enumerate(sequence)
+        ]
+    return numbered
+
+
+def link_names(doc: Any, bindings: list[dict[str, Any]]) -> Any:
+    """Return *doc* with each name reference pointing at what it refers to.
+
+    Parameters
+    ----------
+    doc : dict or list or scalar
+        A ``CompactDoc``.
+    bindings : list of dict
+        What :func:`awl.resolve.resolve` produced for the same module.
+
+    Returns
+    -------
+    dict or list or scalar
+        A new document. A ``var`` node gains ``refers_to`` when the name it
+        holds could be resolved, and is left alone when it could not.
+
+    Notes
+    -----
+    Joined by span where the document has one, because a name is scope-blind
+    and two functions may both call something named ``run``. Where it has no
+    span the join falls back to the name, and only when every use of that name
+    in the module resolved to one identity: an ambiguous name is left
+    unresolved rather than pointed at whichever binding was seen last.
+
+    The editor model does not carry this. It regenerates source from the name
+    as written, and what that name refers to is a judgement with a confidence
+    behind it, which the ``names`` lookup records as such.
+    """
+    by_span: dict[tuple[Any, Any], str] = {}
+    by_name: dict[str, set[str]] = {}
+    for binding in bindings:
+        identity = (binding.get("identity") or {}).get("iri")
+        span = binding.get("span") or {}
+        if not identity:
+            continue
+        if span:
+            by_span[(span.get("start_line"), span.get("start_col"))] = identity
+        by_name.setdefault(binding.get("local_name", ""), set()).add(identity)
+
+    unambiguous = {name: next(iter(found)) for name, found in by_name.items() if len(found) == 1}
+    return _link(doc, by_span, unambiguous)
+
+
+def _link(doc: Any, by_span: dict[tuple[Any, Any], str], unambiguous: dict[str, str]) -> Any:
+    """Walk *doc*, resolving each ``var`` node."""
+    if isinstance(doc, list):
+        return [_link(item, by_span, unambiguous) for item in doc]
+    if not isinstance(doc, dict):
+        return doc
+
+    linked = {key: _link(value, by_span, unambiguous) for key, value in doc.items()}
+    name = doc.get("var")
+    if not isinstance(name, str):
+        return linked
+
+    span = doc.get("span")
+    identity = by_span.get((span[0], span[1])) if isinstance(span, list) and len(span) == 4 else None
+    identity = identity or unambiguous.get(name)
+    if identity:
+        linked["refers_to"] = {"@id": identity}
+    return linked
+
+
+def name_spans(doc: Any, *, file: str = "") -> Any:
+    """Return *doc* with each span's four numbers named.
+
+    Parameters
+    ----------
+    doc : dict or list or scalar
+        A ``CompactDoc``, whose spans are ``[line, col, end_line, end_col]``.
+    file : str, optional
+        Recorded in each span, since a position means nothing without it.
+
+    Returns
+    -------
+    dict or list or scalar
+        A new document.
+
+    Notes
+    -----
+    Two shapes for one fact, which is worth stating rather than hiding. The
+    editor holds a span as four numbers because it patches source with them and
+    reads them by position. A document that carries meaning cannot: a bare
+    array says which four numbers, never which is the line and which the
+    column, and a consumer has to know the order by convention. The plan and
+    the def-use graph already name them, so naming them here is what keeps one
+    spelling across the whole document rather than two.
+    """
+    if isinstance(doc, list):
+        return [name_spans(item, file=file) for item in doc]
+    if not isinstance(doc, dict):
+        return doc
+
+    named = {key: name_spans(value, file=file) for key, value in doc.items() if key != "span"}
+    span = doc.get("span")
+    if isinstance(span, list) and len(span) == 4:
+        start_line, start_col, end_line, end_col = span
+        named["span"] = {
+            "file": file,
+            "start_line": start_line,
+            "start_col": start_col,
+            "end_line": end_line,
+            "end_col": end_col,
+        }
+    elif span is not None:
+        named["span"] = name_spans(span, file=file)
+    return named
 
 
 def _span(doc: dict[str, Any]) -> list[Any]:

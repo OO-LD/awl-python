@@ -152,6 +152,10 @@
       "@id": "awl:dependsOn",
       "@type": "@id"
     },
+    "refers_to": {
+      "@id": "awl:refersTo",
+      "@type": "@id"
+    },
     "id": {
       "@id": "awl:id"
     },
@@ -214,7 +218,7 @@
       }
     }
   },
-  "x-oold-version": "0.3.0",
+  "x-oold-version": "0.4.0",
   "title": "AstDoc",
   "description": "The AST as a document. Deliberately permissive: node types are not enumerated, because pinning them would version AWL-LD against the CPython grammar and defeat the language-agnostic objective.",
   "type": "object",

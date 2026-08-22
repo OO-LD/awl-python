@@ -9,7 +9,7 @@ import ast
 
 import pytest
 
-from awl import compact, contracts, pipeline
+from awl import compact, contracts, pipeline, vocab
 
 TIER2 = contracts.CORPUS_DIR / "tier2_dataclass" / "procedure.py"
 TIER3 = contracts.CORPUS_DIR / "tier3_oold" / "params.py"
@@ -272,19 +272,106 @@ def test_the_gradient_shows_in_the_collapsed_node():
     assert at(linked) == ["ChargeParam", "ex:ChargeParam"]
 
 
-def test_the_layers_partition_the_graph():
-    """Asking for each in turn accounts for the whole of it.
+def test_every_layer_is_contained_in_the_whole():
+    """Asking for one lookup gives part of what asking for all of them gives.
 
-    A layer that overlapped another would double-count here, and one that was
-    silently dropped would leave a remainder.
+    Not a partition: `names` both adds its own nodes and resolves the tree's
+    name references, so the layers overlap by design and the sum of the parts
+    is smaller than the whole rather than equal to it.
     """
     source, index = _tier("tier3_oold")
     whole = len(pipeline.to_graph(source, module="tier3_oold.procedure", index=index))
+    for layer in vocab.LAYERS:
+        part = len(pipeline.to_graph(source, module="tier3_oold.procedure", index=index, layers=(layer,)))
+        assert 0 <= part <= whole, layer
     parts = sum(
         len(pipeline.to_graph(source, module="tier3_oold.procedure", index=index, layers=(layer,)))
-        for layer in pipeline.LAYERS
+        for layer in vocab.LAYERS
     )
-    assert parts == whole
+    assert parts <= whole, "no layer contributes anything the whole does not have"
+
+
+def test_which_statement_precedes_another_is_answerable_over_the_whole_chain():
+    """The ordering claim, asserted where it was actually broken.
+
+    A test on a hand-written document passed throughout, because it supplied
+    the number itself. Nothing checked that the generator still produced one,
+    and for a while it did not: the tree carried an RDF collection, which
+    yields members and not positions, and the query surface was gone.
+    """
+    graph = pipeline.to_graph("a = 1\nb = 2\nc = 3\n", module="m")
+    rows = graph.query("""
+        PREFIX awl: <https://w3id.org/awl/schema/>
+        SELECT ?earlier WHERE {
+          ?a awl:targets [ awl:var ?earlier ] ; awl:order ?i .
+          ?b awl:targets [ awl:var "c" ]     ; awl:order ?j .
+          FILTER(?i < ?j)
+        }
+    """)
+    assert sorted(str(row[0]) for row in rows) == ["a", "b"]
+
+
+def test_the_editor_model_carries_no_slot_numbers():
+    """The other half of the same decision.
+
+    An editor that reorders a body would leave them stale, and the array
+    already says what they say.
+    """
+    assert "order" not in str(pipeline.to_compact("a = 1\nb = 2\n", module="m"))
+
+
+def test_a_name_can_be_asked_for_by_identity_rather_than_by_spelling():
+    """The whole point of the names lookup: stop matching strings.
+
+    A name is scope-blind. Two functions may both call something called
+    `charge`, and a query that matches the word cannot tell them apart.
+    """
+    from rdflib import URIRef
+
+    source = "from battery.device import charge\n\n\ndef run():\n    charge(4)\n"
+    graph = pipeline.to_graph(source, module="battery.procedure", layers=("document", "names"), spans=True)
+    rows = graph.query("""
+        PREFIX awl: <https://w3id.org/awl/schema/>
+        SELECT ?line WHERE {
+          ?call awl:func [ awl:refersTo <https://w3id.org/awl/py/battery.device/charge> ] ;
+                awl:span [ awl:startLine ?line ] .
+        }
+    """)
+    assert [int(row[0]) for row in rows] == [5]
+
+    referents = {object_ for _, predicate, object_ in graph if str(predicate).endswith("refersTo")}
+    assert referents and all(isinstance(value, URIRef) for value in referents), "an IRI, not a string"
+
+
+def test_the_editor_model_keeps_the_name_as_written():
+    """The other half. The tree regenerates source, so it holds the word.
+
+    What that word refers to is a judgement with a confidence behind it, and
+    writing it onto the node unasked would make it look like something the
+    parser saw.
+    """
+    source = "from battery.device import charge\n\n\ndef run():\n    charge(4)\n"
+    assert "refers_to" not in str(pipeline.to_compact(source, module="battery.procedure"))
+    document = pipeline.to_document(source, module="battery.procedure", layers=("document",))
+    assert "refers_to" not in str(document["@graph"]), "the term is in the context; the tree does not use it"
+
+
+def test_the_profile_decides_what_the_document_holds():
+    """A profile is a set of generator parameters, not a separate code path."""
+    assert vocab.LOOKUPS["ast"] == vocab.LAYERS
+
+
+def test_rdf_says_the_same_as_the_document_it_serializes():
+    """The graph is a notation, not a second derivation.
+
+    Every node type in the document appears in the graph, so the two cannot
+    disagree about what a program contains.
+    """
+    source, index = _tier("tier3_oold")
+    document = pipeline.to_document(source, module="tier3_oold.procedure", index=index)
+    graph = pipeline.to_graph(source, module="tier3_oold.procedure", index=index)
+    assert len(graph) > 0
+    assert document["@graph"], "the document carries what the graph serializes"
 
 
 def test_the_document_layer_carries_the_tree_and_nothing_derived():

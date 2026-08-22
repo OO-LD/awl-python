@@ -17,17 +17,11 @@ from __future__ import annotations
 import ast
 from typing import Any
 
-from awl import collapse, compact, context, controlflow, dataflow, elide, execution, facts, rdf
+from awl import collapse, compact, context, controlflow, dataflow, elide, execution, facts, rdf, vocab
 from awl.astdoc import to_doc
 from awl.resolve import resolve, resolve_writes
 
-__all__ = ["LAYERS", "analyze", "resolve_module", "to_ast_doc", "to_compact", "to_graph"]
-
-#: What :func:`to_graph` composes, in the order it composes them. Separate
-#: because they answer different questions: the document is the tree as
-#: written, and each of the others is derived from it. A reader comparing the
-#: RDF against the document wants the first alone; a query wants all four.
-LAYERS = ("document", "plan", "writes", "definitions")
+__all__ = ["analyze", "resolve_module", "to_ast_doc", "to_compact", "to_document", "to_graph"]
 
 
 def analyze(source: str, *, module: str = "", file: str = "<source>") -> dict[str, Any]:
@@ -188,40 +182,60 @@ def to_compact(
     )
 
 
-def to_graph(
+def to_document(
     source: str,
     *,
     module: str = "",
     profile: str = "ast",
     file: str = "<source>",
     index: dict[str, str] | None = None,
-    layers: tuple[str, ...] = LAYERS,
-):
-    """Run the chain and return the RDF graph.
+    layers: tuple[str, ...] | None = None,
+    spans: bool = False,
+) -> dict[str, Any]:
+    """Build the JSON-LD document a profile calls for.
 
     Parameters
     ----------
+    source : str
+        The module's text.
+    module : str
+        Its dotted import path.
     profile : str, optional
+        A named set of generator parameters: which wrappers are transparent,
+        which types go opaque, whether keywords fold, and which lookups run.
         Defaults to ``ast``, the profile whose obligation is complete value
-        provenance. The reduced profiles are paused: they elide by
-        construction, and until each is defined by the class of question it
-        must answer, choosing one only makes the graph smaller and no better.
+        provenance. The reduced profiles are paused, and until each is defined
+        by the class of question it must answer, choosing one only makes the
+        document smaller and no better.
+    file : str, optional
+        A label for spans.
+    index : dict, optional
+        Module path to source, for the modules this one imports from.
     layers : tuple of str, optional
-        Which of :data:`LAYERS` to project. All of them by default, which is
-        what a query is run against. Asking for ``("document",)`` alone gives
-        the collapsed tree and nothing derived from it, which is what a reader
-        comparing the RDF against the document needs to see.
+        Overrides the profile's lookups, for a caller who wants one of them on
+        its own. Asking for ``("document",)`` gives the tree and nothing
+        derived from it, which is what a reader comparing notations needs.
+    spans : bool, optional
+        Locate every node of the tree. The join key for patching a file in
+        place and for a trace overlay; not needed to regenerate code, and
+        roughly half the tree's triples.
 
     Returns
     -------
-    rdflib.Graph
-        The requested layers, in one graph.
-    """
-    from rdflib import Graph
+    dict
+        A ``@context`` and a ``@graph``. This is the artefact; RDF is one
+        serialization of it and the editor model is the first entry in it.
 
-    unknown = set(layers) - set(LAYERS)
+    Raises
+    ------
+    ValueError
+        If a layer is not one of :data:`awl.vocab.LAYERS`, rather than quietly
+        returning less than was asked for.
+    """
+    selected = vocab.LOOKUPS[profile] if layers is None else layers
+    unknown = set(selected) - set(vocab.LAYERS)
     if unknown:
-        raise ValueError(f"unknown layers {sorted(unknown)}; expected some of {list(LAYERS)}")
+        raise ValueError(f"unknown layers {sorted(unknown)}; expected some of {list(vocab.LAYERS)}")
 
     observed = facts.extract(source, module=module, file=file)
     # The same resolution the collapse used. Building the context from this
@@ -229,12 +243,41 @@ def to_graph(
     # the node was typed awl:ChargeParam while the collapse had named it
     # py/tier3_oold.params/ChargeParam: one entity, two IRIs.
     types, _ = _collapsible(observed, module, index or {})
-    document = context.build_context(list(types.values()))
+    built = context.build_context(list(types.values()))
 
-    graph = Graph()
-    for part in _layers(source, observed, layers, module=module, profile=profile, file=file, index=index):
-        graph += rdf.to_graph(part, context=document)
-    return graph
+    graph: list[Any] = []
+    for part in _layers(
+        source, observed, selected, module=module, profile=profile, file=file, index=index, spans=spans
+    ):
+        graph.extend(part.get("@graph", [part]))
+    return {"@context": built["@context"], "@graph": graph}
+
+
+def to_graph(
+    source: str,
+    *,
+    module: str = "",
+    profile: str = "ast",
+    file: str = "<source>",
+    index: dict[str, str] | None = None,
+    layers: tuple[str, ...] | None = None,
+    spans: bool = False,
+):
+    """Serialize :func:`to_document` as RDF, taking the same parameters.
+
+    Returns
+    -------
+    rdflib.Graph
+
+    Notes
+    -----
+    There is nothing here but a change of notation. What the graph contains is
+    decided by the profile when the document is built, so the two cannot say
+    different things about one program.
+    """
+    return rdf.to_graph(
+        to_document(source, module=module, profile=profile, file=file, index=index, layers=layers, spans=spans)
+    )
 
 
 def _layers(
@@ -246,10 +289,25 @@ def _layers(
     profile: str,
     file: str,
     index: dict[str, str] | None,
+    spans: bool,
 ):
     """Yield the requested layers as documents, building only what is asked for."""
     if "document" in layers:
-        yield to_ast_doc(source, module=module, profile=profile, file=file, index=index)
+        # The editor model, then the two things a document that is going to be
+        # projected needs and an editor does not: a slot number where array
+        # position stops being recoverable, and a span whose four numbers are
+        # named. Both are the profile's call, and both leave the editor's own
+        # model alone.
+        tree = to_compact(source, module=module, profile=profile, file=file, index=index, spans=spans)
+        if vocab.MATERIALIZES_ORDERINGS[profile]:
+            tree = compact.number_items(tree)
+        if "names" in layers:
+            # The name stays as written, and gains a reference to what it was
+            # resolved to, so a query can ask by identity instead of by
+            # spelling. Only when the names lookup ran: the reference is that
+            # lookup's judgement, not something the tree knows on its own.
+            tree = compact.link_names(tree, resolve(observed)["bindings"])
+        yield compact.name_spans(tree, file=file) if spans else tree
 
     flow = None
     if {"plan", "definitions"} & set(layers):
@@ -259,6 +317,9 @@ def _layers(
         plan = controlflow.analyze(source, module=module, file=file)
         _attach_condition_reads(plan, flow or {})
         yield controlflow.as_document(plan)
+
+    if "names" in layers:
+        yield {"@graph": _name_nodes(resolve(observed))}
 
     if "writes" in layers:
         yield {"@graph": _write_nodes(resolve_writes(observed))}
@@ -298,6 +359,26 @@ def _span_key(span: dict[str, Any] | None) -> tuple[Any, ...] | None:
 def _write_nodes(writes: dict[str, Any]) -> list[dict[str, Any]]:
     """Return the resolved member writes as graph nodes."""
     return [{"_type": "Write", **entry} for entry in writes["writes"]]
+
+
+def _name_nodes(names: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return each resolved name as a node keyed by the identity it names.
+
+    The tree carries a name as written, because that is what the source says
+    and what regenerates it. What that name refers to is a judgement, so it is
+    recorded here with the confidence it was reached at, rather than written
+    onto the node as though the parser had seen it.
+    """
+    return [
+        {
+            "@id": entry["identity"]["iri"],
+            "_type": "Binding",
+            **{key: value for key, value in entry.items() if key != "identity"},
+            **{key: value for key, value in entry["identity"].items() if key != "iri" and value is not None},
+        }
+        for entry in names["bindings"]
+        if (entry.get("identity") or {}).get("iri")
+    ]
 
 
 def _flow_nodes(flow: dict[str, Any]) -> list[dict[str, Any]]:

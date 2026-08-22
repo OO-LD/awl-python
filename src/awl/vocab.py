@@ -12,6 +12,9 @@ __all__ = [
     "AMBIENT_ANNOTATIONS",
     "AMBIENT_CALLEES",
     "FOLDS_KEYWORDS",
+    "LAYERS",
+    "LOOKUPS",
+    "MATERIALIZES_ORDERINGS",
     "NODE_TYPES",
     "OPAQUE",
     "ORDERED_FIELDS",
@@ -197,6 +200,29 @@ OPAQUE = MappingProxyType({
 })
 
 PROFILES = tuple(TRANSPARENT)
+
+#: What a document can hold beyond the tree. The tree says what was written;
+#: each of the others is a lookup over it, answering a question the tree alone
+#: cannot: how control moves, what a name refers to, which typed member a value
+#: was written to, and where a value came from.
+LAYERS = ("document", "plan", "names", "writes", "definitions")
+
+#: The lookups each profile runs, alongside TRANSPARENT, OPAQUE and
+#: FOLDS_KEYWORDS: a profile is a named set of generator parameters, not a
+#: separate code path. Every profile looks up everything today, because the
+#: reduced ones are paused; they differ here first when they are defined, since
+#: a lookup is what a profile's question needs rather than what its tree shows.
+LOOKUPS = MappingProxyType(dict.fromkeys(TRANSPARENT, LAYERS))
+
+#: Whether a profile's document carries the orderings that array position
+#: already implies.
+#:
+#: The editor model leaves them out, because an editor that reorders a body
+#: would leave the numbers stale. A document that is going to be projected must
+#: carry them: ``@container: @list`` yields an RDF collection, a collection
+#: yields members rather than positions, and SPARQL 1.1 property paths have
+#: only ``*``, ``+`` and ``?``, so nothing downstream can count the hops back.
+MATERIALIZES_ORDERINGS = MappingProxyType(dict.fromkeys(TRANSPARENT, True))
 
 #: Callees shared by every workflow, so they distinguish nothing.
 #:
