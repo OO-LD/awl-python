@@ -10,6 +10,7 @@ copyright = 'Maintained by <a href="https://github.com/OO-LD">OO-LD</a>.'
 
 nav = [
     { "Home" = "index.md" },
+    { "Flavours" = "flavours.md" },
     { "Worked examples" = "examples.md" },
     { "API Reference" = "awl.md" },
     { "Development" = "dev.md" },
@@ -19,7 +20,10 @@ extra_css = ["assets/wide.css"]
 
 [project.plugins.macros]
 # The worked-examples page is built from the corpus at render time.
-module_name = "docs/macros"
+# An importable name, not a path: zensical resolves a path only against
+# the project root, which arrives extended-length-prefixed under serve on
+# Windows, and then silently renders no macros at all.
+module_name = "awl.examples"
 
 [project.plugins.mkdocstrings.handlers.python]
 paths = ["src/awl"]
