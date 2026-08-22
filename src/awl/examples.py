@@ -103,20 +103,9 @@ def _turtle(source: str, module: str, path: Path) -> str:
 #: One short procedure, shown under every generator setting. Small enough that
 #: each flavour fits on a screen, and still holds a loop, a guard, a resolved
 #: constructor and a write to a typed member, so no setting has nothing to say.
-FLAVOUR_SOURCE = """from dataclasses import dataclass
-
-from battery.device import charge, measure
+FLAVOUR_SOURCE = """from battery.device import charge, measure
 from battery.params import ChargeParam
-
-
-@dataclass
-class Capacity:
-    value: float
-
-
-@dataclass
-class Report:
-    capacity: Capacity
+from battery.report import Report
 
 
 def procedure(cycles: int) -> None:
@@ -131,7 +120,7 @@ def procedure(cycles: int) -> None:
 #: Bound in every query on the page, so the questions read as questions.
 _PREFIXES = """PREFIX awl: <https://w3id.org/awl/schema/>
 PREFIX param: <https://w3id.org/awl/py/battery.params/ChargeParam#>
-PREFIX capacity: <https://w3id.org/awl/py/battery.procedure/>"""
+PREFIX report: <https://w3id.org/awl/py/battery.report/>"""
 
 #: The lookups on their own, each with a question only it can answer.
 _SINGLE_FLAVOURS: tuple[tuple[str, str, dict, str, str], ...] = (
@@ -151,7 +140,8 @@ _SINGLE_FLAVOURS: tuple[tuple[str, str, dict, str, str], ...] = (
         "The same tree with `spans` on, so every node says where it was written. That is "
         "the join key for patching a file in place, for laying a trace over it, and for "
         "joining the tree to anything looked up beside it. It is also about half the "
-        "tree's triples, which is why it is not on by default.",
+        "tree's triples. Every profile turns it on for that reason; the tree above turned "
+        "it off, which is the only thing that differs between the two.",
         {"layers": ("document",), "spans": True},
         "On which line is `charge` called? The tree alone can only answer about the "
         "name as written, which is scope-blind: two functions may both call something "
@@ -196,7 +186,7 @@ _SINGLE_FLAVOURS: tuple[tuple[str, str, dict, str, str], ...] = (
         "Where was a Capacity written, and by what?",
         """SELECT ?member ?by ?confidence WHERE {
   ?write awl:memberPath ?member ; awl:writtenBy ?by ; awl:confidence ?confidence ;
-         awl:range capacity:Capacity .
+         awl:range report:Capacity .
 }""",
     ),
     (
@@ -223,7 +213,7 @@ _COMBINED_FLAVOURS: tuple[tuple[str, str, dict, str, str], ...] = (
         "What was written, and how control moves through it. The two are joined by span, "
         "which is why this combination turns them on: a plan step and the statement it was "
         "derived from carry the same position.",
-        {"layers": ("document", "plan", "names"), "spans": True},
+        {"layers": ("document", "plan", "names")},
         "Which function does the loop body call, by identity rather than by name?",
         """SELECT ?step ?callee WHERE {
   ?loop awl:whenTrue ?step .
@@ -236,7 +226,7 @@ _COMBINED_FLAVOURS: tuple[tuple[str, str, dict, str, str], ...] = (
         "Tree, plan and provenance",
         "Adds where each value came from, so the name a step reads can be followed back to "
         "the definitions that could have produced it.",
-        {"layers": ("document", "plan", "names", "definitions"), "spans": True},
+        {"layers": ("document", "plan", "names", "definitions")},
         "Where does the value the loop test reads come from?",
         """SELECT ?definition ?kind WHERE {
   ?loop awl:condition [ awl:reads ?definition ] .
@@ -247,7 +237,7 @@ _COMBINED_FLAVOURS: tuple[tuple[str, str, dict, str, str], ...] = (
         "Everything",
         "What the `ast` profile asks for, and what a query is actually run against. The "
         "typed member writes join the tree to the classes it constructs.",
-        {"spans": True},
+        {},
         "What does this procedure produce, and from which step?",
         """SELECT ?member ?range ?line WHERE {
   ?write awl:memberPath ?member ; awl:range ?range ;
@@ -270,7 +260,7 @@ def _flavour_document(settings: dict) -> str:
         file="procedure.py",
         index=_FLAVOUR_INDEX,
         layers=settings.get("layers"),
-        spans=settings.get("spans", False),
+        spans=settings.get("spans"),
     )
     return dumps({"@graph": document["@graph"]}, width=128)
 
@@ -283,7 +273,7 @@ def _flavour_turtle(settings: dict) -> str:
         file="procedure.py",
         index=_FLAVOUR_INDEX,
         layers=settings.get("layers"),
-        spans=settings.get("spans", False),
+        spans=settings.get("spans"),
     )
     graph.bind("awl", "https://w3id.org/awl/schema/")
     graph.bind("py", "https://w3id.org/awl/py/")
@@ -310,7 +300,7 @@ def _answer(settings: dict, query: str) -> str:
         file="procedure.py",
         index=_FLAVOUR_INDEX,
         layers=settings.get("layers"),
-        spans=settings.get("spans", False),
+        spans=settings.get("spans"),
     )
     result = graph.query(query)
     names = [str(name) for name in result.vars or []]
@@ -380,17 +370,18 @@ def _flavour_view(title: str, note: str, settings: dict, question: str, query: s
     ])
 
 
-#: The module the procedure imports its parameter object from, so the collapse
-#: has something to resolve across a file boundary. Tier 2 of the corpus: a
-#: plain annotated dataclass, with no linked data written by hand anywhere.
-#:
-#: `Report` is declared in the procedure itself rather than here, because
-#: member-write resolution reads one module: a class imported from another file
-#: resolves for the collapse and not for the write.
+#: The modules the procedure imports from, so the collapse and the member write
+#: both have something to resolve across a file boundary. Tier 2 of the corpus:
+#: plain annotated dataclasses, with no linked data written by hand anywhere.
 _FLAVOUR_INDEX = {
     "battery.params": (
         "from dataclasses import dataclass\n\n\n@dataclass\nclass ChargeParam:\n    target_voltage: float\n"
-    )
+    ),
+    "battery.report": (
+        "from dataclasses import dataclass\n\n\n"
+        "@dataclass\nclass Capacity:\n    value: float\n\n\n"
+        "@dataclass\nclass Report:\n    capacity: Capacity\n"
+    ),
 }
 
 

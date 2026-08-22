@@ -122,6 +122,32 @@ def _collapsible(observed: dict[str, Any], module: str, index: dict[str, str]) -
     return types, resolved
 
 
+def _imported_classes(observed: dict[str, Any], module: str, index: dict[str, str]) -> dict[str, Any]:
+    """Return every class an imported module declares, by its own name.
+
+    Member-write resolution reads declarations, and a declaration lives in the
+    module that made it. Without these, ``report.capacity = ...`` resolved for
+    the collapse, which follows imports, and not for the write, which did not:
+    the same class was known and unknown in one pass.
+
+    Every class of the module, not only the imported name, because the range of
+    a field is declared in the module that declares the field. Local names win
+    on a collision, since a class declared here is what a name here means.
+    """
+    found: dict[str, Any] = {}
+    for entry in observed.get("imports", []):
+        if entry.get("is_star"):
+            continue
+        origin = resolve_module(module, entry["from_module"])
+        other = index.get(origin)
+        if other is None:
+            continue
+        for declaration in facts.extract(other, module=origin, file=origin).get("declarations", []):
+            if declaration.get("kind") == "class":
+                found.setdefault(declaration["name"], declaration)
+    return found
+
+
 def to_ast_doc(
     source: str,
     *,
@@ -154,9 +180,26 @@ def to_ast_doc(
         an unresolved name stays a plain call.
     """
     observed = facts.extract(source, module=module, file=file)
-    types, resolved = _collapsible(observed, module, index or {})
+    return _tree(source, observed, module=module, profile=profile, index=index or {})
+
+
+def _tree(
+    source: str,
+    observed: dict[str, Any],
+    *,
+    module: str,
+    profile: str,
+    index: dict[str, str],
+) -> Any:
+    """Elide and collapse against facts that have already been read.
+
+    Split out so a document can be built with one pass of extraction. Calling
+    the public entry points in sequence read every module twice and every
+    module they import four times, for one answer.
+    """
+    types, resolved = _collapsible(observed, module, index)
     doc = elide.elide(to_doc(ast.parse(source)), profile=profile, source=source)
-    return collapse.collapse(doc, types=types, resolved=resolved, embed_context=False)
+    return collapse.collapse(doc, types=types, resolved=resolved, embed_context=vocab.EMBEDS_CONTEXT[profile])
 
 
 def to_compact(
@@ -190,7 +233,7 @@ def to_document(
     file: str = "<source>",
     index: dict[str, str] | None = None,
     layers: tuple[str, ...] | None = None,
-    spans: bool = False,
+    spans: bool | None = None,
 ) -> dict[str, Any]:
     """Build the JSON-LD document a profile calls for.
 
@@ -216,9 +259,10 @@ def to_document(
         its own. Asking for ``("document",)`` gives the tree and nothing
         derived from it, which is what a reader comparing notations needs.
     spans : bool, optional
-        Locate every node of the tree. The join key for patching a file in
-        place and for a trace overlay; not needed to regenerate code, and
-        roughly half the tree's triples.
+        Overrides the profile's :data:`awl.vocab.MATERIALIZES_SPANS`. On for
+        every profile, because a span is what joins the tree to the lookups
+        beside it: the tree's nodes are anonymous and everything else is a
+        minted identity, so without one they share a graph and touch nowhere.
 
     Returns
     -------
@@ -233,6 +277,7 @@ def to_document(
         returning less than was asked for.
     """
     selected = vocab.LOOKUPS[profile] if layers is None else layers
+    located = vocab.MATERIALIZES_SPANS[profile] if spans is None else spans
     unknown = set(selected) - set(vocab.LAYERS)
     if unknown:
         raise ValueError(f"unknown layers {sorted(unknown)}; expected some of {list(vocab.LAYERS)}")
@@ -247,7 +292,7 @@ def to_document(
 
     graph: list[Any] = []
     for part in _layers(
-        source, observed, selected, module=module, profile=profile, file=file, index=index, spans=spans
+        source, observed, selected, module=module, profile=profile, file=file, index=index, spans=located
     ):
         graph.extend(part.get("@graph", [part]))
     return {"@context": built["@context"], "@graph": graph}
@@ -261,7 +306,7 @@ def to_graph(
     file: str = "<source>",
     index: dict[str, str] | None = None,
     layers: tuple[str, ...] | None = None,
-    spans: bool = False,
+    spans: bool | None = None,
 ):
     """Serialize :func:`to_document` as RDF, taking the same parameters.
 
@@ -298,7 +343,10 @@ def _layers(
         # position stops being recoverable, and a span whose four numbers are
         # named. Both are the profile's call, and both leave the editor's own
         # model alone.
-        tree = to_compact(source, module=module, profile=profile, file=file, index=index, spans=spans)
+        tree = compact.encode(
+            _tree(source, observed, module=module, profile=profile, index=index or {}),
+            keep_spans=spans,
+        )
         if vocab.MATERIALIZES_ORDERINGS[profile]:
             tree = compact.number_items(tree)
         if "names" in layers:
@@ -322,7 +370,8 @@ def _layers(
         yield {"@graph": _name_nodes(resolve(observed))}
 
     if "writes" in layers:
-        yield {"@graph": _write_nodes(resolve_writes(observed))}
+        imported = _imported_classes(observed, module, index or {})
+        yield {"@graph": _write_nodes(resolve_writes(observed, imported=imported))}
 
     if "definitions" in layers and flow is not None:
         yield {"@graph": _flow_nodes(flow)}

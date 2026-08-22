@@ -151,7 +151,12 @@ def _describe(event: dict[str, Any], walked: _Bound | None, identity_for) -> dic
     return entry
 
 
-def resolve_writes(facts: dict[str, Any], *, scheme: str = "py") -> dict[str, Any]:
+def resolve_writes(
+    facts: dict[str, Any],
+    *,
+    scheme: str = "py",
+    imported: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """Resolve each attribute write to the member it targets.
 
     Parameters
@@ -162,6 +167,11 @@ def resolve_writes(facts: dict[str, Any], *, scheme: str = "py") -> dict[str, An
         carry the annotations to walk them against.
     scheme : str, optional
         Language dimension passed through to minting.
+    imported : dict, optional
+        Classes declared in the modules this one imports from, by name. A
+        write walks declared fields, and a declaration lives in the module that
+        made it, so without these an imported class resolves for the collapse
+        and not for the write: known and unknown in the same pass.
 
     Returns
     -------
@@ -185,15 +195,28 @@ def resolve_writes(facts: dict[str, Any], *, scheme: str = "py") -> dict[str, An
 
     A hop that cannot be walked yields ``AMBIGUOUS`` rather than a guess.
     """
-    classes = _classes(facts)
+    # A local declaration wins: a class declared here is what a name here
+    # means, whatever a module it imports from happens to call the same thing.
+    classes = {**(imported or {}), **_classes(facts)}
+    declared = {
+        name: entry["identity"]["iri"] for name, entry in classes.items() if (entry.get("identity") or {}).get("iri")
+    }
     imports = {entry["local_name"]: entry for entry in facts.get("imports", [])}
     module = facts.get("module", "")
 
     def identity_for(class_name: str) -> str:
-        """Mint the identity of a class, following its import if it has one."""
-        imported = imports.get(class_name)
-        if imported is not None:
-            return mint(scheme=scheme, module=imported["from_module"], symbol=class_name)["iri"]
+        """Return the identity of a class, as whoever declared it minted it.
+
+        The declaration is asked first. Re-minting from the import as written
+        gets the module wrong for anything reached indirectly: the range of an
+        imported class's field is declared where that class is, not where it
+        was imported to.
+        """
+        if class_name in declared:
+            return declared[class_name]
+        entry = imports.get(class_name)
+        if entry is not None:
+            return mint(scheme=scheme, module=entry["from_module"], symbol=class_name)["iri"]
         return mint(scheme=scheme, module=module, symbol=class_name)["iri"]
 
     def position(event: dict[str, Any]) -> tuple[int, int]:

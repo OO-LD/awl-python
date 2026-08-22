@@ -11,10 +11,12 @@ from types import MappingProxyType
 __all__ = [
     "AMBIENT_ANNOTATIONS",
     "AMBIENT_CALLEES",
+    "EMBEDS_CONTEXT",
     "FOLDS_KEYWORDS",
     "LAYERS",
     "LOOKUPS",
     "MATERIALIZES_ORDERINGS",
+    "MATERIALIZES_SPANS",
     "NODE_TYPES",
     "OPAQUE",
     "ORDERED_FIELDS",
@@ -22,6 +24,7 @@ __all__ = [
     "TRANSPARENT",
     "node_type_for",
     "operator_name_for",
+    "round_trips",
     "statement_types",
 ]
 
@@ -223,6 +226,40 @@ LOOKUPS = MappingProxyType(dict.fromkeys(TRANSPARENT, LAYERS))
 #: yields members rather than positions, and SPARQL 1.1 property paths have
 #: only ``*``, ``+`` and ``?``, so nothing downstream can count the hops back.
 MATERIALIZES_ORDERINGS = MappingProxyType(dict.fromkeys(TRANSPARENT, True))
+
+#: Whether a profile's document locates every node of the tree.
+#:
+#: On, because a span is what joins the tree to everything looked up beside it.
+#: The tree's nodes are anonymous and the plan, the names and the def-use graph
+#: are minted identities, so with no span in common they sit in one graph and
+#: touch nowhere: "which call does the loop body run" has no answer. It is also
+#: the join key for patching a file in place and for a trace overlay.
+#:
+#: The editor model is the exception and asks for it explicitly, because
+#: regenerating code does not need it and carrying it doubles the tree.
+MATERIALIZES_SPANS = MappingProxyType(dict.fromkeys(TRANSPARENT, True))
+
+#: Whether a collapsed node carries its own ``@context``.
+#:
+#: Off: the document context already scopes every class's terms under the class
+#: term, so embedding the same map per node repeats it once per constructor
+#: call. It is worth turning on for a node travelling on its own, away from the
+#: document that would interpret it.
+EMBEDS_CONTEXT = MappingProxyType(dict.fromkeys(TRANSPARENT, False))
+
+
+def round_trips(profile: str) -> bool:
+    """Return whether a profile's documents can be read back.
+
+    Derived from the parameters rather than listed beside them. A profile that
+    unwraps only reversible wrappers and makes nothing opaque has dropped
+    nothing, so it can be reconstructed; any other has, and no importer can
+    recover what is gone. Listing the round-trippable profiles by hand meant a
+    profile added to the tables above was treated as round-trippable by
+    default, which is the wrong way for that mistake to fall.
+    """
+    return TRANSPARENT[profile] <= _REVERSIBLE_WRAPPERS and not OPAQUE[profile]
+
 
 #: Callees shared by every workflow, so they distinguish nothing.
 #:

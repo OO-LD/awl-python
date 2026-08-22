@@ -20,10 +20,16 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from awl import vocab
+
 __all__ = ["CONFIDENCE_GRAPHS", "from_graph", "to_dataset", "to_graph", "to_jsonld"]
 
-#: Profiles that drop nodes, and therefore cannot be read back.
-LOSSY_PROFILES = frozenset({"workflow", "provenance", "signature"})
+#: Profiles that drop nodes, and therefore cannot be read back. Derived from
+#: the generator parameters rather than listed beside them: a hand-written list
+#: treated a profile added to those tables as round-trippable by default, which
+#: is the wrong way for that mistake to fall, and put a decision about what a
+#: profile contains on the serialization side.
+LOSSY_PROFILES = frozenset(profile for profile in vocab.PROFILES if not vocab.round_trips(profile))
 
 #: One named graph per confidence tier, so retrofitted meaning stays
 #: distinguishable from declared meaning.

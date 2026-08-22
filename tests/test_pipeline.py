@@ -361,6 +361,96 @@ def test_the_profile_decides_what_the_document_holds():
     assert vocab.LOOKUPS["ast"] == vocab.LAYERS
 
 
+@pytest.mark.parametrize(
+    "table", ["LOOKUPS", "MATERIALIZES_ORDERINGS", "MATERIALIZES_SPANS", "EMBEDS_CONTEXT", "FOLDS_KEYWORDS"]
+)
+def test_every_generator_parameter_is_named_by_a_profile(table):
+    """Otherwise it is reachable only as a keyword argument no profile can set.
+
+    `spans` was exactly that: an include-or-exclude decision about what the
+    document holds, with no profile able to express it.
+    """
+    assert set(getattr(vocab, table)) == set(vocab.PROFILES), table
+
+
+def test_the_ast_profile_locates_its_tree():
+    """Without spans the layers share a graph and touch nowhere.
+
+    The tree's nodes are anonymous and every lookup is a minted identity, so
+    the span is the only thing they have in common.
+    """
+    assert vocab.MATERIALIZES_SPANS["ast"] is True
+
+    source, index = _tier("tier3_oold")
+    graph = pipeline.to_graph(source, module="tier3_oold.procedure", index=index)
+    rows = graph.query("""
+        PREFIX awl: <https://w3id.org/awl/schema/>
+        SELECT ?step WHERE {
+          ?step a awl:Step ; awl:span [ awl:startLine ?line ; awl:startCol ?column ] .
+          ?node awl:span [ awl:startLine ?line ; awl:startCol ?column ] ; awl:func [] .
+        }
+    """)
+    assert list(rows), "no step joins to the statement it came from"
+
+
+def test_which_profiles_can_be_read_back_is_derived_not_listed():
+    """A profile added to the tables must not default to round-trippable."""
+    from awl.rdf import LOSSY_PROFILES
+
+    assert {name for name in vocab.PROFILES if not vocab.round_trips(name)} == LOSSY_PROFILES
+    assert "ast" not in LOSSY_PROFILES
+
+
+def test_a_module_is_read_once_per_document():
+    """Calling the entry points in sequence read every module twice, and every
+    module it imports from four times, for one answer.
+    """
+    from unittest.mock import patch
+
+    from awl import facts
+
+    source, index = _tier("tier3_oold")
+    with patch.object(facts, "extract", wraps=facts.extract) as extract:
+        pipeline.to_document(source, module="tier3_oold.procedure", index=index, layers=("document",))
+    read = [call.kwargs.get("module") for call in extract.call_args_list]
+    assert read.count("tier3_oold.procedure") == 1, read
+
+
+def test_a_write_to_an_imported_class_resolves():
+    """The class was known to the collapse and unknown to the write.
+
+    Resolution walks declarations, and a declaration lives in the module that
+    made it, so an imported parameter object could be constructed as a typed
+    node and then written to as though it had no type at all.
+    """
+    index = {
+        "battery.report": (
+            "from dataclasses import dataclass\n\n\n"
+            "@dataclass\nclass Capacity:\n    value: float\n\n\n"
+            "@dataclass\nclass Report:\n    capacity: Capacity\n"
+        )
+    }
+    source = (
+        "from battery.report import Report\n\n\ndef run():\n    report = Report()\n    report.capacity = measure()\n"
+    )
+    graph = pipeline.to_graph(source, module="battery.procedure", index=index, layers=("writes",))
+    rows = graph.query("""
+        PREFIX awl: <https://w3id.org/awl/schema/>
+        SELECT ?member ?root ?range WHERE {
+          ?write awl:memberPath ?member ; awl:rootType ?root ; awl:range ?range .
+        }
+    """)
+    assert [tuple(str(value) for value in row) for row in rows] == [
+        (
+            "Report.capacity",
+            "https://w3id.org/awl/py/battery.report/Report",
+            # The module that declares Capacity, not the one that imported
+            # Report: a field's range belongs to whoever declared the field.
+            "https://w3id.org/awl/py/battery.report/Capacity",
+        )
+    ]
+
+
 def test_rdf_says_the_same_as_the_document_it_serializes():
     """The graph is a notation, not a second derivation.
 
