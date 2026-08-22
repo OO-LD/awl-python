@@ -537,11 +537,17 @@ def decode(node: Any) -> Any:
 
     if "@type" in node and not _is_ast_node(node):
         return _decode_collapsed(node)
-    if "literal" in node and set(node) <= {"literal", *_SHORTHAND_EXTRA}:
+    # Minus the drop list, because a shorthand can arrive carrying a
+    # materialized ordering: renumbering a statement list stamps `order` onto
+    # every item, and a docstring is an item. Reading that as a typed node
+    # asked a literal for its `@type` and raised, which made adding a step to
+    # any body holding a docstring fail on the way back out.
+    plain = set(node) - _DROP
+    if "literal" in node and plain <= {"literal", *_SHORTHAND_EXTRA}:
         from awl.astdoc import from_doc
 
         return ast.Constant(value=from_doc(node["literal"]))
-    if "var" in node and set(node) <= {"var", *_SHORTHAND_EXTRA}:
+    if "var" in node and plain <= {"var", *_SHORTHAND_EXTRA}:
         return ast.Name(id=node["var"], ctx=ast.Load())
 
     from awl.elide import unfold_node

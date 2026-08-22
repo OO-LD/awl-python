@@ -208,6 +208,147 @@ def test_a_step_that_calls_nothing_does_not_open():
     assert model.opens(assign) is None
 
 
+def test_a_level_renders_a_block_for_each_level_below_it():
+    """Standing on a module, `procedure` has to be visible and openable.
+
+    A declaration does not run, so it is not a step and never appeared on the
+    canvas that draws what runs. That made the module a dead end with the only
+    way in sitting in a list beside the canvas.
+    """
+    model = _nested()
+    module = model.flow("")
+    assert [entry["name"] for entry in module["sublevels"]] == ["procedure"]
+    assert module["sublevels"][0]["steps"] == 5, "and says how much is inside it"
+    assert len(module["sublevels"][0]["span"]) == 4, "so a canvas can locate the block"
+
+
+def test_a_sublevel_block_is_not_a_step():
+    """It stands for a level. Nothing flows through it, so it has no place in
+    the next chain and would be a lie in the plan.
+    """
+    model = _nested()
+    module = model.flow("")
+    assert not [step for step in module["steps"] if step["parser_type_name"] == "FunctionDef"]
+
+
+def test_the_source_can_be_edited_back():
+    """Both ways, or the source pane is a read-only echo."""
+    model = _nested()
+    answer = model.set_source(NESTED.replace("rest(600)", "rest(900)\n        settle()"))
+    assert answer["ok"]
+    assert [step.get("callee") for step in model.flow("procedure")["steps"]] == [
+        None,
+        None,
+        "charge",
+        "rest",
+        "settle",
+        None,
+    ]
+
+
+def test_source_that_does_not_parse_changes_nothing():
+    """A half-typed edit is the normal state of a source pane, and a canvas
+    rebuilt from a partial tree would flicker through files that never existed.
+    """
+    model = _nested()
+    before = model.source
+    answer = model.set_source("def procedure(:\n")
+    assert not answer["ok"]
+    assert answer["line"] == 1
+    assert model.source == before
+    assert model.flow("procedure")["steps"], "the canvas still has something to draw"
+
+
+def _device(charge):
+    """A stand-in for the hardware module the procedure imports.
+
+    A namespace rather than a ModuleType: `from battery.device import charge`
+    is an attribute lookup on whatever sits in sys.modules, so this is enough,
+    and it is enough for a type checker too.
+    """
+    import types
+
+    return types.SimpleNamespace(charge=charge, rest=lambda seconds: None)
+
+
+def test_running_the_procedure_says_what_ran():
+    """A real run, traced, joined to the plan by span."""
+    model = _nested()
+    calls: list[float] = []
+    result = model.run("procedure", 3, modules={"battery.device": _device(calls.append)})
+    assert result["ok"]
+    assert calls == [4.2, 4.2, 4.2], "it really ran, three times"
+    executed = [record for record in result["overlay"]["executions"] if record["executed"]]
+    assert len(executed) == len(model.flow("procedure")["steps"])
+
+
+def test_a_run_that_raises_still_says_how_far_it_got():
+    """A step that raised is a fact about the procedure, not a lost run."""
+    model = _nested()
+
+    def explode(volts: float) -> None:
+        raise RuntimeError("supply tripped")
+
+    result = model.run("procedure", 3, modules={"battery.device": _device(explode)})
+    assert not result["ok"]
+    assert "supply tripped" in result["error"]
+    assert any(record["executed"] for record in result["overlay"]["executions"])
+
+
+def test_the_sample_runs_and_says_how_often_and_which_way():
+    """The overlay is only worth drawing if it carries more than "it ran".
+
+    The tracer reads the file to work out which loop a frame is in and which
+    way a branch went, so a `file` label that is not on disk silently costs
+    every iteration count and every branch outcome. The steps still report as
+    executed, which is what made it easy to miss.
+    """
+    model = ui.sample()
+    result = model.run("procedure", 3)
+    assert result["ok"]
+
+    executions = result["overlay"]["executions"]
+    charge = next(record for record in executions if record.get("callee") == "charge")
+    assert charge["iterations"] == [0, 1, 2], "the loop ran three times, and says so"
+
+    branch = next(record for record in executions if record.get("branch_taken"))
+    assert branch["branch_taken"] == [False, True], "and the branch went both ways"
+
+
+def test_a_structural_edit_is_recorded_rather_than_refused():
+    """add_step, delete_step and reorder carry no span, and reading one raised.
+
+    A structural patch names a path and an operation, because moving a
+    statement is not a range of characters. Every structural operation was
+    unreachable through this class until the patch tier was read before the
+    span.
+    """
+    model = ui.sample()
+    before = len(model.flow("procedure")["steps"])
+    added = {"@type": "Call", "func": {"var": "rest"}, "args": [{"literal": 30}]}
+    model.apply("add_step", into=["body", 7, "body"], node=added)
+
+    assert [edit.get("kind") for edit in model.edits] == ["structural"]
+    assert model.set_source(model.regenerate())["ok"]
+    assert len(model.flow("procedure")["steps"]) == before + 1
+
+
+def test_a_structural_edit_cannot_be_spliced_and_says_so():
+    """Adding a statement is not a range of characters.
+
+    Nothing routes a structural patch through a concrete-syntax rewrite yet,
+    so the only way to produce the code is to regenerate, which reformats the
+    file and drops its comments. That is the caller's choice to make, not
+    something to discover from a KeyError raised inside the patcher.
+    """
+    model = ui.sample()
+    model.apply("delete_step", path=["body", 7, "body", 4])
+
+    with pytest.raises(NotImplementedError, match="structural"):
+        model.to_source()
+    assert model.regenerate(), "and the way through is named in the error"
+
+
 def test_every_variant_pairs_a_canvas_with_a_form():
     """Three variants, and the comparison is only worth anything if what
     differs between them is the paradigm rather than the plumbing.

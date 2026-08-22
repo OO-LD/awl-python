@@ -12,6 +12,7 @@ nav = [
     { "Home" = "index.md" },
     { "Flavours" = "flavours.md" },
     { "Worked examples" = "examples.md" },
+    { "Editor variants" = "editor.md" },
     { "API Reference" = "awl.md" },
     { "Development" = "dev.md" },
 ]

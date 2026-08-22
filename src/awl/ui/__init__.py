@@ -181,7 +181,164 @@ class EditorModel:
             "scope": scope,
             "steps": [step for step in self.plan["steps"] if step["id"] in here],
             "edges": [edge for edge in self.plan["edges"] if edge.get("from") in here and edge.get("to") in here],
+            "sublevels": self.sublevels(scope),
         }
+
+    def sublevels(self, scope: str = "") -> list[dict[str, Any]]:
+        """Return the levels declared at *scope*, as blocks to render.
+
+        Parameters
+        ----------
+        scope : str, optional
+            The level being drawn.
+
+        Returns
+        -------
+        list of dict
+            ``name``, ``scope``, ``steps`` and ``span`` for each function
+            declared here.
+
+        Notes
+        -----
+        A level draws what runs at it, and a declaration does not run, so
+        neither canvas had anything to show for ``procedure`` while standing on
+        the module that declares it. That made a module a dead end and put the
+        only way in behind a list beside the canvas.
+
+        A declaration is still not a step: it has no place in the ``next``
+        chain and nothing flows through it. It is a block that stands for a
+        level, which is a different thing on the canvas and is why it is a
+        different key here.
+        """
+        found = []
+        for entry in self.facts.get("declarations", []):
+            if entry.get("kind") != "function":
+                continue
+            if (entry.get("scope") or "") != scope:
+                continue
+            span = entry.get("span") or {}
+            found.append({
+                "name": entry["name"],
+                "scope": entry["name"],
+                "steps": sum(1 for step in self.plan["steps"] if step.get("scope") == entry["name"]),
+                "span": [
+                    span.get("start_line"),
+                    span.get("start_col"),
+                    span.get("end_line"),
+                    span.get("end_col"),
+                ],
+            })
+        return found
+
+    def set_source(self, text: str) -> dict[str, Any]:
+        """Replace the source and rebuild everything drawn from it.
+
+        Parameters
+        ----------
+        text : str
+            The module's new text.
+
+        Returns
+        -------
+        dict
+            ``ok`` and either the new ``document`` or the ``error`` that
+            stopped it, with ``line`` and ``offset`` when the parser gave them.
+
+        Notes
+        -----
+        Editing runs both ways or the source pane is a read-only echo. What
+        makes it safe is that a failure changes nothing: a half-typed edit does
+        not parse, and a canvas rebuilt from a partial tree would flicker
+        through states the file was never in.
+
+        Pending patches are dropped, because they address offsets in the text
+        being replaced. Keeping them would apply an old edit at a new position.
+        """
+        import ast
+
+        try:
+            ast.parse(text)
+        except SyntaxError as error:
+            return {"ok": False, "error": error.msg, "line": error.lineno, "offset": error.offset}
+
+        self.source = text
+        self.document = pipeline.to_compact(text, module=self.module, file=self.file, index=self.index, spans=True)
+        self.plan = controlflow.analyze(text, module=self.module, file=self.file)
+        self.facts = facts.extract(text, module=self.module, file=self.file)
+        self.names = resolve(self.facts)
+        self.edits = []
+        self._descended = {}
+        return {"ok": True, "document": self.document}
+
+    def run(
+        self,
+        entry: str,
+        *arguments: Any,
+        environment: dict[str, Any] | None = None,
+        modules: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Execute a function in this module under instrumentation.
+
+        Parameters
+        ----------
+        entry : str
+            The function to call.
+        *arguments
+            Passed to it.
+        environment : dict, optional
+            Names to provide before the module runs.
+        modules : dict, optional
+            Modules to stand in for the duration of the run, by import path.
+            A procedure drives hardware that is not attached, and its imports
+            run before any of its statements do, so a name in *environment*
+            never gets the chance to help. The caller says what
+            ``battery.device`` is for this run; nothing here guesses, and
+            nothing is left installed afterwards.
+
+        Returns
+        -------
+        dict
+            ``ok``, and either the per-step ``overlay`` or the ``error`` that
+            stopped the run, which is itself worth drawing: a step that raised
+            is a fact about the procedure.
+
+        Notes
+        -----
+        The overlay is joined to the plan by span, the key the canvas was drawn
+        from, so a variant lays it over the nodes it already has.
+        """
+        import sys
+
+        namespace: dict[str, Any] = dict(environment or {})
+        compiled = compile(self.source, self.file, "exec")
+        borrowed = {name: sys.modules.get(name) for name in modules or {}}
+        try:
+            sys.modules.update(modules or {})
+            exec(compiled, namespace)  # noqa: S102 - running the module is the point
+            target = namespace[entry]
+        except Exception as error:
+            return {"ok": False, "error": f"{type(error).__name__}: {error}"}
+        finally:
+            for name, held in borrowed.items():
+                if held is None:
+                    sys.modules.pop(name, None)
+                else:
+                    sys.modules[name] = held
+
+        failure: list[str] = []
+
+        def call() -> None:
+            try:
+                target(*arguments)
+            except Exception as error:
+                failure.append(f"{type(error).__name__}: {error}")
+
+        from awl.execution import join
+        from awl.trace import trace
+
+        events = trace(call)
+        overlay = join(self.plan, events)
+        return {"ok": not failure, "overlay": overlay, "error": failure[0] if failure else None}
 
     def opens(self, step: dict[str, Any]) -> tuple[str, str] | None:
         """Return the module and scope a step descends into, or None.
@@ -315,12 +472,26 @@ class EditorModel:
         An insertion is left alone. It is zero-width, so two of them at one
         offset do not overlap and both belong: adding two steps at the same
         point is two steps, not the second replacing the first.
+
+        A structural patch carries no span at all. It names a path and an
+        operation, because moving a statement is not a range of characters:
+        span splicing has no opinion about which comment belongs to which
+        statement, so a moved node could not carry its own trivia. Reading a
+        span off one raised, which made every structural operation
+        unreachable through this class.
         """
+        if patch.get("kind") == "structural":
+            self.edits.append(patch)
+            return
         if patch["start"] < patch["end"]:
             self.edits = [
                 edit for edit in self.edits if not (edit["start"] == patch["start"] and edit["end"] == patch["end"])
             ]
         self.edits.append(patch)
+
+    def structural(self) -> list[dict[str, Any]]:
+        """Return the pending patches span splicing cannot apply."""
+        return [edit for edit in self.edits if edit.get("kind") == "structural"]
 
     def to_source(self) -> str:
         """Return the source with every edit applied, by span.
@@ -328,9 +499,26 @@ class EditorModel:
         Regenerating from the document would reformat the whole file and drop
         its comments. Patching by span touches only what was edited, which is
         the difference between an editor and a code generator.
+
+        Raises
+        ------
+        NotImplementedError
+            If a structural edit is pending. Adding, deleting or moving a
+            statement is not a range of characters, and nothing yet routes one
+            through a concrete-syntax rewrite, so there is no way to apply it
+            without reformatting. :meth:`regenerate` will produce the code and
+            lose the file's comments and layout, which is a choice the caller
+            should make rather than find out about afterwards.
         """
         from awl import writeback
 
+        pending = self.structural()
+        if pending:
+            operations = ", ".join(sorted({str(edit.get("operation")) for edit in pending}))
+            raise NotImplementedError(
+                f"{len(pending)} structural edit(s) pending ({operations}); span splicing cannot apply them. "
+                "Use regenerate(), which reformats the file and drops its comments."
+            )
         return writeback.apply_edits(self.source, self.edits) if self.edits else self.source
 
     def regenerate(self) -> str:
@@ -393,3 +581,21 @@ def _without_span(node: dict[str, Any]) -> dict[str, Any]:
 def load(source: str, **options: Any) -> EditorModel:
     """Return an :class:`EditorModel` for *source*."""
     return EditorModel(source, **options)
+
+
+def sample() -> EditorModel:
+    """Return a model over the procedure every variant opens on.
+
+    One sample for all three, so a difference on screen is a difference between
+    the canvases. It is a real module in this package rather than a fixture
+    string, so the linter and the type checker keep it valid, and it imports
+    nothing, so the run button runs it with no stand-ins.
+    """
+    from pathlib import Path
+
+    path = Path(__file__).with_name("sample.py")
+    # The real path, not a label. The tracer reads the file to work out which
+    # loop a frame is in and which way a branch went, so a name that is not on
+    # disk costs every iteration count and every branch outcome: the overlay
+    # still says a step ran, and can no longer say how often or which way.
+    return EditorModel(path.read_text(encoding="utf-8"), module="awl.ui.sample", file=str(path))
