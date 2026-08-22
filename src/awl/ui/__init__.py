@@ -22,7 +22,7 @@ from typing import Any
 from awl import compact, controlflow, editor, facts, pipeline
 from awl.resolve import resolve
 
-__all__ = ["OPERATIONS", "VARIANTS", "EditorModel", "load"]
+__all__ = ["OPERATIONS", "VARIANTS", "EditorModel", "load", "open_sample"]
 
 #: The edits a canvas may make. Each returns a new document and the source
 #: patch that would make the same change, so a variant needs no edit semantics
@@ -374,6 +374,36 @@ class EditorModel:
         source = self.source if module == self.module else self.index[module]
         return (module, symbol) if _declares(source, symbol) else None
 
+    def refers(self, step: dict[str, Any]) -> dict[str, Any] | None:
+        """Return the identity a step's callee resolves to, or None.
+
+        Parameters
+        ----------
+        step : dict
+            A step from :meth:`flow`.
+
+        Returns
+        -------
+        dict or None
+            The binding's identity, whether or not it names a level.
+
+        Notes
+        -----
+        :meth:`opens` answers "can I draw what is inside this", and returns
+        None for two different reasons: nothing was resolved, or something was
+        resolved that is not a function. A canvas with only that answer labels
+        a constructor "source not read", which is false and misleading —
+        ``Report`` resolved perfectly well; it is a class, and a class is not a
+        level.
+        """
+        callee = step.get("callee")
+        if not callee:
+            return None
+        for binding in self.names["bindings"]:
+            if binding.get("local_name") == callee and (binding.get("identity") or {}).get("iri"):
+                return binding["identity"]
+        return None
+
     def descend(self, step: dict[str, Any]) -> EditorModel | None:
         """Return the model holding the level a step opens into, or None.
 
@@ -583,13 +613,17 @@ def load(source: str, **options: Any) -> EditorModel:
     return EditorModel(source, **options)
 
 
-def sample() -> EditorModel:
+def open_sample() -> EditorModel:
     """Return a model over the procedure every variant opens on.
 
     One sample for all three, so a difference on screen is a difference between
     the canvases. It is a real module in this package rather than a fixture
     string, so the linter and the type checker keep it valid, and it imports
     nothing, so the run button runs it with no stand-ins.
+
+    Named ``open_sample`` and not ``sample``, because the sample is a module of
+    that name: ``import awl.ui.sample`` anywhere in the process rebinds the
+    attribute to the module and the function is gone for everyone after it.
     """
     from pathlib import Path
 

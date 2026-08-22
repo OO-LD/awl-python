@@ -303,7 +303,7 @@ def test_the_sample_runs_and_says_how_often_and_which_way():
     every iteration count and every branch outcome. The steps still report as
     executed, which is what made it easy to miss.
     """
-    model = ui.sample()
+    model = ui.open_sample()
     result = model.run("procedure", 3)
     assert result["ok"]
 
@@ -323,7 +323,7 @@ def test_a_structural_edit_is_recorded_rather_than_refused():
     unreachable through this class until the patch tier was read before the
     span.
     """
-    model = ui.sample()
+    model = ui.open_sample()
     before = len(model.flow("procedure")["steps"])
     added = {"@type": "Call", "func": {"var": "rest"}, "args": [{"literal": 30}]}
     model.apply("add_step", into=["body", 7, "body"], node=added)
@@ -341,12 +341,62 @@ def test_a_structural_edit_cannot_be_spliced_and_says_so():
     file and drops its comments. That is the caller's choice to make, not
     something to discover from a KeyError raised inside the patcher.
     """
-    model = ui.sample()
+    model = ui.open_sample()
     model.apply("delete_step", path=["body", 7, "body", 4])
 
     with pytest.raises(NotImplementedError, match="structural"):
         model.to_source()
     assert model.regenerate(), "and the way through is named in the error"
+
+
+def test_a_resolved_class_is_not_the_same_as_an_unread_call():
+    """`opens` returns None for two different reasons, and a canvas that has
+    only that answer labels a constructor "source not read".
+
+    `Report` resolved perfectly well. It is a class, and a class is not a
+    level.
+    """
+    model = ui.open_sample()
+    steps = model.flow("procedure")["steps"]
+
+    constructor = next(step for step in steps if step.get("callee") == "Report")
+    assert model.opens(constructor) is None, "a class is not a level"
+    resolved = model.refers(constructor)
+    assert resolved is not None and resolved["symbol"] == "Report", "but it did resolve"
+
+    call = next(step for step in steps if step.get("callee") == "charge")
+    assert model.opens(call) == ("awl.ui.sample", "charge")
+    named = model.refers(call)
+    assert named is not None and named["symbol"] == "charge"
+
+
+def test_a_step_identity_does_not_survive_an_edit_elsewhere():
+    """A known limitation, pinned so it cannot change quietly.
+
+    Step identities are positional counters, so inserting a line anywhere
+    earlier renumbers everything after it. Editing `settle` renames ten of the
+    eleven steps in `procedure`, and `step#12` stops being an `Assign` and
+    becomes an `Expr`.
+
+    That is sound within one snapshot, which is all the plan minted them for,
+    and not enough for an editor: a selection, a trace overlay or any stored
+    annotation keyed on a step IRI is wrong after any edit. Two graphs of the
+    same file taken either side of an edit cannot be joined even where the
+    statements are untouched.
+    """
+    model = ui.open_sample()
+    before = {step["id"]: step["parser_type_name"] for step in model.flow("procedure")["steps"]}
+
+    model.set_source(
+        model.source.replace(
+            '    """Let the cell relax. The bottom of the stack, and deliberately empty."""',
+            '    """Let the cell relax."""\n    return None',
+        )
+    )
+    after = {step["id"]: step["parser_type_name"] for step in model.flow("procedure")["steps"]}
+
+    kept = [identity for identity in before if after.get(identity) == before[identity]]
+    assert len(kept) < len(before), "positional identity does not survive an insertion earlier in the file"
 
 
 def test_every_variant_pairs_a_canvas_with_a_form():
