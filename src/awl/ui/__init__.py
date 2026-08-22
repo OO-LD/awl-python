@@ -89,7 +89,8 @@ class EditorModel:
         # each step belongs to, so a level is a scope rather than a structure
         # this has to build.
         self.plan = controlflow.analyze(source, module=module, file=file)
-        self.names = resolve(facts.extract(source, module=module, file=file))
+        self.facts = facts.extract(source, module=module, file=file)
+        self.names = resolve(self.facts)
         self._descended: dict[str, EditorModel] = {}
 
     def apply(self, operation: str, **arguments: Any) -> dict[str, Any]:
@@ -116,8 +117,41 @@ class EditorModel:
         if operation not in OPERATIONS:
             raise ValueError(f"unknown operation {operation!r}; expected one of {list(OPERATIONS)}")
         self.document, patches = getattr(editor, operation)(self.document, **arguments)
-        self.edits.extend(patches)
+        for patch in patches:
+            self._record(patch)
         return self.document
+
+    def scopes(self) -> list[dict[str, Any]]:
+        """Return the levels this module offers, module scope first.
+
+        Returns
+        -------
+        list of dict
+            ``scope`` and ``steps``, the number of steps at that level.
+
+        Notes
+        -----
+        A canvas needs somewhere to start, and module scope is usually not it:
+        a module is imports and declarations, and the flow worth drawing is
+        inside a function. Both canvases built against this reached the same
+        dead end, opening at ``""`` and finding a docstring and two imports
+        with nothing to descend into.
+
+        The fix is here and not in the plan. A ``def`` is a declaration, not a
+        step: making it one so that navigation had something to click would put
+        declarations in the ``next`` chain and change what the plan asserts
+        about what runs. Which levels exist is a question about the module, and
+        this answers it without touching what a level means.
+        """
+        counts: dict[str, int] = {}
+        for step in self.plan["steps"]:
+            counts[step.get("scope", "")] = counts.get(step.get("scope", ""), 0) + 1
+
+        found = [{"scope": "", "steps": counts.get("", 0)}]
+        for entry in self.facts.get("declarations", []):
+            if entry.get("kind") == "function":
+                found.append({"scope": entry["name"], "steps": counts.get(entry["name"], 0)})
+        return found
 
     def flow(self, scope: str = "") -> dict[str, Any]:
         """Return one level of the flow: the steps at *scope*, and their edges.
@@ -261,7 +295,7 @@ class EditorModel:
             rebuilt = {**holder, path[-1]: value}
             span = writeback.offsets(self.source, holder["span"])
             self.document = _replace(self.document, path[:-1], rebuilt)
-            self.edits.append({**span, "text": editor._unparse(_without_span(rebuilt))})
+            self._record({**span, "text": editor._unparse(_without_span(rebuilt))})
             return self.document
 
         raise LookupError(
@@ -269,6 +303,24 @@ class EditorModel:
             "Only a value has one: changing a name or a signature is a structural edit, and "
             "rebuilding the node holding it would reformat everything inside it."
         )
+
+    def _record(self, patch: dict[str, Any]) -> None:
+        """Keep a patch, replacing any earlier one over the same range.
+
+        Editing one thing twice produces the same span twice, and two patches
+        over one range overlap, so appending raised instead of writing the
+        second edit. The last one wins, which is what editing something twice
+        means.
+
+        An insertion is left alone. It is zero-width, so two of them at one
+        offset do not overlap and both belong: adding two steps at the same
+        point is two steps, not the second replacing the first.
+        """
+        if patch["start"] < patch["end"]:
+            self.edits = [
+                edit for edit in self.edits if not (edit["start"] == patch["start"] and edit["end"] == patch["end"])
+            ]
+        self.edits.append(patch)
 
     def to_source(self) -> str:
         """Return the source with every edit applied, by span.

@@ -74,6 +74,38 @@ def test_two_edits_compose_without_reflowing_the_file():
     assert len(before) == len(after)
 
 
+def test_two_fields_of_one_constructor_can_both_be_set():
+    """Both patches replace the same call, so appending them overlapped.
+
+    A collapsed node is written back by rebuilding the whole call, and the
+    rebuilt node already holds every earlier change to it. Setting a voltage
+    and then a rate raised on overlapping edits instead of writing both.
+    """
+    model = _model()
+    model.set_value([*CONSTRUCTOR, "target_voltage"], 4.35)
+    model.set_value([*CONSTRUCTOR, "c_rate"], 0.5)
+
+    after = model.to_source()
+    assert "target_voltage=4.35" in after
+    assert "c_rate=0.5" in after
+    assert len(model.edits) == 1, "one call, one patch"
+
+
+def test_a_literal_can_be_edited_more_than_once():
+    """The first edit used to delete what the next one would point at.
+
+    Replacing a literal wrote a bare node with no span, so it vanished from a
+    canvas drawn from spans and could never be selected again. The same family
+    as the constructor overlap: an edit that destroys its own address.
+    """
+    model = _model()
+    model.set_value(LITERAL, 900)
+    assert "span" in ui._descend(model.document, LITERAL), "still locatable"
+
+    model.set_value(LITERAL, 1200)
+    assert "rest(1200)" in model.to_source()
+
+
 def test_an_edit_that_cannot_be_located_is_refused():
     """Rather than rewriting the file to make the change fit."""
     model = _model()
@@ -110,6 +142,19 @@ DEVICE = "def charge(volts):\n    apply_voltage(volts)\n    settle()\n\n\ndef re
 
 def _nested():
     return ui.load(NESTED, module="battery.procedure", file="procedure.py", index={"battery.device": DEVICE})
+
+
+def test_a_module_says_which_levels_it_offers():
+    """Where a canvas starts.
+
+    Both canvases built against this opened at module scope and found a
+    docstring and two imports with nothing to descend into: a module is
+    declarations, and the flow worth drawing is inside a function. A `def` is
+    deliberately not a step, so which levels exist is asked here rather than
+    by making declarations part of what runs.
+    """
+    model = _nested()
+    assert model.scopes() == [{"scope": "", "steps": 1}, {"scope": "procedure", "steps": 5}]
 
 
 def test_a_level_is_a_scope():

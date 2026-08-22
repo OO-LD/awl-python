@@ -163,7 +163,15 @@ def set_literal(
     """
     out = copy.deepcopy(doc)
     target = _descend(out, path[:-1]) if path[:-1] else out
-    target[path[-1]] = {"literal": value}
+    # The span is kept, not replaced. Writing a bare {"literal": value} left
+    # the node with no position, so a canvas drawn from spans lost it and it
+    # could never be edited a second time: the first edit deleted the thing
+    # the next one would have pointed at.
+    previous = target[path[-1]] if isinstance(target, list) or path[-1] in target else None
+    replacement: dict[str, Any] = {"literal": value}
+    if isinstance(previous, dict) and "span" in previous:
+        replacement["span"] = previous["span"]
+    target[path[-1]] = replacement
     return out, [{"start": span["start"], "end": span["end"], "text": repr(value)}]
 
 
