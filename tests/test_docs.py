@@ -78,7 +78,11 @@ def test_every_lookup_is_shown_on_its_own(flavours):
     from awl import vocab
 
     single, _ = flavours
-    assert single.count("## ") == len(vocab.LAYERS) + 1, "one per lookup, plus the located tree"
+    # The tree appears three times, because two of its parameters are worth a
+    # section each: located adds the spans, explained adds the comments, and
+    # neither is a lookup.
+    tree_views = 3
+    assert single.count("## ") == len(vocab.LAYERS) - 1 + tree_views, "one per lookup, and each view of the tree"
 
 
 def test_each_flavour_pairs_the_source_with_both_notations(flavours):
@@ -204,3 +208,29 @@ def test_the_macro_module_is_reachable_by_import_alone():
 
     assert "/" not in configured and "\\" not in configured, configured
     assert hasattr(importlib.import_module(configured), "define_env")
+
+
+def test_the_diagrams_do_not_use_the_class_the_theme_claims():
+    """Or they arrive in the browser as empty elements.
+
+    The theme owns `.mermaid`: it empties every element carrying that class and
+    then renders nothing, because it ships mermaid's colour variables and not
+    mermaid itself. Ten diagrams reached the page as ten empty divs and the
+    Graph tab showed blank space. The fences carry their own class, and the
+    script that renders them is what loads mermaid at all.
+    """
+    import tomllib
+    from pathlib import Path
+
+    config = tomllib.loads(Path("zensical.toml").read_text(encoding="utf-8"))
+    fences = config["project"]["markdown_extensions"]["pymdownx"]["superfences"]["custom_fences"]
+    mermaid = next(fence for fence in fences if fence["name"] == "mermaid")
+    assert mermaid["class"] != "mermaid", "the theme empties what carries its own class"
+
+    scripts = config["project"].get("extra_javascript", [])
+    assert any("mermaid" in script for script in scripts), "nothing would load mermaid"
+
+    renderer = Path("docs") / "assets" / "mermaid.js"
+    assert renderer.exists()
+    body = renderer.read_text(encoding="utf-8")
+    assert f".{mermaid['class']}" in body, "the renderer looks for a class the fences do not carry"

@@ -12,3 +12,64 @@
 
 /* Two columns of code need the gap kept tight. */
 .md-typeset .grid { gap: 0.4rem; }
+
+/* A diagram, and the control that opens it full screen. The button lives on a
+   wrapper rather than on the fence, because mermaid replaces the fence's
+   contents with the SVG it renders and would take any child of it with them. */
+.awl-diagram {
+  position: relative;
+}
+
+.awl-diagram__full {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 3px;
+  background: var(--md-default-bg-color);
+  color: var(--md-default-fg-color--light);
+  font: 600 0.62rem/1.6 var(--md-text-font-family);
+  cursor: pointer;
+  /* Out of the way until the diagram is wanted, and never invisible to the
+     keyboard: a control reachable only by hovering is unreachable by tab. */
+  opacity: 0;
+  transition: opacity 125ms;
+}
+
+.awl-diagram:hover .awl-diagram__full,
+.awl-diagram__full:focus-visible {
+  opacity: 1;
+}
+
+.awl-diagram--open,
+.awl-diagram--filling {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-default-bg-color);
+}
+
+/* Filling is the fallback for a browser that refused the fullscreen request,
+   so it has to take the viewport itself rather than rely on the API. */
+.awl-diagram--filling {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+}
+
+/* Mermaid caps the SVG at the width it measured at render time, which is the
+   column it was rendered in. Full screen has to lift that cap or the diagram
+   opens at its original size in the middle of an empty page. */
+.awl-diagram--open svg,
+.awl-diagram--filling svg {
+  width: 96vw !important;
+  max-width: 96vw !important;
+  height: 92vh !important;
+  max-height: 92vh !important;
+}
+
+.awl-diagram--open .awl-diagram__full,
+.awl-diagram--filling .awl-diagram__full {
+  opacity: 1;
+}

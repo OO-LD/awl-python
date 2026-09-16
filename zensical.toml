@@ -12,12 +12,16 @@ nav = [
     { "Home" = "index.md" },
     { "Flavours" = "flavours.md" },
     { "Worked examples" = "examples.md" },
-    { "Editor variants" = "editor.md" },
+    { "Editor" = "editor.md" },
+    { "Editor specification" = "editor-spec.md" },
     { "API Reference" = "awl.md" },
     { "Development" = "dev.md" },
 ]
 
 extra_css = ["assets/wide.css"]
+# The theme ships mermaid's colour variables and not mermaid itself, so
+# without this every diagram on the flavours page stays a block of text.
+extra_javascript = ["assets/mermaid.js"]
 
 [project.plugins.macros]
 # The worked-examples page is built from the corpus at render time.
@@ -83,9 +87,15 @@ link = "https://pypi.org/project/awl"
 [project.markdown_extensions.pymdownx.superfences]
 
 # Design docs use mermaid diagrams.
+#
+# The class is deliberately not "mermaid". The theme claims that one, empties
+# every element carrying it, and then renders nothing because it ships mermaid's
+# colour variables and not mermaid itself: the fences arrived in the browser as
+# ten empty divs. Under its own class the source survives for assets/mermaid.js
+# to render.
 [[project.markdown_extensions.pymdownx.superfences.custom_fences]]
 name = "mermaid"
-class = "mermaid"
+class = "awl-mermaid"
 format = "pymdownx.superfences.fence_code_format"
 
 [project.markdown_extensions.pymdownx.tabbed]

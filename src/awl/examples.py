@@ -112,9 +112,10 @@ def procedure(cycles: int) -> None:
     report = Report()
     i = 0
     while i < cycles:
+        # hold the cell at its target until it settles
         charge(ChargeParam(target_voltage=4.2))
         i += 1
-    report.capacity = measure()
+    report.capacity = measure()  # what the cell held, once
 """
 
 #: Bound in every query on the page, so the questions read as questions.
@@ -129,7 +130,10 @@ _SINGLE_FLAVOURS: tuple[tuple[str, str, dict, str, str], ...] = (
         "The `document` lookup alone, which is the editor model: statements, calls and "
         "literals, with the constructor collapsed into a typed node. The minimal form, "
         "and the only one that regenerates the source it came from.",
-        {"layers": ("document",)},
+        # Off explicitly. Every profile turns spans on, and ``spans=None`` asks
+        # the profile rather than overriding it, so leaving the key out left
+        # this flavour carrying the spans the next one is introduced to show.
+        {"layers": ("document",), "spans": False},
         "What voltage does the procedure charge to, and what class says so?",
         """SELECT ?class ?volts WHERE {
   ?node a ?class ; param:target_voltage ?volts .
@@ -142,7 +146,7 @@ _SINGLE_FLAVOURS: tuple[tuple[str, str, dict, str, str], ...] = (
         "joining the tree to anything looked up beside it. It is also about half the "
         "tree's triples. Every profile turns it on for that reason; the tree above turned "
         "it off, which is the only thing that differs between the two.",
-        {"layers": ("document",), "spans": True},
+        {"layers": ("document",), "spans": True, "trivia": False},
         "On which line is `charge` called? The tree alone can only answer about the "
         "name as written, which is scope-blind: two functions may both call something "
         "called `charge`.",
@@ -152,11 +156,24 @@ _SINGLE_FLAVOURS: tuple[tuple[str, str, dict, str, str], ...] = (
 }""",
     ),
     (
+        "The tree, explained",
+        "The same tree again, with `trivia` on, so each statement carries what was written "
+        "*about* it. `ast` has no comment node, so without this a comment exists only in the "
+        "file and nothing derived from the tree can see one. Two places hold what belongs to "
+        "no statement: the end of a block, and the head and tail of the module.",
+        {"layers": ("document",), "spans": True, "trivia": True},
+        "What was the author's reason for a step, in their own words?",
+        """SELECT ?text ?where ?line WHERE {
+  ?step awl:comment [ awl:text ?text ; awl:where ?where ] ;
+        awl:span [ awl:startLine ?line ] .
+}""",
+    ),
+    (
         "The plan",
         "The `plan` lookup: which step follows which, and under what condition. A loop is "
         "found by its back edge and a branch by the definitions its condition reads, never "
         "by matching source text.",
-        {"layers": ("plan",)},
+        {"layers": ("plan",), "trivia": False},
         "Which steps form the loop, and which edge closes it?",
         """SELECT ?loop ?body ?back WHERE {
   ?loop awl:whenTrue ?body .
@@ -170,7 +187,7 @@ _SINGLE_FLAVOURS: tuple[tuple[str, str, dict, str, str], ...] = (
         "the word the author wrote, because that is what regenerates the source; beside it, "
         "each name reference gains a `refers_to`, so the same question can be asked by "
         "identity instead of by spelling. The name is scope-blind and the identity is not.",
-        {"layers": ("document", "names"), "spans": True},
+        {"layers": ("document", "names"), "spans": True, "trivia": False},
         "On which line is *this* `charge` called, the one imported from `battery.device`?",
         """SELECT ?line ?column WHERE {
   ?call awl:func [ awl:refersTo <https://w3id.org/awl/py/battery.device/charge> ] ;
@@ -182,7 +199,7 @@ _SINGLE_FLAVOURS: tuple[tuple[str, str, dict, str, str], ...] = (
         "The `writes` lookup: which typed member a value was written to. `report.capacity` "
         "resolves through the annotation on `Report`, so the graph names the member and its "
         "range rather than the variable that happened to hold it.",
-        {"layers": ("writes",)},
+        {"layers": ("writes",), "trivia": False},
         "Where was a Capacity written, and by what?",
         """SELECT ?member ?by ?confidence WHERE {
   ?write awl:memberPath ?member ; awl:writtenBy ?by ; awl:confidence ?confidence ;
@@ -194,7 +211,7 @@ _SINGLE_FLAVOURS: tuple[tuple[str, str, dict, str, str], ...] = (
         "The `definitions` lookup: where each value came from. Set-valued at a join, so a "
         "variable assigned in more than one place keeps every definition rather than the "
         "last one seen.",
-        {"layers": ("definitions",)},
+        {"layers": ("definitions",), "trivia": False},
         "Which name has more than one definition, and how many?",
         """SELECT ?name (COUNT(?definition) AS ?definitions) WHERE {
   ?definition a awl:Definition ; awl:name ?name .
@@ -210,16 +227,15 @@ HAVING (COUNT(?definition) > 1)""",
 _COMBINED_FLAVOURS: tuple[tuple[str, str, dict, str, str], ...] = (
     (
         "Tree and plan",
-        "What was written, and how control moves through it. The two are joined by span, "
-        "which is why this combination turns them on: a plan step and the statement it was "
-        "derived from carry the same position.",
+        "What was written, and how control moves through it. Not two graphs side by side: a "
+        "statement carries the identity the plan mints for it, so the step and the statement "
+        "are one node and the loop's `when_true` lands on the node holding the call. Asking "
+        "this used to mean matching four span numbers to say *the same statement*.",
         {"layers": ("document", "plan", "names")},
         "Which function does the loop body call, by identity rather than by name?",
         """SELECT ?step ?callee WHERE {
   ?loop awl:whenTrue ?step .
-  ?step a awl:Step ; awl:span [ awl:startLine ?line ; awl:startCol ?column ] .
-  ?node awl:span [ awl:startLine ?line ; awl:startCol ?column ] ;
-        awl:func [ awl:refersTo ?callee ] .
+  ?step awl:func [ awl:refersTo ?callee ] .
 }""",
     ),
     (
@@ -251,8 +267,8 @@ def _flavour_document(settings: dict) -> str:
     """Return the JSON-LD document one setting produces.
 
     Without its ``@context``, which is the same in every flavour and would
-    bury the part that differs. It is the vocabulary, shown once in the API
-    reference rather than eight times here.
+    bury the part that differs. It is the vocabulary, shown once above rather
+    than once per flavour here.
     """
     document = pipeline.to_document(
         FLAVOUR_SOURCE,
@@ -261,6 +277,7 @@ def _flavour_document(settings: dict) -> str:
         index=_FLAVOUR_INDEX,
         layers=settings.get("layers"),
         spans=settings.get("spans"),
+        trivia=settings.get("trivia"),
     )
     return dumps({"@graph": document["@graph"]}, width=128)
 
@@ -274,10 +291,212 @@ def _flavour_turtle(settings: dict) -> str:
         index=_FLAVOUR_INDEX,
         layers=settings.get("layers"),
         spans=settings.get("spans"),
+        trivia=settings.get("trivia"),
     )
     graph.bind("awl", "https://w3id.org/awl/schema/")
     graph.bind("py", "https://w3id.org/awl/py/")
     return graph.serialize(format="turtle").strip()
+
+
+#: Literal properties a node may be named by, best first. The first one a node
+#: carries becomes its label, so a binding reads as ``charge`` rather than as
+#: the IRI it was minted to, and a step as the statement kind it was derived
+#: from.
+_LABELS = ("localName", "symbol", "var", "callee", "name", "literal", "parserTypeName")
+
+#: The AWL vocabulary. A type from anywhere else is a class the source
+#: constructed rather than a node kind the pipeline emitted.
+_SCHEMA = "https://w3id.org/awl/schema/"
+
+
+def _local(term: Any) -> str:
+    """Return the last segment of an IRI, which is the name a reader knows it by."""
+    text = str(term)
+    for mark in ("#", "/"):
+        if mark in text:
+            text = text.rsplit(mark, 1)[-1]
+    return text
+
+
+def _node_label(graph: Any, subject: Any) -> str | None:
+    """Return how a node is drawn, or ``None`` when it is not drawn at all.
+
+    Three parts, each of which was added because leaving it out made a section
+    fail to show the thing it exists to show:
+
+    - the name and the types, so a binding reads as ``charge`` and not as the
+      IRI it was minted to;
+    - the line, so the located flavour differs from the one above it at all,
+      and so three nodes labelled ``Assign`` can be told apart;
+    - a collapsed instance's own fields, because ``target_voltage=4.2`` is a
+      literal, and a diagram of object properties alone dropped both the
+      collapse the first flavour demonstrates and the voltage its own question
+      asks for.
+    """
+    from rdflib import RDF, RDFS, BNode, Literal, URIRef
+
+    types = sorted(_local(kind) for kind in graph.objects(subject, RDF.type))
+    name = next(
+        (
+            str(found)
+            for key in ("label", *_LABELS)
+            for found in [
+                graph.value(subject, RDFS.label) if key == "label" else graph.value(subject, URIRef(_SCHEMA + key))
+            ]
+            if isinstance(found, Literal)
+        ),
+        "",
+    )
+    # A blank node with neither is a span or a list cell: four numbers or a cons
+    # pair, with nothing to say once its literals are dropped. An IRI always has
+    # one, because a local name is a label.
+    if not name and not types and isinstance(subject, BNode):
+        return None
+
+    span = graph.value(subject, URIRef(_SCHEMA + "span"))
+    start = graph.value(span, URIRef(_SCHEMA + "startLine")) if span is not None else None
+    where = "" if start is None else " L" + str(start)
+
+    # A definition says how it was made, and ``assign`` against ``augmented``
+    # is the difference between the two the provenance flavour draws an edge
+    # between. Without it they read as the same node written twice.
+    made = graph.value(subject, URIRef(_SCHEMA + "kind"))
+    how = " " + str(made) if isinstance(made, Literal) else ""
+
+    own = ""
+    if any(not str(kind).startswith(_SCHEMA) for kind in graph.objects(subject, RDF.type)):
+        values = sorted(
+            _local(predicate) + " " + str(obj)
+            for predicate, obj in graph.predicate_objects(subject)
+            if isinstance(obj, Literal)
+        )
+        own = "<br>" + "<br>".join(values) if values else ""
+
+    label = name + " (" + ", ".join(types) + ")" if name and types else name or ", ".join(types) or _local(subject)
+    return label + where + how + own
+
+
+def _mermaid_nodes(graph: Any) -> dict[Any, str]:
+    """Return every node the diagram draws, with its label.
+
+    Objects as well as subjects: a range or a member is named once, by the
+    triple pointing at it, and iterating subjects alone left the writes flavour
+    a single empty box, with the member, the range and the type it resolved
+    through all missing from the picture drawn to show them.
+
+    Not the object of an ``rdf:type``, which is the vocabulary term the label is
+    already made of, and not ``rdf:nil``, which is where every list ends and
+    says only that it ended. Both drew as boxes of their own.
+
+    What still collides afterwards is separated by the identity itself. Two
+    definitions of ``i`` can share a name, a line and a kind, and drawing them
+    as one label twice says the picture has a duplicate in it rather than that
+    the graph has two nodes.
+    """
+    from rdflib import RDF, URIRef
+
+    pointed_at = {
+        obj for _, predicate, obj in graph if isinstance(obj, URIRef) and predicate != RDF.type and obj != RDF.nil
+    }
+    labelled = ((node, _node_label(graph, node)) for node in set(graph.subjects()) | pointed_at)
+    named = {node: label for node, label in labelled if label is not None}
+
+    taken: dict[str, list[Any]] = {}
+    for node, label in named.items():
+        taken.setdefault(label, []).append(node)
+    for label, nodes in taken.items():
+        if len(nodes) < 2:
+            continue
+        for index, node in enumerate(sorted(nodes, key=str), start=1):
+            mark = str(node).rsplit("#", 1)[-1] if isinstance(node, URIRef) and "#" in str(node) else str(index)
+            named[node] = label + " #" + mark
+    return named
+
+
+def _through(graph: Any, named: dict, obj: Any, seen: frozenset = frozenset()) -> list[Any]:
+    """Return the drawn nodes *obj* stands for, following undrawn ones.
+
+    An ordered body is an ``rdf:List``, and a list cell carries no type and no
+    name of its own. Stopping at one dropped every edge into a body, which left
+    the module, its functions and its imports drawn as isolated boxes: the
+    statements were all there and nothing said which file they were in. A span
+    reaches only literals, so it still contributes nothing.
+    """
+    from rdflib import RDF, Literal
+
+    if obj in named:
+        return [obj]
+    if isinstance(obj, Literal) or obj == RDF.nil or obj in seen:
+        return []
+    # Sorted, because a store yields triples in no particular order and the
+    # edges are emitted in the order they are reached: without this the same
+    # graph drew its list edges in a different sequence on every run.
+    return [
+        reached
+        for _, predicate, nested in sorted(graph.triples((obj, None, None)), key=lambda triple: str(triple[1:]))
+        if predicate != RDF.type
+        for reached in _through(graph, named, nested, seen | {obj})
+    ]
+
+
+def _flavour_mermaid(settings: dict) -> str:
+    """Return the same setting's graph as a diagram, nodes and object properties only.
+
+    Turtle says everything and so says nothing at a glance: half the triples in
+    any flavour are the four corners of a span, and a diagram carrying those is
+    unreadable at the size a documentation page gives it. So this draws what a
+    reader traces with a finger, which is the nodes and the arrows between them.
+    A triple whose object is a literal names its subject or is dropped, and only
+    a triple pointing at another drawn node becomes an edge.
+
+    ``rdf:type`` is drawn only when the type is itself a node the graph
+    describes, which by construction is never a vocabulary term: those are the
+    labels, and are not in the node set at all. What survives is the one type
+    edge worth an arrow, from a collapsed instance to the binding whose IRI it
+    was minted with, which is the join between what the source wrote and what
+    it means.
+    """
+    from rdflib import BNode
+    from rdflib.compare import to_canonical_graph
+
+    # Canonicalized, because a blank node's ``str()`` is a fresh UUID per
+    # process: numbering by it renumbered every node on every build, so the page
+    # rendered a different diagram each time it was generated and no two builds
+    # of the docs agreed. Canonical labels are derived from the graph's own
+    # shape, so they are the same wherever it is built.
+    graph = to_canonical_graph(
+        pipeline.to_graph(
+            FLAVOUR_SOURCE,
+            module="battery.procedure",
+            file="procedure.py",
+            index=_FLAVOUR_INDEX,
+            layers=settings.get("layers"),
+            spans=settings.get("spans"),
+            trivia=settings.get("trivia"),
+        )
+    )
+    named = _mermaid_nodes(graph)
+    identities = {node: "n" + str(index) for index, node in enumerate(sorted(named, key=str))}
+
+    lines = ["graph TD"]
+    for node, label in sorted(named.items(), key=lambda pair: str(pair[0])):
+        # Quoted in both shapes. A label carries its types in parentheses, and
+        # an unquoted `([Compare (Call)])` closes the stadium at the first `)`.
+        safe = label.replace(chr(34), "'")
+        lines.append(
+            "  " + identities[node] + ('(["' + safe + '"])' if isinstance(node, BNode) else '["' + safe + '"]')
+        )
+
+    drawn = set()
+    for subject, predicate, obj in sorted(graph, key=lambda triple: (str(triple[0]), str(triple[1]), str(triple[2]))):
+        if subject not in identities:
+            continue
+        for reached in _through(graph, named, obj):
+            edge = (identities[subject], _local(predicate), identities[reached])
+            if edge not in drawn:
+                drawn.add(edge)
+                lines.append("  " + edge[0] + " -->|" + edge[1] + "| " + edge[2])
+    return "\n".join(lines)
 
 
 def flavour_context() -> str:
@@ -301,6 +520,7 @@ def _answer(settings: dict, query: str) -> str:
         index=_FLAVOUR_INDEX,
         layers=settings.get("layers"),
         spans=settings.get("spans"),
+        trivia=settings.get("trivia"),
     )
     result = graph.query(query)
     names = [str(name) for name in result.vars or []]
@@ -355,6 +575,7 @@ def _flavour_view(title: str, note: str, settings: dict, question: str, query: s
         _tabs([
             ("AWL AST", _flavour_document(settings), "json"),
             ("RDF", _flavour_turtle(settings), "turtle"),
+            ("Graph", _flavour_mermaid(settings), "mermaid"),
         ]),
         "",
         "</div>",

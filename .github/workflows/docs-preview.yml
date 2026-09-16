@@ -1,0 +1,50 @@
+# Publish the documentation from a branch, under a name of its own.
+#
+# The released docs are published by on-release-main.yml, which runs mike only
+# after python-semantic-release has cut a version. That is right for a release
+# and leaves no way to look at the documentation for work that has not been
+# released yet, which is most of it while a branch is open.
+#
+# This deploys the checked-out ref as its own mike version, so `latest` and
+# every released version are untouched: a preview is added beside them and
+# never becomes the default.
+name: docs-preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      alias:
+        description: Name to publish under, as it will appear in the version selector
+        default: dev
+
+permissions:
+  contents: write # mike pushes to gh-pages
+
+concurrency:
+  # Shared with the release deploy, because both push to gh-pages and two
+  # pushes to one branch race. Not cancelled in flight: a half-finished mike
+  # deploy leaves the version selector naming a version that is not there.
+  group: pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # mike reads and rewrites gh-pages history
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Deploy the preview
+        env:
+          ALIAS: ${{ inputs.alias }}
+        run: uv run mike deploy --push "$ALIAS"
