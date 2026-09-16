@@ -1,0 +1,2797 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Python implementation of the Abstract Workflow Language (AWL-LD)">
+      
+      
+        <meta name="author" content="OO-LD Contributors">
+      
+      
+        <link rel="canonical" href="https://OO-LD.github.io/awl-python/graph-derivation/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="https://raw.githubusercontent.com/OO-LD/schema/main/OO-LD_logo.jpg">
+      <meta name="generator" content="zensical-0.0.56">
+    
+    
+      
+        <title>Deriving semantic graph from code: principles, prior art, and design for AWL-LD - awl-python</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.20815dad.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../assets/stylesheets/modern/palette.dfe2e883.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/wide.css">
+    
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="deep-orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#deriving-semantic-graph-from-code-principles-prior-art-and-design-for-awl-ld" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="./.." title="awl-python" class="md-header__button md-logo" aria-label="awl-python" data-md-component="logo">
+      
+  <img src="https://raw.githubusercontent.com/OO-LD/schema/main/OO-LD_logo.jpg" alt="awl-python">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            awl-python
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Deriving semantic graph from code: principles, prior art, and design for AWL-LD
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="deep-orange"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/OO-LD/awl-python" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    OO-LD/awl-python
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="./.." title="awl-python" class="md-nav__button md-logo" aria-label="awl-python" data-md-component="logo">
+      
+  <img src="https://raw.githubusercontent.com/OO-LD/schema/main/OO-LD_logo.jpg" alt="awl-python">
+
+    </a>
+    awl-python
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/OO-LD/awl-python" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    OO-LD/awl-python
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flavours/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Flavours
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Worked examples
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../editor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Editor
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../editor-spec/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Editor specification
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../awl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API Reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Development
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Scope
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#naming" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Naming
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#worked-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Worked examples
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Worked examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example-a-control-flow-and-literal-arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Example A: control flow and literal arguments
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-b-typed-quantities-and-opaque-numerics" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Example B: typed quantities and opaque numerics
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+    <a href="https://github.com/OO-LD/awl-python/edit/main/docs/graph-derivation.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="deriving-semantic-graph-from-code-principles-prior-art-and-design-for-awl-ld">Deriving semantic graph from code: principles, prior art, and design for AWL-LD<a class="headerlink" href="#deriving-semantic-graph-from-code-principles-prior-art-and-design-for-awl-ld" title="Permanent link">&para;</a></h1>
+<h2 id="scope">Scope<a class="headerlink" href="#scope" title="Permanent link">&para;</a></h2>
+<p>AWL derives an RDF graph from an abstract syntax tree. The open design problem is
+<strong>redundancy and cutoff level</strong>: which detail becomes graph, and what makes the result
+compact enough to query.</p>
+<p>This document asks which principles and tooling from comparable projects are sound,
+which AWL should reuse rather than rebuild, and where AWL's own objectives make a
+different answer correct. It is an analysis, not an implementation plan.</p>
+<p>Positions taken as given:</p>
+<ul>
+<li>The vocabulary must be language-agnostic. Building the graph from other languages'
+  ASTs is future work, but the constraint shapes the design now.</li>
+<li>Identity is import-path based, rename-safe, re-export-safe, optionally versioned.</li>
+<li>OO-LD <code>LinkedBaseModel</code> is mid-migration, so the mechanism analysed is plain
+  dataclasses carrying schema-derived annotations.</li>
+<li>The JSON-LD context is a first-class lever, on equal footing with AST processing.</li>
+</ul>
+<p>Claims marked <strong>verified</strong> were reproduced locally or read from a primary source.
+Claims marked <strong>reported</strong> come from secondary sources. Claims marked
+<strong>reconstructed</strong> are derived from a project's documented schema rather than from
+running the tool.</p>
+<h2 id="naming">Naming<a class="headerlink" href="#naming" title="Permanent link">&para;</a></h2>
+<p><strong>AWL-LD is the primary name; AWL is used as shorthand in this document.</strong> The bare
+acronym has one hard collision and one soft one.</p>
+<p><strong>AWL = Anweisungsliste</strong>, the German name for the IEC 61131-3 Instruction List
+language, implemented in Siemens STEP 7 as the native statement list for S7-300, S7-400
+and S7-1500. <code>.AWL</code> is a real source-file extension for PLC code. That is the same
+industrial and laboratory automation domain AWL-LD targets: battery cyclers and tensile
+test rigs are PLC-controlled, and in German-speaking industry "AWL" already names a
+programming language.</p>
+<p>The soft collision is the <code>*WL</code> family. CWL and WDL are hand-authored <strong>dataflow</strong>
+languages. AWL-LD is derived from code and is <strong>control-flow</strong>. Both connotations
+mislead. It is also not a language in the sense CWL is; Joern calls its equivalent "a
+language-agnostic intermediate graph representation", which is the honest category.</p>
+<p>Renaming outright would cost <code>w3id.org/awl/schema/</code>, the PyPI name, the repositories and
+a Zenodo DOI. Leading with AWL-LD is sufficient: no PLC context claims it, and the
+README already uses it.</p>
+<h2 id="worked-examples">Worked examples<a class="headerlink" href="#worked-examples" title="Permanent link">&para;</a></h2>
+<p>Two, used throughout. The first is minimal, the second is real.</p>
+<h3 id="example-a-control-flow-and-literal-arguments">Example A: control flow and literal arguments<a class="headerlink" href="#example-a-control-flow-and-literal-arguments" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># battery/params.py</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nd">@dataclass</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">ChargeParam</span><span class="p">:</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">target_voltage</span><span class="p">:</span> <span class="nb">float</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">c_rate</span><span class="p">:</span> <span class="nb">float</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># procedure.py</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">battery.params</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChargeParam</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">battery.device</span><span class="w"> </span><span class="kn">import</span> <span class="n">charge</span><span class="p">,</span> <span class="n">rest</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">procedure</span><span class="p">(</span><span class="n">cycles</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">cycles</span><span class="p">:</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="n">charge</span><span class="p">(</span><span class="n">ChargeParam</span><span class="p">(</span><span class="n">target_voltage</span><span class="o">=</span><span class="mf">4.2</span><span class="p">,</span> <span class="n">c_rate</span><span class="o">=</span><span class="mf">0.23</span><span class="p">))</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>        <span class="n">rest</span><span class="p">(</span><span class="mi">600</span><span class="p">)</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+</code></pre></div>
+<h3 id="example-b-typed-quantities-and-opaque-numerics">Example B: typed quantities and opaque numerics<a class="headerlink" href="#example-b-typed-quantities-and-opaque-numerics" title="Permanent link">&para;</a></h3>
+<p>Abridged from <code>opensemantic.characteristics.quantitative-python/examples/tensile_test.py</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">TensileTestSpecimen</span><span class="p">(</span><span class="n">OswBaseModel</span><span class="p">):</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">length</span><span class="p">:</span> <span class="n">Length</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">width</span><span class="p">:</span> <span class="n">Width</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">thickness</span><span class="p">:</span> <span class="n">Length</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">cross_section_area</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Area</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">e_mod</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModulusOfElasticity</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="k">def</span><span class="w"> </span><span class="nf">tensile_test_analysis</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">TensileTestDataset</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TensileTestDataset</span><span class="p">:</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="k">if</span> <span class="n">dataset</span><span class="o">.</span><span class="n">specimen</span><span class="o">.</span><span class="n">cross_section_area</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        <span class="n">dataset</span><span class="o">.</span><span class="n">specimen</span><span class="o">.</span><span class="n">cross_section_area</span> <span class="o">=</span> <span class="p">(</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>            <span class="n">dataset</span><span class="o">.</span><span class="n">specimen</span><span class="o">.</span><span class="n">width</span> <span class="o">*</span> <span class="n">dataset</span><span class="o">.</span><span class="n">specimen</span><span class="o">.</span><span class="n">thickness</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>        <span class="p">)</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="n">df</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">to_df</span><span class="p">()</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="n">df</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"elongation"</span><span class="p">]</span> <span class="o">/</span> <span class="n">dataset</span><span class="o">.</span><span class="n">specimen</span><span class="o">.</span><span class="n">length</span><span class="o">.</span><span class="n">to_pint</span><span class="p">()</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="n">df</span><span class="p">[</span><span class="s2">"stress"</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">"force"</span><span class="p">]</span> <span class="o">/</span> <span class="n">dataset</span><span class="o">.</span><span class="n">specimen</span><span class="o">.</span><span class="n">cross_section_area</span><span class="o">.</span><span class="n">to_pint</span><span class="p">()</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>    <span class="n">linear</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">linear_region</span><span class="o">.</span><span class="n">to_pint</span><span class="p">()]</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    <span class="n">slope</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">linregress</span><span class="p">(</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>        <span class="n">linear</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">]</span><span class="o">.</span><span class="n">pint</span><span class="o">.</span><span class="n">to_base_units</span><span class="p">()</span><span class="o">.</span><span class="n">pint</span><span class="o">.</span><span class="n">magnitude</span><span class="p">,</span>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>        <span class="n">linear</span><span class="p">[</span><span class="s2">"stress"</span><span class="p">]</span><span class="o">.</span><span class="n">pint</span><span class="o">.</span><span class="n">to_base_units</span><span class="p">()</span><span class="o">.</span><span class="n">pint</span><span class="o">.</span><span class="n">magnitude</span><span class="p">,</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>    <span class="p">)</span>
+<a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>    <span class="n">slope</span> <span class="o">=</span> <span class="p">(</span><span class="n">slope</span>
+<a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a>             <span class="o">*</span> <span class="n">linear</span><span class="p">[</span><span class="s2">"stress"</span><span class="p">]</span><span class="o">.</span><span class="n">pint</span><span class="o">.</span><span class="n">to_base_units</span><span class="p">()</span><span class="o">.</span><span class="n">pint</span><span class="o">.</span><span class="n">units</span>
+<a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a>             <span class="o">/</span> <span class="n">linear</span><span class="p">[</span><span class="s2">"strain"</span><span class="p">]</span><span class="o">.</span><span class="n">pint</span><span class="o">.</span><span class="n">to_base_units</span><span class="p">()</span><span class="o">.</span><span class="n">pint</span><span class="o">.</span><span class="n">units</span><span class="p">)</span>
+<a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a>    <span class="n">dataset</span><span class="o">.</span><span class="n">specimen</span><span class="o">.</span><span class="n">e_mod</span> <span class="o">=</span> <span class="n">ModulusOfElasticity</span><span class="o">.</span><span class="n">from_pint</span><span class="p">(</span><span class="n">slope</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">"Pa"</span><span class="p">))</span>
+<a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>    <span class="n">dataset</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">TensileTestResult</span><span class="o">.</span><span class="n">from_df</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+<a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>    <span class="k">return</span> <span class="n">dataset</span>
+</code></pre></div>
+<p>Example B is the hard case and the honest test of every claim below. It mixes fully
+typed OO-LD quantities with an opaque third-party numerical call, and it strips units
+immediately before that call.</p>
+<hr />
+<h1 id="part-i-problem-and-prior-art">Part I: Problem and prior art<a class="headerlink" href="#part-i-problem-and-prior-art" title="Permanent link">&para;</a></h1>
+<h2 id="1-two-theories-of-code-graph">1. Two theories of code graph<a class="headerlink" href="#1-two-theories-of-code-graph" title="Permanent link">&para;</a></h2>
+<p>Code-indexing tools answer "what is in this repository and how does it connect", for
+someone navigating unfamiliar code. AWL answers "what does this procedure do, in what
+order, with what values, and what do those values mean", for a machine reasoning over
+a workflow.</p>
+<p>That difference sets the cutoff. <a href="https://github.com/Graphify-Labs/graphify">Graphify</a>'s
+Python configuration (<code>graphify/extract.py:767</code>, verified) admits four node families:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">class_types</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">"class_definition"</span><span class="p">}),</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">function_types</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">"function_definition"</span><span class="p">}),</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">import_types</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">"import_statement"</span><span class="p">,</span> <span class="s2">"import_from_statement"</span><span class="p">}),</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">call_types</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">"call"</span><span class="p">}),</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">function_boundary_types</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">"function_definition"</span><span class="p">}),</span>
+</code></pre></div>
+<p>Bodies are walked only to collect calls. Statement order, control flow and literal
+argument values are discarded. Those are what AWL exists to carry.</p>
+<p>So the <strong>cutoff level</strong> of the indexing tools is not transferable. Their <strong>principles,
+tooling, and in several cases their actual output</strong> are, and that is what follows.</p>
+<h2 id="2-prior-art">2. Prior art<a class="headerlink" href="#2-prior-art" title="Permanent link">&para;</a></h2>
+<h3 id="21-nobody-ships-full-ast-rdf-graph">2.1 Nobody ships full-AST RDF graph<a class="headerlink" href="#21-nobody-ships-full-ast-rdf-graph" title="Permanent link">&para;</a></h3>
+<p>Kythe's schema has node kinds for <code>record</code>, <code>function</code>, <code>variable</code>, <code>tapp</code> and
+<code>anchor</code>, and none for statements, expressions, operators or literals. Glean states
+the position outright: "while the full AST could be stored, for efficiency only the
+needed parts are kept, usually locations of definitions and cross-references, but not
+expressions" (reported). SCIP models only occurrences of symbols in ranges.
+CodeOntology, the closest direct precedent, made statement and expression triples an
+opt-in flag, default off.</p>
+<p>The two systems that do keep the full AST, CodeQL and Joern's Code Property Graph, are
+a relational database and a property graph. Neither is RDF.</p>
+<p>AWL is deliberately going where others declined. That makes the collapse mechanism not
+an optimisation but the thing that makes the design viable.</p>
+<h3 id="22-tiny-node-vocabulary-beats-class-per-syntax-form">2.2 Tiny node vocabulary beats class per syntax form<a class="headerlink" href="#22-tiny-node-vocabulary-beats-class-per-syntax-form" title="Permanent link">&para;</a></h3>
+<p>Joern's CPG has no <code>ASSIGNMENT</code>, <code>BINARY_OP</code> or <code>FIELD_ACCESS</code> node. <code>x = y + 1</code> is a
+<code>CALL</code> named <code>&lt;operator&gt;.assignment</code> whose second argument is a <code>CALL</code> named
+<code>&lt;operator&gt;.addition</code>. CodeQL does the relational equivalent: one <code>exprs</code> table keyed
+<code>(id, kind, parent, idx)</code>.</p>
+<p>CodeOntology took the opposite route, minting an OWL class per AST construct. Its Java
+parser was last pushed 2018-06-27 with 2 stars; a Python port,
+<code>SandroGT/CodeOntologyPython</code>, 2023-03-26 with 1 star (both verified). Joern was last
+pushed 2026-08-18 with 3430 stars (verified).</p>
+<p><strong>Do not mint an RDF class per Python <code>ast</code> node type.</strong> It would version AWL against
+CPython's grammar forever and defeat the language-agnostic objective.</p>
+<h3 id="23-two-orderings-not-one">2.3 Two orderings, not one<a class="headerlink" href="#23-two-orderings-not-one" title="Permanent link">&para;</a></h3>
+<p>Verified against the CPG specification:</p>
+<ul>
+<li><code>ORDER</code> is syntactic: "This integer indicates the position of the node among its
+  siblings in the AST. The left-most child has an order of 0."</li>
+<li><code>ARGUMENT_INDEX</code> is semantic: "AST-children of CALL nodes have an argument index,
+  that is used to match call-site arguments with callee parameters", numbered 1 to N,
+  with "index 0 reserved for implicit self / this parameter". Named arguments set it to
+  -1 and carry <code>ARGUMENT_NAME</code>; "if the <code>PARAMETER_NAME</code> field is set, then the
+  <code>ARGUMENT_INDEX</code> field is ignored".</li>
+</ul>
+<p>Conflating position-in-body with argument-binding-position hurts exactly at AWL's
+collapse boundary, where a call's keywords become a class's named properties.</p>
+<h3 id="24-ordering-mechanisms-to-avoid">2.4 Ordering mechanisms to avoid<a class="headerlink" href="#24-ordering-mechanisms-to-avoid" title="Permanent link">&para;</a></h3>
+<p>JSON-LD index maps are defined for "keys that have no semantic meaning, but should be
+preserved regardless" (JSON-LD 1.1 syntax, section 9.9, verified). Statement order is
+semantically meaningful, so <code>@container: @index</code> is disqualified by the specification's
+own framing.</p>
+<p>SHACL <code>sh:order</code> sits in the "Non-validating property shape characteristics" section
+and is intended for form building. A conforming processor never emits a result for it.</p>
+<h3 id="25-no-workflow-ontology-models-control-flow">2.5 No workflow ontology models control flow<a class="headerlink" href="#25-no-workflow-ontology-models-control-flow" title="Permanent link">&para;</a></h3>
+<p>CWL has no step order at all: "An implementation may choose to execute the steps in a
+different order than listed". Ordering is derived entirely from <code>source</code> and
+<code>outputSource</code> data links. P-Plan expresses order only through <code>p-plan:isPreceededBy</code>,
+transitive and index-free. Surveys report the same gap in OPMW, wfdesc and ProvONE,
+attributed to dataflow-driven scientific-workflow origins (reported).</p>
+<p>AWL's <code>If</code>, <code>While</code> and <code>For</code> have no existing RDF vocabulary to reuse. That is a
+contribution area and a warning: the ecosystem concluded ordered imperative statements
+are the wrong abstraction for a workflow <em>plan</em>.</p>
+<h3 id="26-fno-is-the-precedent-for-callee-defined-predicates">2.6 FnO is the precedent for callee-defined predicates<a class="headerlink" href="#26-fno-is-the-precedent-for-callee-defined-predicates" title="Permanent link">&para;</a></h3>
+<p>In the <a href="https://fno.io/spec/">Function Ontology</a>, an <code>fno:Parameter</code> declares
+<code>fno:predicate</code>, the RDF property to use when binding its value. A call is an
+<code>fno:Execution</code> with <code>fno:executes</code> plus plain triples using those declared predicates.</p>
+<p>That is "the callee's own description defines the predicates of the call node". AWL
+reaches the same target through a type-scoped JSON-LD context.
+<code>FnOio/fno-descriptor-python</code> already derives FnO from Python type hints, last pushed
+2022-08-10 with 2 stars (verified). Align with the vocabulary; do not depend on it.</p>
+<h3 id="27-stack-graphs-is-archived">2.7 Stack graphs is archived<a class="headerlink" href="#27-stack-graphs-is-archived" title="Permanent link">&para;</a></h3>
+<p><code>github/stack-graphs</code> is archived, last pushed 2025-09-09 (verified). Take
+the architecture, not the crate, and do not build an equivalent. AWL resolves call
+targets within one document plus its declared imports.</p>
+<h3 id="28-the-pyiron-and-nfdi-stack-pwd-semantikon-flowrep">2.8 The pyiron and NFDI stack: PWD, semantikon, flowrep<a class="headerlink" href="#28-the-pyiron-and-nfdi-stack-pwd-semantikon-flowrep" title="Permanent link">&para;</a></h3>
+<p>The closest active work, from an adjacent community. Three packages that reach a
+workflow knowledge graph <strong>without touching an AST</strong>.</p>
+<p><strong>Python Workflow Definition</strong> (<code>pythonworkflow/python-workflow-definition</code>,
+last pushed 2026-08-17, published in Digital Discovery 2025, verified). A workflow is a Python
+module, a JSON graph, and a conda environment file:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="p">{</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">"nodes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"function"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"workflow.get_prod_and_div"</span><span class="p">},</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="p">{</span><span class="nt">"id"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"input"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x"</span><span class="p">}</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="p">],</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="nt">"edges"</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span><span class="nt">"target"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="nt">"targetPort"</span><span class="p">:</span><span class="w"> </span><span class="s2">"x"</span><span class="p">,</span><span class="w"> </span><span class="nt">"source"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="nt">"sourcePort"</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">}]</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">}</span>
+</code></pre></div>
+<ul>
+<li><strong>Identity is the dotted import path.</strong> AWL's chosen scheme is already in production
+  in a sibling project.</li>
+<li><strong>Version drift is handled by shipping a conda environment file</strong>, not by versioning
+  identifiers. A real alternative to a SCIP-style version component, better suited to
+  scientific workflows where the whole environment matters. The cost: the identifier is
+  no longer self-describing.</li>
+<li><strong>Cutoff is pure dataflow.</strong> No statements, no control flow, no literals except as
+  <code>input</code> nodes. Independently confirms 2.5.</li>
+</ul>
+<p><strong>semantikon</strong> (<code>pyiron/semantikon</code>, last pushed 2026-08-19, verified). Scientific
+context on functions through type annotations, emitted as an rdflib graph:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_speed</span><span class="p">(</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">distance</span><span class="p">:</span> <span class="n">u</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">uri</span><span class="o">=</span><span class="n">EX</span><span class="o">.</span><span class="n">distance</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">"meter"</span><span class="p">),</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">time</span><span class="p">:</span>     <span class="n">u</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">uri</span><span class="o">=</span><span class="n">EX</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>     <span class="n">units</span><span class="o">=</span><span class="s2">"second"</span><span class="p">),</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">u</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">uri</span><span class="o">=</span><span class="n">EX</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">"meter/second"</span><span class="p">):</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="k">return</span> <span class="n">distance</span> <span class="o">/</span> <span class="n">time</span>
+</code></pre></div>
+<p>Targets PMDco on BFO and OBI, plus QUDT for units, and validates units at runtime
+through <code>pint</code>. <strong>flowrep</strong> (<code>pyiron/flowrep</code>, last pushed 2026-08-17) supplies the
+exchange format <code>semantikon.get_knowledge_graph</code> reads.</p>
+<p><strong>Comparison, and where AWL actually differs:</strong></p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>semantikon stack</th>
+<th>AWL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input</td>
+<td>Decorated functions plus exported dataflow graph</td>
+<td>Source AST</td>
+</tr>
+<tr>
+<td>Semantics attached to</td>
+<td>Parameters, via <code>u(...)</code> in each signature</td>
+<td>Resolved type, via schema-derived context</td>
+</tr>
+<tr>
+<td>Who writes the IRIs</td>
+<td>The developer, in every annotated signature</td>
+<td>Nobody; generated from the schema</td>
+</tr>
+<tr>
+<td>Control flow</td>
+<td>None</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Round-trip to source</td>
+<td>No</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Partial annotation</td>
+<td>All or nothing per function</td>
+<td>Degrades continuously</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The differentiator is progressive enhancement, not coverage.</strong> semantikon produces a
+better graph than AWL for a fully annotated function, and it should be preferred there.
+What it cannot do is produce <em>anything</em> for a function whose author declined to
+annotate it, and it requires the author to write RDF vocabulary in the signature of
+every function they touch.</p>
+<p>AWL's position is a gradient with no cliff: plain code yields a call graph, partially
+typed code yields typed boundaries where types exist, fully typed code yields the
+collapse. Section 8 makes this precise, and section 9 shows how the untyped end is
+raised without asking developers to write IRIs.</p>
+<p>One point of honesty about "no leaking". OO-LD's generated models carry the context in
+<code>model_config</code>, so RDF vocabulary is present in Python source either way. The real
+distinction is that OO-LD's copy is machine-generated and never hand-maintained, and
+that <strong>call sites are RDF-free</strong>: a developer writes <code>ChargeParam(target_voltage=4.2)</code>
+and never types an IRI. semantikon's annotations sit in the signatures developers
+write. That is the claim worth making.</p>
+<h3 id="29-summary">2.9 Summary<a class="headerlink" href="#29-summary" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Cutoff</th>
+<th>Identity</th>
+<th>RDF</th>
+<th>Status 2026</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kythe</td>
+<td>Declarations, references, full type structure</td>
+<td>VName 5-tuple plus <code>vnames.json</code></td>
+<td>No, entry store</td>
+<td>Alive, pre-1.0</td>
+</tr>
+<tr>
+<td>SCIP</td>
+<td>Symbol occurrences in ranges</td>
+<td>Human-readable symbol string with version</td>
+<td>No, protobuf</td>
+<td>Active</td>
+</tr>
+<tr>
+<td>Stack graphs</td>
+<td>Name binding only</td>
+<td>Path through a graph</td>
+<td>No</td>
+<td>Archived 2025-09-09</td>
+</tr>
+<tr>
+<td>Joern CPG</td>
+<td>Full AST, tiny vocabulary, plus CFG and dataflow overlays</td>
+<td><code>FULL_NAME</code>, language-specific</td>
+<td>No, property graph</td>
+<td>Very active</td>
+</tr>
+<tr>
+<td>CodeQL</td>
+<td>Full AST, relational</td>
+<td>Row ids</td>
+<td>No</td>
+<td>Active</td>
+</tr>
+<tr>
+<td>CodeOntology</td>
+<td>Structural, expressions opt-in</td>
+<td>OWL class per construct</td>
+<td>Yes</td>
+<td>Dead since 2018</td>
+</tr>
+<tr>
+<td>Graphify</td>
+<td>Declarations, references, calls</td>
+<td>Normalized string id</td>
+<td>No</td>
+<td>Active</td>
+</tr>
+<tr>
+<td>CWL / schema-salad</td>
+<td>Workflow steps, dataflow only</td>
+<td>schema-salad identifier resolution</td>
+<td>Yes</td>
+<td>Active</td>
+</tr>
+<tr>
+<td>FnO</td>
+<td>Function and execution descriptions</td>
+<td>IRI per function</td>
+<td>Yes</td>
+<td>Draft, uneven</td>
+</tr>
+<tr>
+<td>P-Plan / PROV-O</td>
+<td>Plan and trace</td>
+<td>IRI</td>
+<td>Yes</td>
+<td>Stable</td>
+</tr>
+<tr>
+<td>Python Workflow Definition</td>
+<td>Function-level dataflow</td>
+<td>Dotted import path, version via conda env</td>
+<td>No</td>
+<td>Active, published 2025</td>
+</tr>
+<tr>
+<td>semantikon</td>
+<td>Function and parameter semantics from type hints</td>
+<td>IRI in the annotation</td>
+<td>Yes, PMDco / BFO / OBI / QUDT</td>
+<td>Active</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-what-existing-tools-already-give-and-where-reuse-stops">3. What existing tools already give, and where reuse stops<a class="headerlink" href="#3-what-existing-tools-already-give-and-where-reuse-stops" title="Permanent link">&para;</a></h2>
+<p>Applied to example B. Reconstructed from each tool's documented schema.</p>
+<table>
+<thead>
+<tr>
+<th>Construct</th>
+<th>Graphify</th>
+<th>SCIP</th>
+<th>Kythe</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>class TensileTestSpecimen</code> fields and their types</td>
+<td><code>-[references, field]-&gt; Length, Width, Area, ModulusOfElasticity</code></td>
+<td><code>...tensile_test/TensileTestSpecimen#e_mod.</code></td>
+<td><code>variable</code> node, <code>typed</code> edge to <code>tapp</code></td>
+</tr>
+<tr>
+<td><code>def tensile_test_analysis(ds: TensileTestDataset) -&gt; TensileTestDataset</code></td>
+<td><code>-[references, parameter_type]-&gt;</code>, <code>-[references, return_type]-&gt;</code></td>
+<td><code>().</code> descriptor plus occurrences</td>
+<td><code>function</code> node, signature via <code>fn#builtin</code></td>
+</tr>
+<tr>
+<td><code>class TensileTestResult(TabularData)</code></td>
+<td><code>-[inherits]-&gt;</code></td>
+<td><code>Relationship.is_implementation</code></td>
+<td><code>extends</code></td>
+</tr>
+<tr>
+<td><code>cross_section_area = width * thickness</code></td>
+<td>nothing</td>
+<td>nothing</td>
+<td>nothing</td>
+</tr>
+<tr>
+<td><code>e_mod = ModulusOfElasticity.from_pint(...)</code></td>
+<td><code>-[calls]-&gt; from_pint</code></td>
+<td><code>from_pint().</code> ReadAccess, <code>e_mod.</code> WriteAccess</td>
+<td>anchor plus <code>ref/call</code>, anchor plus <code>ref/writes</code></td>
+</tr>
+<tr>
+<td><code>slope, *_ = linregress(...)</code></td>
+<td><code>-[calls]-&gt; linregress</code></td>
+<td><code>local 0</code></td>
+<td><code>ref/call</code></td>
+</tr>
+<tr>
+<td><code>Length(value=100, unit=LengthUnit.milli_meter)</code></td>
+<td><code>-[calls]-&gt; Length</code></td>
+<td>occurrence only</td>
+<td><code>ref/call</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>Optional</code> is filtered as a typing container and <code>float</code> as annotation noise;
+<code>ModulusOfElasticity</code> survives.</p>
+<p><strong>Reuse them for the type skeleton. They are sufficient there and should not be
+rebuilt.</strong> Every class, every field, every field's declared type, parameter and return
+types, inheritance.</p>
+<p><strong>All three lack the same thing: intra-procedural dataflow.</strong> Kythe's <code>ref/writes</code>
+records <em>that</em> <code>e_mod</code> was written; nothing connects it to the reads that produced the
+value. Navigation does not need that edge, so none of them emit it.</p>
+<p>Also lost by all three: the literal arguments. <code>Length(value=100, unit=LengthUnit.milli_meter)</code>
+reduces to a <code>calls</code> edge, discarding <code>100</code> and <code>milli_meter</code>. For a materials
+knowledge graph that is the payload.</p>
+<h3 id="the-reuse-split">The reuse split<a class="headerlink" href="#the-reuse-split" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Supplier</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Identity, declarations, field types, inheritance</td>
+<td>SCIP for versioned symbols, or Graphify</td>
+</tr>
+<tr>
+<td>Intra-procedural dataflow</td>
+<td>Joern CPG <code>REACHING_DEF</code> edges, or <code>python-graphs</code> for a pure-Python CFG and DFG</td>
+</tr>
+<tr>
+<td>Typed-boundary provenance</td>
+<td>AWL</td>
+</tr>
+<tr>
+<td>Literal arguments, control flow, collapse</td>
+<td>AWL only</td>
+</tr>
+</tbody>
+</table>
+<p>This is the concrete answer to "can we just reuse their output". For the first two rows,
+yes. The last two are unbuilt anywhere.</p>
+<hr />
+<h1 id="part-ii-principles">Part II: Principles<a class="headerlink" href="#part-ii-principles" title="Permanent link">&para;</a></h1>
+<h2 id="4-graphifys-principles-and-the-tooling-embodying-each">4. Graphify's principles, and the tooling embodying each<a class="headerlink" href="#4-graphifys-principles-and-the-tooling-embodying-each" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Principle</th>
+<th>Embodied in</th>
+<th>Failure it prevents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cutoff as declaration, not code</td>
+<td><code>LanguageConfig</code>, a dataclass of frozensets</td>
+<td>Cutoff becomes inspectable and diffable rather than buried in a walker</td>
+</tr>
+<tr>
+<td>One normalization authority</td>
+<td><code>graphify/ids.py</code></td>
+<td>"Three independent producers must agree on node IDs or the graph splits a single entity into disconnected ghost nodes"</td>
+</tr>
+<tr>
+<td>Observation before inference</td>
+<td><code>_SymbolResolutionFacts</code>, resolved in a later pass</td>
+<td>Extraction never guesses; guessing becomes auditable</td>
+</tr>
+<tr>
+<td>Provenance in the data model</td>
+<td><code>confidence: EXTRACTED / INFERRED / AMBIGUOUS</code> per edge (<code>engine.py:29</code>)</td>
+<td>Consumers can ask for only what was literally written</td>
+</tr>
+<tr>
+<td>Ambient vocabulary is not corpus vocabulary</td>
+<td>builtin, typing-container, annotation-noise and decorator-noise filters</td>
+<td>Builtins "become god-nodes accumulating spurious edges from every call site"</td>
+</tr>
+<tr>
+<td>Small closed relation vocabulary</td>
+<td>one <code>references</code> relation plus a role from <code>REFERENCE_CONTEXTS</code> (<code>engine.py:18</code>), validated at construction</td>
+<td>The schema cannot grow by accident</td>
+</tr>
+<tr>
+<td>Stages as total functions over plain data</td>
+<td><code>detect -&gt; extract -&gt; build_graph -&gt; cluster -&gt; analyze -&gt; report -&gt; export</code></td>
+<td>Any stage is replaceable and testable in isolation</td>
+</tr>
+<tr>
+<td>Deterministic by default</td>
+<td>tree-sitter for code, model only for prose, quarantined behind the <code>AMBIGUOUS</code> tier</td>
+<td>Probabilistic output cannot silently contaminate deterministic output</td>
+</tr>
+</tbody>
+</table>
+<p>Quoted rationales are the authors' own comments in <code>graphify/ids.py</code> and
+<code>graphify/extractors/base.py</code>.</p>
+<h2 id="5-awls-own-principles">5. AWL's own principles<a class="headerlink" href="#5-awls-own-principles" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Language-agnostic serialization</strong>, now binding rather than aspirational.</li>
+<li><strong>The AST is the document</strong>, and it round-trips to source.</li>
+<li><strong>Semantics live in the context, not the extractor.</strong> One document, many RDF
+   projections.</li>
+<li><strong>Restriction is a goal.</strong> JSON Schema constrains which constructs and which calls
+   are legal in a workflow domain.</li>
+<li><strong>Types carry their own semantics.</strong> The resolved type defines meaning, and the
+   developer never writes an IRI.</li>
+</ol>
+<p>Principles 1, 3 and 5 have no counterpart in the indexing tools. Principle 2 is
+unusual across the entire field.</p>
+<h2 id="6-compatibility-and-tensions">6. Compatibility and tensions<a class="headerlink" href="#6-compatibility-and-tensions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Graphify principle</th>
+<th>Verdict</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cutoff as declaration</td>
+<td>Adopt, extended</td>
+<td>AWL needs transparent and opaque type sets, plus a content-dependent condition: a call collapses if and only if its callee resolves to an annotated type</td>
+</tr>
+<tr>
+<td>One normalization authority</td>
+<td>Adopt wholesale</td>
+<td>More critical for AWL, whose identifiers are global IRIs, so a collision is a wrong assertion rather than a merged node</td>
+</tr>
+<tr>
+<td>Observation before inference</td>
+<td>Adopt wholesale</td>
+<td>The enabling change; nothing else works without it</td>
+</tr>
+<tr>
+<td>Provenance in the data model</td>
+<td>Adopt, different tooling</td>
+<td>See tension 2</td>
+</tr>
+<tr>
+<td>Ambient versus corpus vocabulary</td>
+<td>Adopt, inverted contents</td>
+<td>See tension 3</td>
+</tr>
+<tr>
+<td>Small closed relation vocabulary</td>
+<td>Adopt, corroborated by 2.2</td>
+<td>AWL has better tooling for it: type-scoped contexts</td>
+</tr>
+<tr>
+<td>Stages as total functions</td>
+<td>Adopt wholesale</td>
+<td>Purely architectural</td>
+</tr>
+<tr>
+<td>Deterministic by default</td>
+<td>Adopt with care</td>
+<td>Section 9 introduces a probabilistic path; it must stay quarantined</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tension-1-round-trip-versus-cutoff">Tension 1: round-trip versus cutoff<a class="headerlink" href="#tension-1-round-trip-versus-cutoff" title="Permanent link">&para;</a></h3>
+<p>If the AST is the document, eliding nodes breaks <code>unparse</code>. The <code>backparsable</code> flag in
+<code>src/awl/core.py</code> is this tension left unresolved as a boolean.</p>
+<p>Resolution: stop treating document and graph as one artefact. Keep the document
+complete, put the cutoff in the projection. RDF canonicalization normalizes layout away
+by design, so the RDF projection is explicitly lossy in reverse. That is coherent, and
+it is SCIP's transmission-versus-storage split, but it must be stated rather than
+assumed.</p>
+<h3 id="tension-2-provenance-in-rdf">Tension 2: provenance in RDF<a class="headerlink" href="#tension-2-provenance-in-rdf" title="Permanent link">&para;</a></h3>
+<p>A triple carries no attributes.</p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Strength</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Named graphs</td>
+<td>Clean, standard, queryable per graph</td>
+<td>Needs quads; <code>to_jsonld()</code> emits one document today</td>
+</tr>
+<tr>
+<td>RDF-star</td>
+<td>Most expressive</td>
+<td>Uneven tool support</td>
+</tr>
+<tr>
+<td>Parallel inferred graph</td>
+<td>Simplest</td>
+<td>One bit only</td>
+</tr>
+</tbody>
+</table>
+<p>Named graphs are recommended. Section 9 raises the stakes: once meaning can be
+<em>retrofitted</em> by a model, declared and inferred semantics must never be
+indistinguishable.</p>
+<h3 id="tension-3-ambient-vocabulary-is-domain-relative">Tension 3: ambient vocabulary is domain-relative<a class="headerlink" href="#tension-3-ambient-vocabulary-is-domain-relative" title="Permanent link">&para;</a></h3>
+<p>Graphify lists <code>dataclass</code> in <code>_PYTHON_DECORATOR_NOISE</code> as "ambient vocabulary, not
+corpus symbols". For AWL it is the primary identity signal. The principle transfers,
+the contents invert. Adopting the lists verbatim would be worse than having none.</p>
+<hr />
+<h1 id="part-iii-design">Part III: Design<a class="headerlink" href="#part-iii-design" title="Permanent link">&para;</a></h1>
+<h2 id="7-language-agnostic-vocabulary-with-cpg-as-blueprint">7. Language-agnostic vocabulary, with CPG as blueprint<a class="headerlink" href="#7-language-agnostic-vocabulary-with-cpg-as-blueprint" title="Permanent link">&para;</a></h2>
+<p><strong>Correction worth stating first: tree-sitter does not normalize across languages.</strong> It
+is many parsers with different node vocabularies (<code>function_definition</code> in Python,
+<code>function_declaration</code> in JS, <code>method_definition</code> in TS). Graphify's <code>LanguageConfig</code> is
+a thin normalization layer mapping those names onto four roles. The normalization AWL
+wants is CPG's.</p>
+<p>Joern's Code Property Graph is explicitly "a language-agnostic intermediate graph
+representation of code designed for code querying", one layered schema across all
+frontends. Six mechanisms transfer.</p>
+<ol>
+<li><strong>Neutral core vocabulary.</strong> <code>METHOD</code>, <code>BLOCK</code>, <code>CALL</code>, <code>CONTROL_STRUCTURE</code>,
+   <code>IDENTIFIER</code>, <code>LITERAL</code>, <code>LOCAL</code>, <code>RETURN</code>, <code>TYPE_DECL</code>, <code>TYPE</code>, <code>MEMBER</code>. Close to
+   exactly what AWL's workflow profile needs, and none of it Python-specific.</li>
+<li><strong>Terminology neutrality.</strong> Procedures, functions and methods are all <code>METHOD</code>.
+   <code>BLOCK</code> rather than "compound statement", because blocks yield values in some
+   languages.</li>
+<li><strong>One node type plus discriminator.</strong> <code>CONTROL_STRUCTURE</code> carries a type property
+   rather than spawning <code>If</code>, <code>While</code>, <code>For</code> classes.</li>
+<li><strong>Escape hatch.</strong> <code>UNKNOWN</code> covers "any AST node that the frontend would like to
+   include in the AST but for which no suitable AST node is specified".</li>
+<li><strong>Raw frontend labels as properties, not types.</strong> <code>PARSER_TYPE_NAME</code> stores the
+   "AST node type name emitted by parser", explicitly not used for control-flow
+   construction.</li>
+<li><strong>Declared language-specific dimensions.</strong> A <code>LANGUAGE</code> property names the frontend;
+   <code>SIGNATURE</code> has no strict format "so it can be chosen by the frontend implementor to
+   fit the source language"; for <code>FULL_NAME</code>, "the details of what constitutes a
+   fully-qualified name are language specific".</li>
+</ol>
+<h3 id="this-resolves-tension-1">This resolves tension 1<a class="headerlink" href="#this-resolves-tension-1" title="Permanent link">&para;</a></h3>
+<p>Mechanisms 4 and 5 let AWL keep a language-neutral vocabulary <strong>and</strong> round-trip Python
+exactly, because the Python-specific label rides as a property while the node type stays
+neutral. Vocabulary choice and frontend choice become independent, so principle 1 does
+not force a move to tree-sitter.</p>
+<h3 id="joern-as-second-frontend-not-a-replacement">Joern as second frontend, not a replacement<a class="headerlink" href="#joern-as-second-frontend-not-a-replacement" title="Permanent link">&para;</a></h3>
+<p><code>pysrc2cpg</code> already emits the neutral vocabulary plus <code>REACHING_DEF</code> dataflow, which is
+the gap identified in section 3. Roughly the whole workflow profile, for free.</p>
+<p>Caveats: Joern is JVM and Scala, heavy for a Python library, and <strong>CPG does not
+round-trip to source</strong>. So do not replace AWL's frontend with it. Two frontends, one
+vocabulary: Python <code>ast</code> for round-trip fidelity, exported CPG for breadth and dataflow.</p>
+<h3 id="sanity-check-against-non-python-source">Sanity check against non-Python source<a class="headerlink" href="#sanity-check-against-non-python-source" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kd">function</span><span class="w"> </span><span class="nx">procedure</span><span class="p">(</span><span class="nx">cycles</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="nx">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="nx">cycles</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">charge</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">ChargeParam</span><span class="p">(</span><span class="mf">4.2</span><span class="p">,</span><span class="w"> </span><span class="mf">0.23</span><span class="p">));</span><span class="w"> </span><span class="nx">rest</span><span class="p">(</span><span class="mf">600</span><span class="p">);</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mf">1</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="p">}</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Python <code>ast</code></th>
+<th>TypeScript</th>
+<th>Neutral vocabulary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FunctionDef</code></td>
+<td><code>function_declaration</code></td>
+<td><code>METHOD</code></td>
+</tr>
+<tr>
+<td>body list</td>
+<td><code>statement_block</code></td>
+<td><code>BLOCK</code></td>
+</tr>
+<tr>
+<td><code>Assign</code></td>
+<td><code>lexical_declaration</code></td>
+<td><code>CALL &lt;operator&gt;.assignment</code></td>
+</tr>
+<tr>
+<td><code>While</code></td>
+<td><code>while_statement</code></td>
+<td><code>CONTROL_STRUCTURE</code> type While</td>
+</tr>
+<tr>
+<td><code>Call</code></td>
+<td><code>call_expression</code></td>
+<td><code>CALL</code></td>
+</tr>
+<tr>
+<td><code>Call ClassName(...)</code></td>
+<td><code>new_expression</code></td>
+<td><code>CALL</code>, collapsed</td>
+</tr>
+<tr>
+<td><code>AugAssign</code></td>
+<td><code>augmented_assignment_expression</code></td>
+<td><code>CALL &lt;operator&gt;.assignmentPlus</code></td>
+</tr>
+<tr>
+<td><code>arg cycles: int</code></td>
+<td><code>required_parameter</code></td>
+<td><code>METHOD_PARAMETER_IN</code> plus <code>TYPE</code></td>
+</tr>
+</tbody>
+</table>
+<p>Two findings. <code>Call</code> and <code>new_expression</code> are distinct in their grammars and identical
+semantically, which is mechanism 3 earning its keep. And <strong>Python keyword arguments have
+no TypeScript equivalent</strong>, so the collapse's input shape differs by language while its
+output does not. The collapse must therefore be defined over the <strong>resolved callee's
+parameter names</strong>, not over the source's keyword syntax. That is why 2.3's
+<code>ARGUMENT_INDEX</code> and <code>ARGUMENT_NAME</code> split matters.</p>
+<h2 id="8-identity">8. Identity<a class="headerlink" href="#8-identity" title="Permanent link">&para;</a></h2>
+<h3 id="base-scheme">Base scheme<a class="headerlink" href="#base-scheme" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Detect the definition</strong>: a <code>ClassDef</code> carrying <code>@dataclass</code> or an OO-LD base.</li>
+<li><strong>Mint from the fully qualified name</strong> under a configurable module-to-namespace
+   mapping. Adopt Kythe's <code>vnames.json</code> pattern: identity minting is declarative
+   configuration mapping path patterns to identity fields, not code.</li>
+<li><strong>Carry a language or scheme dimension</strong>, per Kythe's VName <code>language</code> and SCIP's
+   <code>scheme</code>.</li>
+<li><strong>Carry an optional version component</strong>, per SCIP, or pin the environment instead,
+   per PWD (2.8). Choose deliberately; do not do both. An FQN identifies a <em>name</em>, not
+   a <em>contract</em>.</li>
+<li><strong>Derive properties</strong> from the class body's annotated assignments.</li>
+<li><strong>Resolve call sites</strong> through import facts. Do not write the resolver: Scalpel's FQN
+   Inferrer and PyCG exist. Scalpel was last pushed 2024-03-28 (verified).</li>
+</ol>
+<h3 id="failure-modes">Failure modes<a class="headerlink" href="#failure-modes" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Solved by</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Re-exports</td>
+<td>Kythe emits both <code>aliases</code> and <code>aliases/root</code></td>
+<td>Emit the alias hop and the resolved-to-root target so queries pick their indirection level. The likeliest source of duplicate nodes in Python</td>
+</tr>
+<tr>
+<td>Aliases</td>
+<td>Local import table</td>
+<td>Straightforward</td>
+</tr>
+<tr>
+<td>Overloads</td>
+<td>SCIP <code>method-disambiguator</code></td>
+<td>Required, see below</td>
+</tr>
+<tr>
+<td>Version drift</td>
+<td>SCIP version component or PWD environment file</td>
+<td>Point 4</td>
+</tr>
+<tr>
+<td>Star imports</td>
+<td>Nothing, anywhere</td>
+<td>Make <code>import *</code> illegal in the domain schema. This is what the restriction objective is for</td>
+</tr>
+</tbody>
+</table>
+<h3 id="identity-is-the-typed-instantiation-not-the-function">Identity is the typed instantiation, not the function<a class="headerlink" href="#identity-is-the-typed-instantiation-not-the-function" title="Permanent link">&para;</a></h3>
+<p>The important refinement, and the mechanism that makes example B tractable.</p>
+<p><code>scipy.stats.linregress</code> is generic linear regression. Attaching
+<code>(LinearStrain, Stress) -&gt; ModulusOfElasticity</code> to that identifier asserts it globally,
+so every other use of linregress inherits it. The semantics belong not to the function
+but to its <strong>typed instantiation</strong>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>scipy.stats.linregress                        no semantics, ever
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>scipy.stats.linregress(LinearStrain, Stress)  -&gt; ModulusOfElasticity
+</code></pre></div>
+<p>This is <code>functools.singledispatch</code> semantics, and it is what SCIP's
+<code>method-disambiguator</code> and Kythe's opaque <code>signature</code> field exist for.</p>
+<p>The payoff is large. With OO-LD types on the arguments, the typed instantiation is
+<strong>derivable statically at every call site</strong>. A model is needed once, to propose the
+mapping; dispatch afterwards is deterministic.</p>
+<p><strong>Retroactive minting.</strong> Kythe's entry store is append-only facts keyed by VName, so any
+analyzer may add facts about a symbol later and they join everywhere it was referenced.
+AWL should adopt the same property: mint the identifier for an opaque callee now, attach
+semantics whenever they become known, and every prior reference gains meaning without
+reprocessing. This is the architectural reason identity must be stable and global before
+anything else is built.</p>
+<p><strong>Dimensional analysis validates a proposed instantiation for free.</strong> Strain is
+dimensionless, so <code>Stress / LinearStrain</code> has dimension Pa, consistent with
+<code>ModulusOfElasticity</code>. Any proposed signature failing the dimensional check is rejected
+without executing anything. Deterministic, cheap, and it catches a large error class
+before section 9's expensive machinery runs.</p>
+<p>Two complications visible in example B:</p>
+<p><strong>Arity.</strong> <code>slope, *_ = linregress(...)</code> discards four values; <code>linregress</code> returns five.
+The annotation target is a <em>result schema</em>, not a return type: <code>.slope : ModulusOfElasticity</code>,
+<code>.rvalue : CorrelationCoefficient</code>. More work, more reusable, and a natural fit for OO-LD.</p>
+<p><strong>The units are stripped before the call.</strong> The arguments are
+<code>linear["strain"].pint.to_base_units().pint.magnitude</code>, that is, dimensionless float
+arrays. <code>(LinearStrain, Stress)</code> describes values three attribute accesses upstream. The
+typed boundary is not at the call site, and AWL must trace back through a third-party
+wrapper chain to recover it. This is the hardest concrete case in the example and it
+should be treated as the acceptance test for any implementation.</p>
+<h2 id="9-what-awl-actually-extracts-and-how-far-down">9. What AWL actually extracts, and how far down<a class="headerlink" href="#9-what-awl-actually-extracts-and-how-far-down" title="Permanent link">&para;</a></h2>
+<h3 id="typed-boundaries-not-operation-semantics">Typed boundaries, not operation semantics<a class="headerlink" href="#typed-boundaries-not-operation-semantics" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">dataset</span><span class="o">.</span><span class="n">specimen</span><span class="o">.</span><span class="n">e_mod</span> <span class="o">=</span> <span class="n">ModulusOfElasticity</span><span class="o">.</span><span class="n">from_pint</span><span class="p">(</span><span class="n">slope</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">"Pa"</span><span class="p">))</span>
+</code></pre></div>
+<p>Whatever opaque computation produced <code>slope</code>, at the moment it is assigned to a typed
+member it acquires meaning. The same holds in reverse when a typed member is read out of
+an input argument. Typed members form a lattice of crossings: computation between
+crossings is opaque, meaning is recovered at every crossing, and there are many crossings
+per function rather than one per signature.</p>
+<p>That is strictly more than signature-level annotation, and it is the precise sense in
+which AWL sees "inside" a function.</p>
+<p>State the limit honestly. What is recovered is <strong>typed-boundary provenance</strong>: <code>e_mod</code>
+depends on <code>width</code>, <code>thickness</code>, <code>length</code>, <code>force</code>, <code>elongation</code>. The <em>operation</em> is not
+recovered. "Linear regression over the elastic region" is unavailable unless the callee's
+typed instantiation is known (section 8) or a model reads the code (below).</p>
+<p>One genuine exception, and it is worth building on: <code>width * thickness</code> where both
+operands are typed quantities has a <strong>dimensionally derivable result type</strong>. That is real
+operation semantics, statically decidable, and unmatched by any project surveyed.</p>
+<table>
+<thead>
+<tr>
+<th>Claim</th>
+<th>Delivered</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Semantics of arbitrary operations</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Typed-boundary provenance at many points per function</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Result type of arithmetic over typed quantities</td>
+<td>Yes, by dimensional analysis</td>
+</tr>
+<tr>
+<td>Meaning of third-party numerics</td>
+<td>Only via a registered typed instantiation</td>
+</tr>
+</tbody>
+</table>
+<h3 id="retrofitting-meaning-onto-untyped-code">Retrofitting meaning onto untyped code<a class="headerlink" href="#retrofitting-meaning-onto-untyped-code" title="Permanent link">&para;</a></h3>
+<p>The untyped end of the gradient. Plain or partially typed code yields hints; a model can
+propose meaning; the extraction is expensive, so it must be <strong>persisted against a global
+target</strong> and shared across repositories rather than recomputed per consumer.</p>
+<p>OO-LD is a good target for a reason that is easy to miss: because the model's task is not
+"choose a vocabulary" (open-ended, unverifiable) but <strong>"choose a profile schema from a
+registry"</strong> (closed, validatable, recorded as a versioned <code>$id</code>). The output is a schema
+URL plus an instance, and both are checkable.</p>
+<p>Validation, cheapest first:</p>
+<table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>Cost</th>
+<th>Catches</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dimensional analysis of the proposed signature</td>
+<td>Free, deterministic</td>
+<td>Large class of wrong types</td>
+</tr>
+<tr>
+<td>Schema validation of instances</td>
+<td>Cheap</td>
+<td>Structural errors</td>
+</tr>
+<tr>
+<td>Execution against literature reference data</td>
+<td>Expensive</td>
+<td>Wrong labels, semantically</td>
+</tr>
+<tr>
+<td>Cross-repository agreement on the same schema</td>
+<td>Ongoing</td>
+<td>Idiosyncratic mappings</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Literature cross-validation is the strong step and deserves emphasis.</strong> Extract input
+and reported output from published work (a tensile test with attached plot or CSV and a
+reported E-modulus), run the schema-wrapped function, compare, repeat across independent
+sources. Unlike unit tests, the error sources are uncorrelated, so this validates the
+<em>label</em>, not merely the arithmetic.</p>
+<p>Three limits to record:</p>
+<ul>
+<li><strong>Coverage is uneven.</strong> Only reported quantities get signal. <code>cross_section_area</code> and
+  the 0.2 percent <code>linear_region</code> cutoff appear in no results table, so intermediates stay
+  unvalidated. Confidence is high at the outputs and absent in the middle, which is where
+  a retrofit is riskiest.</li>
+<li><strong>Convergence is on convention.</strong> If the field uses a 0.2 percent offset convention,
+  cross-validation confirms the convention. That is the right outcome for
+  interoperability and it makes the validated semantics explicitly community-relative.</li>
+<li><strong>The corpus is the asset.</strong> Paper-to-(input, reported output) pairs are expensive to
+  assemble and outlast any pipeline built on them. Treat as a deliverable.</li>
+</ul>
+<p><strong>Retrofitted meaning must be distinguishable from declared meaning</strong>, permanently. This
+is where tension 2 stops being a nicety. Note also that a retrofit has <strong>no instance
+document</strong> to pin a versioned schema <code>$id</code>: the mapping lives in a generated annotation
+or a sidecar, so it needs its own version pin and provenance tier, or a temporary
+fallback vocabulary becomes indistinguishable from a consensus one once it propagates.</p>
+<h3 id="why-multiple-vocabularies-is-a-feature">Why multiple vocabularies is a feature<a class="headerlink" href="#why-multiple-vocabularies-is-a-feature" title="Permanent link">&para;</a></h3>
+<p>A single global vocabulary is not achievable and not required. OO-LD carries a consensus
+mapping in the context while community synonyms ride along as structured annotations, so
+the consumer selects a mapping set rather than the producer enforcing one. That also
+accommodates a lazy or temporary vocabulary for freshly retrofitted code, upgraded later
+without rewriting instances. "One syntax, tiered semantics" is the correct answer to the
+global-target objection, subject to the version-pin caveat above.</p>
+<h2 id="10-graph-semantics-compared">10. Graph semantics compared<a class="headerlink" href="#10-graph-semantics-compared" title="Permanent link">&para;</a></h2>
+<h3 id="a-declarations-and-references-level">A. Declarations-and-references level<a class="headerlink" href="#a-declarations-and-references-level" title="Permanent link">&para;</a></h3>
+<p>Where Graphify, Kythe, SCIP and Glean sit.</p>
+<pre class="awl-mermaid"><code>graph LR
+  P[procedure.py] --&gt;|imports| PP[battery/params.py]
+  P --&gt;|imports| PD[battery/device.py]
+  F["procedure()"] --&gt;|calls EXTRACTED| C["charge()"]
+  F --&gt;|calls EXTRACTED| R["rest()"]
+  F --&gt;|calls EXTRACTED| CP[ChargeParam]
+  PP --&gt; CP</code></pre>
+<p>Answers "does procedure use charge". Cannot answer "in what order", "how many times",
+"at what target voltage".</p>
+<h3 id="b-awl-ast-profile">B. AWL <code>ast</code> profile<a class="headerlink" href="#b-awl-ast-profile" title="Permanent link">&para;</a></h3>
+<p>Full tree, transparent wrappers unwrapped. Round-trips. Verbose.</p>
+<pre class="awl-mermaid"><code>graph LR
+  M[Module] --&gt; FD[FunctionDef procedure]
+  FD --&gt; WH[While]
+  WH --&gt; EX[Expr]
+  EX --&gt; CA["Call charge"]
+  CA --&gt; CA2["Call ChargeParam"]
+  CA2 --&gt; KW["keyword target_voltage"]
+  KW --&gt; CO["Constant 4.2"]</code></pre>
+<h3 id="c-awl-workflow-profile">C. AWL <code>workflow</code> profile<a class="headerlink" href="#c-awl-workflow-profile" title="Permanent link">&para;</a></h3>
+<p>The recommended level, using section 7's vocabulary and section 12's alignments.</p>
+<pre class="awl-mermaid"><code>graph LR
+  PR["awl:Method&lt;br/&gt;py:procedure#procedure"] --&gt;|parameter| PA["cycles : builtins.int"]
+  PR --&gt;|body order 0| S1["awl:Call &amp;lt;operator&amp;gt;.assignment&lt;br/&gt;i = 0"]
+  PR --&gt;|body order 1| W["awl:ControlStructure type=While"]
+  W --&gt;|condition| CD["i &amp;lt; cycles"]
+  W --&gt;|body order 0| S3["fno:Execution&lt;br/&gt;fno:executes py:battery.device.charge"]
+  W --&gt;|body order 1| S4["fno:Execution&lt;br/&gt;fno:executes py:battery.device.rest"]
+  W --&gt;|body order 2| S5["awl:Call &amp;lt;operator&amp;gt;.assignmentPlus&lt;br/&gt;i += 1"]
+  S3 --&gt;|declared predicate| CPI["a py:battery.params.ChargeParam&lt;br/&gt;target_voltage 4.2&lt;br/&gt;c_rate 0.23"]</code></pre>
+<h3 id="d-typed-boundary-provenance-example-b">D. Typed-boundary provenance, example B<a class="headerlink" href="#d-typed-boundary-provenance-example-b" title="Permanent link">&para;</a></h3>
+<p>What sections 8 and 9 buy on the real case.</p>
+<pre class="awl-mermaid"><code>graph LR
+  W["specimen.width : Width"] --&gt; A["specimen.cross_section_area : Area"]
+  T["specimen.thickness : Length"] --&gt; A
+  A --&gt; ST["df.stress : Stress"]
+  FO["row.force : Force"] --&gt; ST
+  EL["row.elongation : Length"] --&gt; SR["df.strain : LinearStrain"]
+  L["specimen.length : Length"] --&gt; SR
+  SR --&gt; LRlinregress&lt;br/&gt;opaque unless registered
+  ST --&gt; LR
+  LR --&gt; EM["specimen.e_mod : ModulusOfElasticity"]</code></pre>
+<p>Every node is a typed member; every edge is a provenance dependency recovered at a
+crossing. The single opaque node is the one section 8 registers as a typed
+instantiation, and dimensional analysis confirms <code>Stress / LinearStrain</code> yields Pa.</p>
+<h2 id="11-the-context-lever">11. The context lever<a class="headerlink" href="#11-the-context-lever" title="Permanent link">&para;</a></h2>
+<p>What AWL has and the indexing tools structurally lack. All claims here were reproduced
+locally against rdflib and pyld.</p>
+<h3 id="ordering-at-more-than-one-layer">Ordering, at more than one layer<a class="headerlink" href="#ordering-at-more-than-one-layer" title="Permanent link">&para;</a></h3>
+<p><code>@container: @list</code> produces a genuine RDF collection. JSON-LD 1.1 API section 8.3:
+"List Conversion is the process of taking a list object and transforming it into an RDF
+collection as defined in RDF Semantics."</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">[]</span> <span class="kt">a</span> <span class="p">:</span><span class="nt">Method</span> <span class="p">;</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="p">:</span><span class="nt">body</span> <span class="p">(</span> <span class="p">[</span> <span class="kt">a</span> <span class="p">:</span><span class="nt">Call</span> <span class="p">;</span> <span class="p">:</span><span class="nt">callee</span> <span class="s">"charge"</span> <span class="p">]</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>            <span class="p">[</span> <span class="kt">a</span> <span class="p">:</span><span class="nt">Call</span> <span class="p">;</span> <span class="p">:</span><span class="nt">callee</span> <span class="s">"rest"</span> <span class="p">]</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>            <span class="p">[</span> <span class="kt">a</span> <span class="p">:</span><span class="nt">Call</span> <span class="p">;</span> <span class="p">:</span><span class="nt">callee</span> <span class="s">"increment"</span> <span class="p">]</span> <span class="p">)</span> <span class="p">.</span>
+</code></pre></div>
+<p><code>?m awl:body/rdf:rest*/rdf:first ?step</code> retrieves all three (verified). But it yields
+<em>members</em>, not <em>positions</em>: recovering an index means counting <code>rdf:rest</code> hops, and SPARQL
+1.1's property path grammar has only <code>*</code>, <code>+</code> and <code>?</code>. Result order is a store artefact,
+not a guarantee.</p>
+<p>Emit <strong>both</strong>: <code>@container: @list</code> for fidelity, since it costs nothing and round-trips,
+and a <strong>materialized integer index</strong> as the query surface. Optionally derive
+<code>p-plan:isPreceededBy</code> in the plan projection. Keep 2.3's two orderings separate.</p>
+<h3 id="numeric-round-trip-and-where-it-actually-bites">Numeric round-trip, and where it actually bites<a class="headerlink" href="#numeric-round-trip-and-where-it-actually-bites" title="Permanent link">&para;</a></h3>
+<p>JSON-LD 1.1 API section 8.6 warns that "when JSON-native numbers are deserialized to RDF,
+lossless data round-tripping cannot be guaranteed", and that an <code>xsd:double</code> of 2.0 "will
+result in an <code>xsd:integer</code> with a value of 2 in canonical lexical form when converted from
+RDF to JSON-LD and back to RDF".</p>
+<p><strong>This does not currently bite awl-python.</strong> Both rdflib and pyld preserve <code>4.0</code> as
+<code>xsd:double</code> (verified), because Python's <code>json</code> module parses <code>4.0</code> to <code>float</code> and <code>4</code> to
+<code>int</code>.</p>
+<p>JavaScript cannot: <code>JSON.parse('4.0')</code> and <code>JSON.parse('4')</code> both yield <code>4</code>, and
+<code>Number.isInteger</code> is true for both (verified, Node v25.6.0). A JavaScript processor must
+emit <code>xsd:integer</code>.</p>
+<p>So the hazard is <strong>cross-language, exactly the axis principle 1 cares about</strong>. A parameter
+written <code>target_voltage=4.0</code> survives a Python round-trip and silently becomes an integer
+through a JavaScript one. Precision loss is real in both:
+<code>1.234567890123456789</code> returns as <code>1.234567890123457</code> (verified), the canonical form
+rounding the mantissa to 15 digits.</p>
+<p>Mitigation verified: coercing the term fixes the datatype regardless of native value.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="p">{</span><span class="nt">"@context"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"v"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"@id"</span><span class="p">:</span><span class="w"> </span><span class="s2">"http://ex.org/v"</span><span class="p">,</span><span class="w"> </span><span class="nt">"@type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"xsd:double"</span><span class="p">}},</span><span class="w"> </span><span class="nt">"v"</span><span class="p">:</span><span class="w"> </span><span class="mi">4</span><span class="p">}</span>
+</code></pre></div>
+<p>emits <code>"4.0E0"^^xsd:double</code>; without coercion the same input emits <code>"4"^^xsd:integer</code>.</p>
+<p>Type numeric terms explicitly, derived from the field annotations AWL already reads. And
+state plainly that the authoritative round-trip is document to source, never RDF to source.</p>
+<h3 id="term-rescue-via-embedded-context">Term rescue via embedded context<a class="headerlink" href="#term-rescue-via-embedded-context" title="Permanent link">&para;</a></h3>
+<p>A fallback <code>@vocab</code> makes unmapped keys expand rather than drop. For a collapsed type the
+namespace is unknown when the context is authored, so post-processing emits an <strong>embedded
+<code>@context</code></strong> on that node object. JSON-LD 1.1 permits a context at any node object.
+Verified:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="p">[]</span> <span class="kt">a</span> <span class="p">:</span><span class="nt">Call</span> <span class="p">;</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="p">:</span><span class="nt">callee</span> <span class="nv">&lt;https://w3id.org/awl/py/battery.device.charge&gt;</span> <span class="p">;</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="p">:</span><span class="nt">hasArgument</span> <span class="p">[</span> <span class="kt">a</span> <span class="nv">&lt;https://w3id.org/awl/py/battery.params.ChargeParam&gt;</span> <span class="p">;</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>            <span class="nn">ns1</span><span class="p">:</span><span class="nt">c_rate</span> <span class="mf">2.3</span><span class="err">e</span><span class="mi">-01</span> <span class="p">;</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>            <span class="nn">ns1</span><span class="p">:</span><span class="nt">target_voltage</span> <span class="mf">4.2</span><span class="err">e</span><span class="mi">+00</span> <span class="p">]</span> <span class="p">.</span>
+</code></pre></div>
+<p>with <code>ns1</code> bound to the type's namespace. This is what makes the collapse lossless.</p>
+<h3 id="disambiguation-via-type-scoped-contexts">Disambiguation via type-scoped contexts<a class="headerlink" href="#disambiguation-via-type-scoped-contexts" title="Permanent link">&para;</a></h3>
+<p>One term meaning different things under different node types: <code>args</code> under a method
+declaration is a parameter list, under a call an argument list; a name under an annotation
+is a type, elsewhere a variable. This is AWL's answer to the closed-vocabulary principle
+and stronger than a qualifier enum, because disambiguation is declarative and per-type.
+It is also the feature LinkML's generator does not emit, and therefore OO-LD's clearest
+differentiator.</p>
+<h2 id="12-alignment-targets">12. Alignment targets<a class="headerlink" href="#12-alignment-targets" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>FnO</strong> for call semantics: <code>fno:Execution</code>, <code>fno:executes</code>, per-parameter
+  <code>fno:predicate</code>, at minimum as <code>owl:equivalentProperty</code> mappings. Language-neutral,
+  which principle 1 requires.</li>
+<li><strong>P-Plan</strong> for the plan layer, <strong>PROV-O</strong> for the trace layer. AWL's TBox and ABox union
+  is P-Plan's structure already.</li>
+<li><strong>PROV-O derivation</strong> for the section 9 provenance edges specifically, since
+  typed-boundary provenance is <code>prov:wasDerivedFrom</code> at sub-function granularity.</li>
+<li><strong>CPG's schema</strong> for the neutral node vocabulary, per section 7.</li>
+<li><strong>PMDco, BFO, OBI and QUDT</strong> if AWL targets materials science; semantikon has validated
+  these choices in that domain. QUDT covers units, which example B needs and the AWL
+  vocabulary does not address. Not exclusive with FnO: FnO covers the call, PMDco the
+  quantities.</li>
+<li><strong>RO-Crate <code>conformsTo</code></strong> for declaring which restriction profile a document claims, and
+  <strong>Workflow Run RO-Crate's Provenance Run Crate</strong> for packaging execution traces
+  (section 14).</li>
+<li><strong>Glean's <code>codemarkup</code> pattern</strong>: define the workflow projection as derived rules
+  (SPARQL CONSTRUCT or SHACL) over language-specific base facts. This is also how a second
+  frontend stays cheap.</li>
+<li><strong>JSON Schema versus SHACL</strong>: do not duplicate. Document-shaped constraints to JSON
+  Schema as an authoring-time gate; path-shaped-across-the-graph to SHACL.</li>
+</ul>
+<h2 id="13-cutoff-design">13. Cutoff design<a class="headerlink" href="#13-cutoff-design" title="Permanent link">&para;</a></h2>
+<p>Profiles over one pipeline, replacing the <code>backparsable</code> boolean.</p>
+<table>
+<thead>
+<tr>
+<th>Profile</th>
+<th>Contents</th>
+<th>Diagram</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ast</code></td>
+<td>Transparent wrappers and empty lists elided, everything else kept</td>
+<td>B</td>
+</tr>
+<tr>
+<td><code>workflow</code></td>
+<td>Control flow, calls, assignments, literal arguments; non-call expressions collapse to a source-text literal</td>
+<td>C</td>
+</tr>
+<tr>
+<td><code>provenance</code></td>
+<td>Typed boundaries and their dependencies only</td>
+<td>D</td>
+</tr>
+<tr>
+<td><code>signature</code></td>
+<td>Declaration inputs and outputs only</td>
+<td>close to A</td>
+</tr>
+</tbody>
+</table>
+<p>Round-trip fidelity is an <strong>orthogonal axis</strong> and must be separated from level.</p>
+<p>AWL's cutoff is <strong>content-dependent</strong>: a call collapses if and only if its callee resolves
+to an annotated type. That is strictly more expressive than CodeOntology's binary flag,
+the only precedent for a cutoff knob, and it is what makes the gradient in 2.8 possible.</p>
+<hr />
+<h1 id="part-iv-execution-tracing">Part IV: Execution tracing<a class="headerlink" href="#part-iv-execution-tracing" title="Permanent link">&para;</a></h1>
+<p>Everything above concerns the static plan. This part concerns instantiation: what
+actually ran, along which path, with which values.</p>
+<h2 id="14-plan-and-trace">14. Plan and trace<a class="headerlink" href="#14-plan-and-trace" title="Permanent link">&para;</a></h2>
+<p>The scientific workflow community already has the vocabulary:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Term</th>
+<th>Status in AWL-LD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The recipe</td>
+<td>prospective provenance</td>
+<td>Parts I to III</td>
+</tr>
+<tr>
+<td>The run</td>
+<td>retrospective provenance</td>
+<td>This part</td>
+</tr>
+</tbody>
+</table>
+<p>Bridge: <code>p-plan:Activity</code> with <code>p-plan:correspondsToStep</code>, plus <code>prov:used</code> and
+<code>prov:generated</code>.</p>
+<p><strong>The observation that reconciles AWL-LD's control flow with the dataflow ecosystem: a
+trace is always a DAG, even when the plan contains loops and branches.</strong> A loop of N
+iterations becomes N activities; a branch resolves to exactly one path. So control flow
+lives in the plan, and the trace is the unrolled dataflow DAG that CWL, PROV, P-Plan and
+PWD already model. AWL-LD sits <strong>upstream</strong> of those vocabularies rather than competing
+with them, which removes the apparent conflict noted in 2.5.</p>
+<p>Two things a trace needs that PROV does not supply: a stable identity per plan step
+(section 8, again) and an iteration ordinal. PROV has no loop counter.</p>
+<p>For packaging a run, <a href="https://www.researchobject.org/workflow-run-crate/">Workflow Run RO-Crate</a>
+provides three nested profiles under <code>w3id.org/ro/wfrun/</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Profile</th>
+<th>Records</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Process Run Crate</td>
+<td>Tool executions as <code>CreateAction</code>, implicit workflow</td>
+</tr>
+<tr>
+<td>Workflow Run Crate</td>
+<td>Adds a <code>ComputationalWorkflow</code> instrument and <code>FormalParameter</code> slots. Individual step executions are <strong>not</strong> represented</td>
+</tr>
+<tr>
+<td>Provenance Run Crate</td>
+<td>Adds per-step <code>CreateAction</code> entities and intermediate outputs</td>
+</tr>
+</tbody>
+</table>
+<p>Provenance Run Crate is the target. It reuses the <code>conformsTo</code> convention already
+recommended in section 12.</p>
+<h2 id="15-how-the-ecosystem-handles-branching">15. How the ecosystem handles branching<a class="headerlink" href="#15-how-the-ecosystem-handles-branching" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Library</th>
+<th>Conditional</th>
+<th>Loop</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CWL</td>
+<td><code>when</code> on a step, added in <strong>v1.2 only</strong>, plus <code>pickValue</code></td>
+<td>Not in the standard. <code>cwltool:Loop</code> extension only, and it cannot be combined with <code>scatter</code> or <code>when</code> in the same step</td>
+</tr>
+<tr>
+<td>WDL</td>
+<td><code>if</code></td>
+<td><code>scatter</code> only, no while</td>
+</tr>
+<tr>
+<td>Snakemake</td>
+<td>Resolved at DAG construction, not at runtime</td>
+<td>Same</td>
+</tr>
+<tr>
+<td>PWD</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<td>P-Plan, PROV</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<td>AiiDA</td>
+<td><code>if_</code> in the WorkChain outline</td>
+<td><code>while_</code>, with a checkpoint per iteration</td>
+</tr>
+<tr>
+<td>aiida-workgraph</td>
+<td>Explicit If, While and Map zones in the graph</td>
+<td>Same</td>
+</tr>
+<tr>
+<td>jobflow</td>
+<td><code>Response(replace=, detour=, addition=)</code> at runtime</td>
+<td>Same</td>
+</tr>
+<tr>
+<td>Prefect</td>
+<td>Native Python</td>
+<td>Native Python</td>
+</tr>
+<tr>
+<td>Joern CPG</td>
+<td><code>CONTROL_STRUCTURE</code> plus CFG and CDG edges</td>
+<td>Same</td>
+</tr>
+</tbody>
+</table>
+<p>Two numbers worth keeping: of the 43 Workflow Patterns Initiative control patterns,
+<strong>CWL v1.2 supports 8 and does not support 35</strong>, and exclusive choice must be emulated by
+giving one step the inverse <code>when</code> condition of another.</p>
+<p><strong>The decisive finding: AiiDA has real control flow but keeps it out of its provenance
+graph.</strong> Its documentation states the branch and iteration logic itself is not a node;
+provenance captures the data and processes actually created. So "which branch was taken"
+is first-class nowhere.</p>
+<p>The pattern across the table is that static languages omit branching while orchestrators
+expand it away at runtime. Both ends avoid representing the branch itself. That is the
+gap, and section 16 shows AWL-LD's draft already fills it.</p>
+<p>Scope warning: 35 unsupported patterns shows how deep this goes. Do not chase the
+Workflow Patterns catalogue. Python's <code>ast</code> bounds the problem usefully already: <code>If</code>,
+<code>While</code>, <code>For</code>, <code>Try</code>, <code>With</code>, <code>Break</code>, <code>Continue</code>.</p>
+<h2 id="16-the-existing-trace-draft-assessed">16. The existing trace draft, assessed<a class="headerlink" href="#16-the-existing-trace-draft-assessed" title="Permanent link">&para;</a></h2>
+<p>The <a href="https://github.com/OO-LD/awl-schema#code-execution">awl-schema README</a> already
+contains a tracing draft: <code>sys.settrace</code> events serialized as a <code>steps</code> list, each entry
+carrying <code>func</code>, <code>lineno</code>, <code>locals</code>, <code>os</code>, <code>timestamp</code> and <code>type</code>, with a <code>code</code>
+back-reference of the form <code>{_type, lineno}</code>.</p>
+<p><strong>It is conceptually ahead of the field.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Note</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>steps</code> with <code>@container: @list</code></td>
+<td>Already the ordering choice recommended in section 11</td>
+</tr>
+<tr>
+<td>Branch resolution</td>
+<td>The <code>If</code> appears as a <code>line</code> event and subsequent events reveal the taken path</td>
+</tr>
+<tr>
+<td>Loop iterations</td>
+<td>The <code>While</code> recurs with changed locals. Nothing else in the survey records this</td>
+</tr>
+<tr>
+<td><code>code: {_type, lineno}</code></td>
+<td>Independently reinvents <code>p-plan:correspondsToStep</code></td>
+</tr>
+<tr>
+<td>Variable-level state</td>
+<td><code>locals</code> at every line event is finer than any WMS; AiiDA and CWL capture step inputs and outputs only</td>
+</tr>
+<tr>
+<td>Environment declared out of scope</td>
+<td>Correct, and it matches how WRROC separates <code>buildInstructions</code> from the run</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Seven gaps.</strong></p>
+<ol>
+<li><strong><code>lineno</code> is a fragile join key.</strong> Edit the file and every historical trace orphans.
+   Kythe's design is instructive: the anchor is deliberately the volatile part and the
+   VName is durable. The draft has only the volatile part.</li>
+<li><strong><code>func</code> is a bare name under <code>ex:</code>.</strong> Same god-node problem as the static side; two
+   functions named <code>run</code> in different modules collapse.</li>
+<li><strong>No iteration ordinal.</strong> The two <code>While</code> events differ only by list position, so
+   every query becomes a list traversal. Same fix as section 11: materialize an index.</li>
+<li><strong><code>locals</code> is a snapshot, not a derivation.</strong> Diffing adjacent events infers change,
+   but there is no <code>prov:wasDerivedFrom</code>. Trace size is O(lines x locals).</li>
+<li><strong>Values are captured as literals.</strong> A local holding a <code>ModulusOfElasticity</code> should
+   serialize as that typed node, not as <code>repr()</code>. <strong>This is where the trace layer and the
+   collapse of section 9 should meet and currently do not.</strong> It is the highest-value fix,
+   because it is what makes a trace semantic rather than a log.</li>
+<li><strong>Parallel vocabulary.</strong> <code>awl:WorkflowRun</code>, <code>awl:HasStep</code>, <code>awl:calls</code> and
+   <code>awl:Parameters</code> are minted where <code>prov:Activity</code>, <code>prov:used</code>,
+   <code>p-plan:correspondsToStep</code> and the WRROC <code>CreateAction</code> shape exist.</li>
+<li><strong><code>os: {cores: 8}</code> repeats on every event.</strong> Static environment belongs once on the run.</li>
+</ol>
+<h2 id="17-instrumentation-mechanics">17. Instrumentation mechanics<a class="headerlink" href="#17-instrumentation-mechanics" title="Permanent link">&para;</a></h2>
+<h3 id="the-existing-test-implementation">The existing test implementation<a class="headerlink" href="#the-existing-test-implementation" title="Permanent link">&para;</a></h3>
+<p><code>osw-chatbot/src/osw_chatbot/tests/ast_.py</code> (78 lines, 2025-03-27) is a working
+trace-to-AST mapping. <code>test2.py</code> beside it is its predecessor, capturing <code>f_locals</code> to
+YAML with no AST mapping.</p>
+<p>A trace event exposes only <code>f_lineno</code>, never a column, so it packs both into the line
+number before compiling:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">n</span><span class="o">.</span><span class="n">lineno</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">lineno</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">+</span> <span class="n">n</span><span class="o">.</span><span class="n">col_offset</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">code</span> <span class="o">=</span> <span class="nb">compile</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s1">''</span><span class="p">,</span> <span class="s1">'exec'</span><span class="p">)</span>
+</code></pre></div>
+<p>That buys <strong>expression-level</strong> resolution. Verified on <code>b = a + 2</code>:</p>
+<table>
+<thead>
+<tr>
+<th>raw <code>f_lineno</code></th>
+<th>decoded</th>
+<th>AST node</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3004</td>
+<td>line 3, col 4</td>
+<td><code>a</code></td>
+</tr>
+<tr>
+<td>3008</td>
+<td>line 3, col 8</td>
+<td><code>2</code></td>
+</tr>
+<tr>
+<td>3004</td>
+<td>line 3, col 4</td>
+<td>BinOp <code>a + 2</code></td>
+</tr>
+<tr>
+<td>3000</td>
+<td>line 3, col 0</td>
+<td>Assign</td>
+</tr>
+</tbody>
+</table>
+<p><strong>One bug</strong>, confirmed by running it. The decode reuses the divided value:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">line_no</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">f_lineno</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">line_no</span> <span class="o">=</span> <span class="n">line_no</span> <span class="o">//</span> <span class="mi">1000</span>       <span class="c1"># line_no overwritten</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">col_offset</span> <span class="o">=</span> <span class="n">line_no</span> <span class="o">%</span> <span class="mi">1000</span>     <span class="c1"># modulo of the already-divided value</span>
+</code></pre></div>
+<p>so <code>col_offset</code> always equals <code>line_no</code>. Keep the raw value instead:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">raw</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">f_lineno</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">line_no</span><span class="p">,</span> <span class="n">col_offset</span> <span class="o">=</span> <span class="n">raw</span> <span class="o">//</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">raw</span> <span class="o">%</span> <span class="mi">1000</span>
+</code></pre></div>
+<p>The file's closing comment also records a real finding worth preserving:
+coverage.py was evaluated and rejected because <code>CoverageData</code> does not store the called
+lines in order.</p>
+<h3 id="the-hack-is-obsolete-on-python-311">The hack is obsolete on Python 3.11<a class="headerlink" href="#the-hack-is-obsolete-on-python-311" title="Permanent link">&para;</a></h3>
+<p>PEP 657 added <code>co_positions()</code> in 3.11. Setting <code>frame.f_trace_opcodes = True</code> and
+indexing <code>co_positions()</code> at <code>f_lasti // 2</code> reproduces the same sub-expression sequence
+on <strong>unmodified</strong> source. Verified on <code>b = a + 2</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>('opcode', (1, 1, 4, 5))    -&gt; a
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>('opcode', (1, 1, 8, 9))    -&gt; 2
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>('opcode', (1, 1, 4, 9))    -&gt; a + 2
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>('opcode', (1, 1, 0, 1))    -&gt; b
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>lineno packing</th>
+<th><code>co_positions()</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Requires AST rewrite and recompile</td>
+<td>Yes</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Works on installed third-party code</td>
+<td><strong>No</strong></td>
+<td><strong>Yes</strong></td>
+</tr>
+<tr>
+<td>Column cap</td>
+<td>999</td>
+<td>None</td>
+</tr>
+<tr>
+<td>End position</td>
+<td>No</td>
+<td>Yes, full <code>(lineno, end_lineno, col, end_col)</code> span</td>
+</tr>
+</tbody>
+</table>
+<p>The third-party row is the unlock: the packing trick only ever sees code compiled by the
+tracer itself, which is why library internals were invisible. The end span matters too,
+because a full span maps onto an AST node exactly where a start offset alone is ambiguous.</p>
+<h3 id="c-functions-are-visible">C functions are visible<a class="headerlink" href="#c-functions-are-visible" title="Permanent link">&para;</a></h3>
+<p><code>settrace</code> does not see them. <code>sys.setprofile</code> does, and yields the fully qualified name
+directly as <code>arg.__module__ + "." + arg.__qualname__</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>('c_call', 'numpy',    'array')
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>('c_call', 'math',     'sqrt')
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>('c_call', 'builtins', 'len')
+</code></pre></div>
+<p><strong>Both hooks can be active simultaneously</strong>, which attributes a C call to an AST node.
+Verified:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>('AST', 3, 4)                    &lt;- Call node math.sqrt(2)
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>('C-CALL', 'math.sqrt')          &lt;- attributed here
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>('AST', 4, 4)
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>('C-CALL', 'builtins.len')
+</code></pre></div>
+<p>Limits: <code>arg</code> is the function object, so no arguments, and no position of its own. The
+position comes entirely from the interleaved trace event.</p>
+<p>This is the runtime counterpart to section 8's retroactive mint: <code>setprofile</code> names the
+opaque callee, and semantics can be attached to that name later.</p>
+<h3 id="three-instrumentation-strategies">Three instrumentation strategies<a class="headerlink" href="#three-instrumentation-strategies" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Granularity</th>
+<th>Overhead</th>
+<th>Blind to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>settrace</code> plus opcode positions</td>
+<td>Expression</td>
+<td>High</td>
+<td>C functions</td>
+</tr>
+<tr>
+<td><code>setprofile</code></td>
+<td>Call, including C</td>
+<td>Medium</td>
+<td>Positions, arguments</td>
+</tr>
+<tr>
+<td>Decorator (Prefect, AiiDA, jobflow)</td>
+<td>Task boundary</td>
+<td>Negligible</td>
+<td>Everything undecorated</td>
+</tr>
+</tbody>
+</table>
+<p>They compose rather than compete. Prefect is the pure decorator case: it never inspects
+code and records only what is decorated, so the DAG is discovered at runtime and nothing
+undecorated exists. Prefect 3's <code>prefect.telemetry.run_telemetry</code> emits a span per run
+with run metadata as attributes, state changes as events and <code>traceparent</code> propagated via
+run labels, but task input and output values are not span attributes, so there is no data
+lineage by default.</p>
+<h3 id="sysmonitoring-pep-669-and-what-it-costs"><code>sys.monitoring</code> (PEP 669), and what it costs<a class="headerlink" href="#sysmonitoring-pep-669-and-what-it-costs" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Loss versus <code>settrace</code></th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>No frame object</strong></td>
+<td>Every callback is <code>(code, instruction_offset, ...)</code>. No frame, no documented route to locals. <code>sys._getframe()</code> works but negates the performance gain. This directly blocks the draft's <code>locals</code> capture</td>
+</tr>
+<tr>
+<td><strong>No columns on <code>LINE</code></strong></td>
+<td><code>LINE</code> is <code>func(code, line_number)</code> alone; only other events carry <code>instruction_offset</code>, so <code>co_positions()</code> cannot be reached from <code>LINE</code></td>
+</tr>
+<tr>
+<td>Per-interpreter, not per-thread</td>
+<td>Stated in the PEP as a difference from <code>settrace</code></td>
+</tr>
+<tr>
+<td>Python 3.12+</td>
+<td>Hard floor</td>
+</tr>
+<tr>
+<td>Expensive reconfiguration</td>
+<td><code>set_events</code> mid-run triggers de-optimization, "possibly taking hundreds of milliseconds"</td>
+</tr>
+<tr>
+<td>Memory per code object</td>
+<td>~40% for <code>LINE</code> with one tool, ~80% for <code>INSTRUCTION</code>, ~120% and ~200% with two or more</td>
+</tr>
+<tr>
+<td>Six tool IDs</td>
+<td>0 to 5, conventionally 0 debugger, 1 coverage, 2 profiler, 5 optimizer</td>
+</tr>
+</tbody>
+</table>
+<p>Gains that matter here: a <strong><code>BRANCH</code> event</strong> carrying <code>destination_offset</code>, which records
+the taken path directly instead of by diffing line events; a unified <strong><code>CALL</code></strong> event with
+signature <code>(code, instruction_offset, callable, arg0)</code> covering Python and C callables and
+supplying the first argument, which is strictly more than <code>setprofile</code> gives; per-event
+opt-in so <code>LINE</code> can be skipped entirely; and coexistence with <code>settrace</code> and <code>setprofile</code>,
+which behave "as if they were tools 6 and 7".</p>
+<p><strong>Conclusion: adopt <code>sys.monitoring</code> for <code>BRANCH</code> and <code>CALL</code>, not as a <code>settrace</code>
+replacement.</strong> Keep <code>settrace</code> alongside for the frame access that <code>locals</code> capture
+requires. The PEP explicitly supports running both.</p>
+<h1 id="part-v-visual-editing">Part V: Visual editing<a class="headerlink" href="#part-v-visual-editing" title="Permanent link">&para;</a></h1>
+<p>A third consumer of the same document: a graph editor that renders and edits workflows
+and writes them back as Python. This part asks how compact the representation can get,
+what fidelity survives the round trip, and which libraries fit.</p>
+<h2 id="18-compact-representation">18. Compact representation<a class="headerlink" href="#18-compact-representation" title="Permanent link">&para;</a></h2>
+<p>Measured on example A, round-trip verified identical to source.</p>
+<table>
+<thead>
+<tr>
+<th>Form</th>
+<th>Bytes</th>
+<th>% of raw</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ast2json</code> raw</td>
+<td>4386</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>Current awl, positions and <code>ctx</code> stripped</td>
+<td>1689</td>
+<td>39%</td>
+</tr>
+<tr>
+<td>Compact form</td>
+<td><strong>1056</strong></td>
+<td><strong>24%</strong></td>
+</tr>
+<tr>
+<td>The Python source itself</td>
+<td>242</td>
+<td>6%</td>
+</tr>
+</tbody>
+</table>
+<p>The compact encoding is four rules:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>_type       -&gt;  _
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>Constant    -&gt;  {"c": value}
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>Name        -&gt;  {"$": id}
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>drop ctx, all position fields, None values, and empty lists
+</code></pre></div>
+<p><strong>Compactness is a property of the encoder and decoder pair, not of the document.</strong>
+Dropping empty lists alone fails: <code>Module.type_ignores</code> is required, so unparse raises
+<code>AttributeError</code>. The decoder must rebuild every required field from <code>cls._fields</code>,
+exactly as <code>unparse()</code> in <code>src/awl/core.py</code> already re-adds <code>lineno: 0</code>. There is no
+compact form that survives a naive decoder.</p>
+<p>Residual bloat against source is 4.4x, almost entirely <code>{"_": ...}</code> type tags and the
+<code>arguments</code>, <code>arg</code>, <code>alias</code> and <code>keyword</code> wrapper nodes. Those are precisely the
+transparent wrappers of section 7, and collapsing <code>keyword</code> into a dict on the <code>Call</code> is
+the existing slim notation generalised.</p>
+<p><strong>The editor encoding and the cutoff design are the same problem.</strong> The transparent and
+opaque type sets defined for the projection also define the compact form. Do not solve
+them twice.</p>
+<h2 id="19-round-trip-fidelity-and-write-back">19. Round-trip fidelity and write-back<a class="headerlink" href="#19-round-trip-fidelity-and-write-back" title="Permanent link">&para;</a></h2>
+<h3 id="astunparse-discards-trivia"><code>ast.unparse</code> discards trivia<a class="headerlink" href="#astunparse-discards-trivia" title="Permanent link">&para;</a></h3>
+<p><code>ast.parse</code> has no comment node at all, so every comment and all formatting is lost:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">procedure</span><span class="p">(</span><span class="n">cycles</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>    <span class="c1"># ramp to 4.2 V, CC phase only                     &lt;- gone</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">cycles</span><span class="p">:</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>        <span class="n">charge</span><span class="p">(</span><span class="n">ChargeParam</span><span class="p">(</span><span class="n">target_voltage</span><span class="o">=</span><span class="mf">4.2</span><span class="p">,</span>   <span class="c1"># cell limit per datasheet   &lt;- gone</span>
+<a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>                           <span class="n">c_rate</span><span class="o">=</span><span class="mf">0.23</span><span class="p">))</span>              <span class="o">&lt;-</span> <span class="n">reflowed</span> <span class="n">to</span> <span class="n">one</span> <span class="n">line</span>
+</code></pre></div>
+<p>For workflows authored in the editor this is irrelevant. For editing a laboratory's
+existing procedure files it is fatal, and that is the audience the retrofit path of
+section 9 targets. It is also the practical face of tension 1: "the AST is the document
+and it round-trips" is true only modulo trivia, and a visual editor is where users notice.</p>
+<h3 id="cst-and-why-the-choice-is-not-a-fork">CST, and why the choice is not a fork<a class="headerlink" href="#cst-and-why-the-choice-is-not-a-fork" title="Permanent link">&para;</a></h3>
+<p>A Concrete Syntax Tree keeps everything the parser saw.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>AST (<code>ast</code>)</th>
+<th>CST (<code>parso</code>, <code>libcst</code>, tree-sitter)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Comments</td>
+<td>No node type exists</td>
+<td>Preserved</td>
+</tr>
+<tr>
+<td>Whitespace and indentation</td>
+<td>Discarded</td>
+<td>Preserved</td>
+</tr>
+<tr>
+<td>Redundant parentheses</td>
+<td><code>(a + b)</code> identical to <code>a + b</code></td>
+<td>Distinct</td>
+</tr>
+<tr>
+<td>Quote style</td>
+<td>Both <code>Constant('x')</code></td>
+<td>Distinct</td>
+</tr>
+<tr>
+<td>Round-trip</td>
+<td>Lossy</td>
+<td>Byte-identical (verified: <code>parso.parse(src).get_code() == src</code>)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>You do not have to choose between the compact form and trivia preservation.</strong> Keep the
+compact AST JSON as the editor model, never serialize a CST, and write edits back by
+source span. Verified with <code>asttokens</code>, already installed: locate the <code>target_voltage</code>
+value node, ask for its span <code>(145, 148)</code>, splice the new literal into the original text.
+Both comments survive and layout is untouched.</p>
+<p>The span machinery already exists in the design: section 17 needs <code>co_positions()</code> spans
+to attribute trace events, and the same tuples identify the patch target. One mechanism,
+two consumers. It also needs no unparser, only spans plus original text, so it works
+identically for tree-sitter, which removes the round-trip objection to a tree-sitter
+frontend raised in section 4.</p>
+<h3 id="where-spans-stop-and-libcst-starts">Where spans stop and libcst starts<a class="headerlink" href="#where-spans-stop-and-libcst-starts" title="Permanent link">&para;</a></h3>
+<p>Span splicing has no opinion about which comment belongs to which statement, so
+reordering or reparenting a node cannot carry its trivia. <code>libcst</code> attaches trivia to
+named slots (<code>leading_lines</code>, <code>trailing_whitespace</code>) and handles it. Verified with
+libcst 1.9.0:</p>
+<ul>
+<li><code>parse_module(src).code == src</code> byte-identical.</li>
+<li>A new statement can be constructed carrying <strong>modeled</strong> comments, leading and trailing,
+  and emitted into source.</li>
+<li>Inserting that statement into a <code>while</code> body leaves every original comment and the
+  original odd spacing untouched.</li>
+<li>Comments extract back into the model: leading comments attach to the following
+  statement, trailing to the same line.</li>
+</ul>
+<p>So a comment field in the editor is not a workaround, it is the right design. Modeled
+comments round-trip in both directions. Two limits found, both model decisions rather
+than bugs:</p>
+<ul>
+<li>A comment inside call arguments attaches to an inner expression node, not to the
+  statement. A per-step comment field captures statement-level comments only;
+  expression-level trivia is preserved but not editable.</li>
+<li>A section banner and a commented-out line arrive identically as leading comments.
+  Attachment is positional, so do not try to classify them; keep an ordered list per step.</li>
+</ul>
+<h3 id="the-resulting-rule">The resulting rule<a class="headerlink" href="#the-resulting-rule" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>Fidelity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Edit a literal or parameter</td>
+<td>Lossless via <code>asttokens</code> spans, no new dependency</td>
+</tr>
+<tr>
+<td>Add, delete or reorder steps</td>
+<td>Lossless via <code>libcst</code></td>
+</tr>
+<tr>
+<td>Regenerate a whole file from the graph</td>
+<td>Lossy by construction, and say so</td>
+</tr>
+</tbody>
+</table>
+<h2 id="20-editor-architecture">20. Editor architecture<a class="headerlink" href="#20-editor-architecture" title="Permanent link">&para;</a></h2>
+<h3 id="paradigm-before-library">Paradigm before library<a class="headerlink" href="#paradigm-before-library" title="Permanent link">&para;</a></h3>
+<p><strong>Node-graph editors model dataflow; block editors model control flow.</strong> AWL-LD's
+differentiator against CWL, PWD and semantikon is that it carries <code>if</code> and <code>while</code>.
+React Flow makes a nested loop body awkward, needing group nodes or subflow conventions;
+Blockly represents nested statements natively with C-shaped blocks and already ships a
+Python generator. Choosing a node-graph canvas quietly pushes the model back toward the
+dataflow shape section 2.5 says the ecosystem already occupies.</p>
+<p>This is a product decision, and it is the same decision as whether control flow is the
+differentiator.</p>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Option</th>
+<th>Verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Canvas, control-flow-first</td>
+<td>Blockly</td>
+<td>Native nested statements, existing Python generator. Weak at data dependencies; embedding a rich form in a block is awkward</td>
+</tr>
+<tr>
+<td>Canvas, dataflow-first</td>
+<td>React Flow (xyflow)</td>
+<td>Custom React nodes are trivial, largest ecosystem. Loops need group conventions</td>
+</tr>
+<tr>
+<td></td>
+<td>Rete.js, LiteGraph, Drawflow</td>
+<td>More opinionated or smaller, no advantage here</td>
+</tr>
+<tr>
+<td>Read-only graph view</td>
+<td>Cytoscape.js</td>
+<td>Right tool for the derived RDF and trace graphs: large graphs, real layout algorithms</td>
+</tr>
+<tr>
+<td></td>
+<td>vis-network, D3</td>
+<td>vis-network is easiest but weak at scale; D3 means building it yourself</td>
+</tr>
+<tr>
+<td>Python bridge</td>
+<td>anywidget</td>
+<td>Already used in <code>oold-python/src/oold/ui/anywidget/</code>; works in Jupyter, Panel, marimo and JupyterLite/pyodide</td>
+</tr>
+<tr>
+<td></td>
+<td>Panel <code>ReactComponent</code></td>
+<td>Present in the installed panel 1.7.5, with <code>JSComponent</code> and <code>AnyWidgetComponent</code></td>
+</tr>
+<tr>
+<td></td>
+<td>NiceGUI</td>
+<td>Server-side Vue, rules out JupyterLite</td>
+</tr>
+</tbody>
+</table>
+<p>Do not make one library do both editing and graph analysis. Different jobs, different
+layout needs.</p>
+<h3 id="schema-driven-form-jedison-over-rjsf">Schema-driven form: jedison over RJSF<a class="headerlink" href="#schema-driven-form-jedison-over-rjsf" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>jedison 1.19.0</th>
+<th>react-jsonschema-form</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Runtime dependencies</td>
+<td><strong>Zero</strong>, no <code>dependencies</code> or <code>peerDependencies</code>, not even a validator</td>
+<td>React, <code>@rjsf/validator-ajv8</code> (ajv), a theme package</td>
+</tr>
+<tr>
+<td>Drafts</td>
+<td>Explicit modules for 04, 06, 07, 2019-09, <strong>2020-12</strong></td>
+<td>via ajv8</td>
+</tr>
+<tr>
+<td>Conformance testing</td>
+<td>Official <code>json-schema-test-suite</code> in devDeps</td>
+<td>ajv's</td>
+</tr>
+<tr>
+<td><code>$ref</code></td>
+<td>Own <code>ref-parser</code>, exported as <code>RefParser</code></td>
+<td>via ajv</td>
+</tr>
+<tr>
+<td>Widget selection</td>
+<td><strong><code>x-format</code> inside the schema</strong></td>
+<td><code>uiSchema</code>, a separate object</td>
+</tr>
+<tr>
+<td>Editors shipped</td>
+<td>40+, including <code>if-then-else</code>, <code>multiple</code> for anyOf/oneOf, <code>object-categories</code>, <code>object-nav</code>, <code>array-table</code>, plus ace, milkdown, flatpickr, imask</td>
+<td>Core widgets plain; rich ones from theme packages</td>
+</tr>
+<tr>
+<td>Stars, license, activity</td>
+<td>88, MIT, pushed 2026-08-13, 1261 commits</td>
+<td>15871, Apache-2.0, actively maintained</td>
+</tr>
+</tbody>
+</table>
+<p>Other exports: <code>Schema</code>, <code>Utils</code>, <code>Create</code>, <code>SchemaGenerator</code>, <code>applyOverlay</code>.</p>
+<p><strong>The decisive argument is a principle argument. RJSF's <code>uiSchema</code> is a second
+artifact.</strong> OO-LD exists because keeping structure and semantics in two files makes them
+drift; a separate <code>uiSchema</code> reintroduces exactly that drift for the presentation layer.
+jedison's <code>x-format</code> lives in the schema, the same in-schema extension pattern as
+<code>x-oold-*</code>, and <code>applyOverlay</code> supports the layered approach when it is wanted
+deliberately. Fair caveat: a <code>uiSchema</code> can be derived from <code>x-oold-*</code> at load time in
+about thirty lines, so this is a soft violation, but that mapping is a layer to own
+forever.</p>
+<p>Two supporting points. This project is already on that codebase: <code>OoldEditor</code> imports
+<code>@json-editor/json-editor</code> and the AWL playground loads it too, and across two accounts
+jedison's author has 601 commits on json-editor against the original author's 315. So
+jedison is a migration and RJSF is a rewrite. And zero dependencies matters for the
+JupyterLite target that the HITL example explicitly names.</p>
+<p>RJSF wins on React Flow embedding, since jedison is imperative DOM and needs a
+mount and unmount wrapper that survives React 18 StrictMode double-invocation; on bus
+factor, mitigated by MIT plus zero dependencies making vendoring trivial; and on
+TypeScript types.</p>
+<p><strong>The form library should follow the canvas decision.</strong> Blockly means no React, so
+jedison outright. React Flow makes RJSF the path of least resistance, though the jedison
+wrapper is still cheaper than a permanent uiSchema mapping.</p>
+<p>Not yet verified: that <code>@context</code> and <code>x-oold-*</code> pass through jedison untouched. Both
+specifications require unknown keywords to be ignored and json-editor already handles
+these schemas, so the risk is low, but it deserves a test against a real OO-LD schema.</p>
+<h3 id="what-is-actually-new-here">What is actually new here<a class="headerlink" href="#what-is-actually-new-here" title="Permanent link">&para;</a></h3>
+<p>Unparsing to Python is not new: Blockly generates Python, BlockPy does dual block and
+text editing for Python, Pencil Code is bidirectional, App Inventor has an ANTLR-based
+blocks-to-text converter, and JetBrains MPS is the deep precedent for projecting one AST
+into several notations.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Blockly, BlockPy</th>
+<th>Node-RED, KNIME, PyFlow</th>
+<th>AWL-LD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Entry point</td>
+<td>Code authored in the tool</td>
+<td>The graph is the source of truth</td>
+<td><strong>Arbitrary existing Python</strong></td>
+</tr>
+<tr>
+<td>Editor model is also the RDF graph</td>
+<td>No</td>
+<td>No</td>
+<td><strong>Yes</strong></td>
+</tr>
+<tr>
+<td>Node palette</td>
+<td>Hand-authored block definitions</td>
+<td>Hand-authored</td>
+<td><strong>Derived from the OO-LD schema</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The third row is the strongest and least obvious: the same generator that produces forms
+and pydantic classes produces the palette, where every other editor requires a
+hand-written definition per construct.</p>
+<h1 id="part-vi-conclusions">Part VI: Conclusions<a class="headerlink" href="#part-vi-conclusions" title="Permanent link">&para;</a></h1>
+<h2 id="21-what-is-genuinely-novel">21. What is genuinely novel<a class="headerlink" href="#21-what-is-genuinely-novel" title="Permanent link">&para;</a></h2>
+<p>Narrowed against the survey, and narrower than an unexamined pitch would claim.</p>
+<ol>
+<li><strong>AST-subtree collapse driven by a type-scoped context selected by the resolved
+   callee.</strong> FnO reaches the same target from a different direction and semantikon is a
+   live implementation of types-carry-semantics. What is unprecedented is only the
+   <em>mechanism</em>: those attach semantics to a <strong>declared signature</strong>, whereas AWL rewrites a
+   <strong>call site's AST subtree</strong> using the resolved callee's context. Claim the mechanism,
+   not the goal.</li>
+<li><strong>Progressive enhancement with no cliff.</strong> Every alternative is all-or-nothing per
+   function (semantikon) or requires restructuring into a dataflow graph (PWD, CWL). AWL
+   degrades continuously from plain code to fully typed. This is the strongest claim and
+   the least obvious.</li>
+<li><strong>Typed-boundary provenance at many points inside one function</strong>, rather than one
+   annotation per signature, plus dimensional derivation of result types for arithmetic
+   over typed quantities.</li>
+<li><strong>One artifact serving three roles: round-trippable source document, semantic graph
+   serialization, and visual editor model.</strong> srcML has the first; every code-to-RDF
+   project has the second; Blockly and BlockPy have a form of the third but only over
+   code authored in their own tool. Section 20 adds the part with no precedent at all:
+   <strong>the editor palette is derived from the OO-LD schema</strong>, where every surveyed editor
+   requires a hand-written block or node definition per construct.</li>
+<li><strong>JSON Schema as whitelist of legal constructs and callees.</strong> CWL's <code>requirements</code>
+   governs runtime capability; RO-Crate's <code>conformsTo</code> has the shape but no teeth. It is
+   also the only sound answer to <code>import *</code>.</li>
+<li><strong>Retroactive semantics via stable global identity</strong>: register the typed instantiation
+   of an opaque callee once, and every prior reference gains meaning. Kythe's append-only
+   entry model is the architectural precedent; nobody applies it to workflow semantics.</li>
+<li><strong>RDF vocabulary for control flow in a workflow plan.</strong> Cautions: the ecosystem
+   concluded imperative control flow is the wrong abstraction for a plan, so keep it in the
+   source-fidelity layer and let the plan projection be dataflow; and BPMN-derived
+   ontologies are the unsurveyed place to look.</li>
+<li><strong>Recording which branch was taken and which iteration ran, as first-class trace
+   data.</strong> Section 15 shows this exists nowhere: static languages omit branching,
+   orchestrators expand it away at runtime, and AiiDA has real control flow but keeps
+   branch and iteration logic out of its provenance graph. The draft in section 16
+   already does it. This is the retrospective counterpart to claim 7 and is at least as
+   defensible.</li>
+<li><strong>Expression-level trace-to-AST attribution, including opaque C callees.</strong> Section 17
+   shows the mechanism works today: opcode positions place each event on an AST node, and
+   an interleaved <code>setprofile</code> names C functions the static analysis cannot see. No
+   surveyed system attributes runtime events below the task boundary.</li>
+</ol>
+<h2 id="22-prioritised-recommendations">22. Prioritised recommendations<a class="headerlink" href="#22-prioritised-recommendations" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Action</th>
+<th>Buys</th>
+<th>Costs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Neutral node vocabulary modelled on CPG, with <code>PARSER_TYPE_NAME</code>-style label preservation</td>
+<td>Language-agnostic graph without losing Python round-trip; unblocks any second frontend</td>
+<td>Vocabulary redesign, expensive to change later</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Identity: FQN plus language, optional version, minted declaratively, with alias and alias-root pairs, and <strong>typed instantiation</strong> as the unit for callees</td>
+<td>Correct collapse, no ghost nodes, retroactive semantics</td>
+<td>Needs an import-resolution pass</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Observation before inference: collect import and declaration facts, resolve separately</td>
+<td>Makes 2 auditable and re-runnable</td>
+<td>Refactor of <code>core.py</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Context lever: <code>@list</code> plus materialized index, embedded <code>@vocab</code>, explicit numeric typing, type-scoped disambiguation</td>
+<td>Fixes ordering, makes collapse lossless, closes the cross-language numeric hazard</td>
+<td>Cheapest item here</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Reuse rather than rebuild: SCIP or Graphify for the type skeleton, Joern <code>REACHING_DEF</code> or <code>python-graphs</code> for dataflow</td>
+<td>Removes the largest build item from scope</td>
+<td>Integration and a CPG-to-RDF projection</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Typed-boundary provenance, with the <code>.pint.magnitude</code> case as acceptance test</td>
+<td>The claim in 18.3</td>
+<td>Requires 2, 3 and 5</td>
+</tr>
+<tr>
+<td>7</td>
+<td>FnO, P-Plan and PROV-O alignment</td>
+<td>Interoperability; avoids minting predicates that later need migrating</td>
+<td>Vocabulary mapping</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Provenance via named graphs</td>
+<td>Declared and retrofitted meaning stay distinguishable</td>
+<td>Changes <code>to_jsonld()</code> to quads</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Ambient-vocabulary filters, re-derived for workflows</td>
+<td>Removes god-nodes</td>
+<td>Lists built from scratch, not copied</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Profile split</td>
+<td>Cutoff becomes a parameter</td>
+<td>Depends on 1 and 3</td>
+</tr>
+</tbody>
+</table>
+<p>Items 1 and 2 come first: both are hard to change later, and both are prerequisites for a
+second frontend and for retroactive semantics.</p>
+<p>Item 8 is not optional once section 9 is in scope. A retrofit pipeline that cannot mark
+its own output is worse than no retrofit pipeline.</p>
+<h3 id="trace-layer">Trace layer<a class="headerlink" href="#trace-layer" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Action</th>
+<th>Buys</th>
+<th>Costs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T1</td>
+<td>Replace the lineno-packing hack with <code>f_trace_opcodes</code> plus <code>co_positions()</code></td>
+<td>Same resolution, no recompile, and <strong>coverage of third-party code</strong>; full end spans</td>
+<td>None. Works on 3.11 today</td>
+</tr>
+<tr>
+<td>T2</td>
+<td>Fix the <code>col_offset</code> decode bug in <code>ast_.py</code> before reusing that code</td>
+<td>Columns actually decode</td>
+<td>One line</td>
+</tr>
+<tr>
+<td>T3</td>
+<td>Replace <code>lineno</code> as the plan-to-trace join with the section 8 identity plus a position span</td>
+<td>Traces survive edits</td>
+<td>Depends on recommendation 2</td>
+</tr>
+<tr>
+<td>T4</td>
+<td>Serialize traced locals as typed nodes, not <code>repr()</code>, reusing the section 9 collapse</td>
+<td>Makes the trace semantic rather than a log. <strong>Highest value in this layer</strong></td>
+<td>Depends on 6</td>
+</tr>
+<tr>
+<td>T5</td>
+<td>Add an iteration ordinal and a materialized step index</td>
+<td>Loop queries without list traversal</td>
+<td>Small</td>
+</tr>
+<tr>
+<td>T6</td>
+<td>Align to PROV-O, P-Plan and Provenance Run Crate instead of minting <code>awl:WorkflowRun</code> and friends</td>
+<td>Interoperability with WorkflowHub, CWLProv, AiiDA exports</td>
+<td>Vocabulary mapping</td>
+</tr>
+<tr>
+<td>T7</td>
+<td>Interleave <code>setprofile</code> to name opaque C callees</td>
+<td>Feeds the retroactive mint of recommendation 2</td>
+<td>Medium overhead</td>
+</tr>
+<tr>
+<td>T8</td>
+<td>On 3.12+, add <code>sys.monitoring</code> <code>BRANCH</code> and <code>CALL</code>, keeping <code>settrace</code> for locals</td>
+<td>Direct branch recording, cheaper than line tracing</td>
+<td>Python floor, dual-mechanism complexity</td>
+</tr>
+</tbody>
+</table>
+<p>T1 and T2 are free and should be done regardless of anything else in this document.</p>
+<h3 id="editor-layer">Editor layer<a class="headerlink" href="#editor-layer" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Action</th>
+<th>Buys</th>
+<th>Costs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>E1</td>
+<td>Define the compact form from the same transparent and opaque sets as the projection profiles</td>
+<td>24% of raw, and one definition instead of two</td>
+<td>Depends on recommendation 1</td>
+</tr>
+<tr>
+<td>E2</td>
+<td>Reconstructing decoder that fills required fields from <code>cls._fields</code></td>
+<td>Without it no compact form unparses at all</td>
+<td>Small</td>
+</tr>
+<tr>
+<td>E3</td>
+<td>Write-back by source span with <code>asttokens</code> for literal and parameter edits</td>
+<td>Lossless editing of existing files, no new dependency</td>
+<td>None</td>
+</tr>
+<tr>
+<td>E4</td>
+<td>Comment field per step, extracted and emitted via <code>libcst</code></td>
+<td>Comments round-trip in both directions; unblocks structural edits</td>
+<td>New dependency</td>
+</tr>
+<tr>
+<td>E5</td>
+<td>Pick the canvas paradigm deliberately, block versus node</td>
+<td>Determines whether control flow stays the differentiator</td>
+<td>Product decision</td>
+</tr>
+<tr>
+<td>E6</td>
+<td>Generate the editor palette from OO-LD schemas, reusing the form generator</td>
+<td>The claim in 21.4</td>
+<td>Depends on E5</td>
+</tr>
+</tbody>
+</table>
+<p>E3 is free and independent. E5 blocks E6 and should be decided before any UI work starts.</p>
+<h2 id="appendix-current-implementation-status">Appendix: current implementation status<a class="headerlink" href="#appendix-current-implementation-status" title="Permanent link">&para;</a></h2>
+<p>For reference. This is a gap between the current code and AWL's own principles, not
+evidence about the principles.</p>
+<p>Measured on example A with <code>AstSerialization</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Triples</th>
+<th>Subjects</th>
+<th>Constructor arguments survive</th>
+<th>Call order survives</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>annotate=False</code></td>
+<td>62</td>
+<td>27</td>
+<td>Yes, six nodes deep</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>annotate=True</code></td>
+<td>47</td>
+<td>21</td>
+<td>No</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<p>With <code>annotate=True</code> the collapsed constructor renders as <code>awl:HasArgumentList [ ]</code>, an
+empty blank node: <code>target_voltage=4.2</code> and <code>c_rate=0.23</code> are absent from the RDF because
+<code>__class_name__</code> and the keyword names are not terms in <code>src/awl/jsonld_context.py</code>, and
+JSON-LD drops unmapped terms. The slim notation helps the JSON and YAML views while
+removing the data from the graph.</p>
+<p>Statement order is absent in both modes, because <code>awl:HasPart</code> is unordered.</p>
+<p>Section 11 shows most of this is context work rather than walker work.</p>
+<h2 id="sources">Sources<a class="headerlink" href="#sources" title="Permanent link">&para;</a></h2>
+<p>Local: <code>src/awl/core.py</code>, <code>src/awl/jsonld_context.py</code>, <code>tests/test_usecases.py</code>,
+<code>examples/human_in_the_loop.ipynb</code>, the
+<a href="https://github.com/OO-LD/awl-schema">awl-schema README</a>, the
+<a href="https://github.com/OO-LD/.github/blob/main/profile/README.md">OO-LD profile summary</a>,
+and Stier et al., "Towards Object-Oriented Linked Data Profiles for Material Science",
+SeMatS 2026.</p>
+<p>Graphify: <a href="https://github.com/Graphify-Labs/graphify/blob/main/graphify/ids.py"><code>ids.py</code></a>,
+<a href="https://github.com/Graphify-Labs/graphify/blob/main/graphify/extract.py"><code>extract.py</code></a>,
+<a href="https://github.com/Graphify-Labs/graphify/blob/main/graphify/extractors/engine.py"><code>extractors/engine.py</code></a>,
+<a href="https://github.com/Graphify-Labs/graphify/blob/main/graphify/extractors/base.py"><code>extractors/base.py</code></a>,
+<a href="https://github.com/Graphify-Labs/graphify/blob/main/graphify/extractors/models.py"><code>extractors/models.py</code></a>,
+<a href="https://github.com/Graphify-Labs/graphify/blob/main/ARCHITECTURE.md"><code>ARCHITECTURE.md</code></a>.</p>
+<p>Prior art: <a href="https://kythe.io/docs/schema/">Kythe schema</a> and
+<a href="https://kythe.io/docs/kythe-storage.html">storage model</a>;
+<a href="https://github.com/scip-code/scip">SCIP</a>;
+<a href="https://github.com/github/stack-graphs">stack-graphs</a>;
+<a href="https://cpg.joern.io/">CPG specification</a> and <a href="https://github.com/joernio/joern">Joern</a>;
+<a href="https://github.com/mattia-atzeni/codeontology-java-parser">CodeOntology Java parser</a>;
+<a href="https://www.commonwl.org/">CWL</a>; <a href="https://github.com/common-workflow-language/schema_salad">schema-salad</a>;
+<a href="https://fno.io/spec/">FnO</a> and <a href="https://github.com/FnOio/fno-descriptor-python">fno-descriptor-python</a>;
+<a href="http://vocab.linkeddata.es/p-plan/">P-Plan</a>; <a href="https://www.w3.org/TR/prov-o/">PROV-O</a>;
+<a href="https://linkml.io/">LinkML</a>; <a href="https://github.com/SMAT-Lab/Scalpel">Scalpel</a>.</p>
+<p>pyiron and NFDI stack:
+<a href="https://github.com/pythonworkflow/python-workflow-definition">python-workflow-definition</a>
+and <a href="https://doi.org/10.1039/D5DD00231A">Digital Discovery 2025</a>;
+<a href="https://github.com/pyiron/semantikon">semantikon</a>; <a href="https://github.com/pyiron/flowrep">flowrep</a>;
+<a href="https://materialdigital.github.io/core-ontology/">PMDco</a>;
+<a href="https://basic-formal-ontology.org/">BFO</a>; <a href="https://obi-ontology.org/">OBI</a>;
+<a href="https://qudt.org/">QUDT</a>.</p>
+<p>Tracing and execution: the
+<a href="https://github.com/OO-LD/awl-schema#code-execution">awl-schema Code Execution draft</a>;
+<code>OpenSemanticWorld/osw-chatbot/src/osw_chatbot/tests/ast_.py</code> and <code>test2.py</code>;
+<a href="https://www.researchobject.org/workflow-run-crate/">Workflow Run RO-Crate</a> and its
+<a href="https://www.researchobject.org/workflow-run-crate/profiles/provenance_run_crate/">Provenance Run Crate profile</a>;
+<a href="https://doi.org/10.1371/journal.pone.0309210">Leo et al. 2024, PLoS ONE</a>;
+<a href="https://cwltool.readthedocs.io/en/latest/loop.html">cwltool Loops</a>;
+<a href="https://www.commonwl.org/v1.2/Workflow.html">CWL v1.2 Workflow spec</a>;
+<a href="https://github.com/common-workflow-library/cwl-patterns/blob/master/workflow_patterns_initiative/control/README.md">cwl-patterns control patterns</a>;
+<a href="https://aiida.readthedocs.io/projects/aiida-core/en/v0.11.2/work/dev.html">AiiDA workflows</a>;
+<a href="https://github.com/aiidateam/aiida-workgraph">aiida-workgraph</a>;
+<a href="https://docs.prefect.io/v3/api-ref/python/prefect-telemetry-run_telemetry">Prefect run_telemetry</a>.</p>
+<p>Naming: <a href="https://cache.industry.siemens.com/dl/files/496/18653496/att_97187/v1/AWL_d.pdf">Siemens SIMATIC Anweisungsliste (AWL) reference manual</a>;
+<a href="https://en.wikipedia.org/wiki/Instruction_list">Instruction list</a>.</p>
+<p>Visual editing: <a href="https://github.com/Instagram/LibCST">libcst</a>;
+<a href="https://github.com/davidhalter/parso">parso</a>; <a href="https://github.com/gristlabs/asttokens">asttokens</a>;
+<a href="https://github.com/germanbisurgi/jedison">jedison</a> and
+<a href="https://github.com/json-editor/json-editor">json-editor</a>;
+<a href="https://github.com/rjsf-team/react-jsonschema-form">react-jsonschema-form</a>;
+<a href="https://github.com/eclipsesource/jsonforms">JSONForms</a>;
+<a href="https://github.com/xyflow/xyflow">React Flow</a>; <a href="https://github.com/google/blockly">Blockly</a>;
+<a href="https://github.com/cytoscape/cytoscape.js">Cytoscape.js</a>;
+<a href="https://github.com/manzt/anywidget">anywidget</a>;
+<a href="https://github.com/opensemanticworld/panelini">panelini</a>.</p>
+<p>Specifications, read directly: <a href="https://www.w3.org/TR/json-ld11-api/">JSON-LD 1.1 API</a>
+sections 8.3 and 8.6; <a href="https://www.w3.org/TR/json-ld11/">JSON-LD 1.1</a> section 9.9;
+<a href="https://www.w3.org/TR/shacl/">SHACL</a>; <a href="https://www.w3.org/TR/sparql11-query/">SPARQL 1.1</a>;
+<a href="https://peps.python.org/pep-0669/">PEP 669</a>; <a href="https://peps.python.org/pep-0657/">PEP 657</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Maintained by <a href="https://github.com/OO-LD">OO-LD</a>.
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/OO-LD/awl-python" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://pypi.org/project/awl" target="_blank" rel="noopener" title="pypi.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6M286.2 444.7a20.4 20.4 0 1 1 0-40.7 20.4 20.4 0 1 1 0 40.7M167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4m-6.6-183.4a20.4 20.4 0 1 1 0 40.8 20.4 20.4 0 1 1 0-40.8"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["content.action.edit","content.code.annotate","content.code.copy","navigation.footer","navigation.indexes","navigation.top","navigation.tracking","search.highlight"],"search":"../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.e886cdf1.min.js"></script>
+      
+        <script src="../assets/mermaid.js"></script>
+      
+    
+  </body>
+</html>

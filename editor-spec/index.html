@@ -1,0 +1,1437 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Python implementation of the Abstract Workflow Language (AWL-LD)">
+      
+      
+        <meta name="author" content="OO-LD Contributors">
+      
+      
+        <link rel="canonical" href="https://OO-LD.github.io/awl-python/editor-spec/">
+      
+      
+        <link rel="prev" href="../editor/">
+      
+      
+        <link rel="next" href="../awl/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="https://raw.githubusercontent.com/OO-LD/schema/main/OO-LD_logo.jpg">
+      <meta name="generator" content="zensical-0.0.56">
+    
+    
+      
+        <title>Editor specification - awl-python</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.20815dad.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../assets/stylesheets/modern/palette.dfe2e883.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/wide.css">
+    
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="deep-orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#editor-specification" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="./.." title="awl-python" class="md-header__button md-logo" aria-label="awl-python" data-md-component="logo">
+      
+  <img src="https://raw.githubusercontent.com/OO-LD/schema/main/OO-LD_logo.jpg" alt="awl-python">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            awl-python
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Editor specification
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="deep-orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="deep-orange"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/OO-LD/awl-python" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    OO-LD/awl-python
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="./.." title="awl-python" class="md-nav__button md-logo" aria-label="awl-python" data-md-component="logo">
+      
+  <img src="https://raw.githubusercontent.com/OO-LD/schema/main/OO-LD_logo.jpg" alt="awl-python">
+
+    </a>
+    awl-python
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/OO-LD/awl-python" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    OO-LD/awl-python
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flavours/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Flavours
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Worked examples
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../editor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Editor
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Editor specification
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Editor specification
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-model-is-shared-a-canvas-supplies-a-canvas" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. The model is shared; a canvas supplies a canvas
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-a-level-is-a-scope-and-every-level-is-drawn-the-same-way" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. A level is a scope, and every level is drawn the same way
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-containment-must-be-visible-and-it-must-come-from-the-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Containment must be visible, and it must come from the plan
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-every-block-is-editable-removable-and-addable" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Every block is editable, removable and addable
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-where-the-typed-parameter-form-lives" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Where the typed parameter form lives
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-navigation-levels-and-the-nesting-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Navigation: levels and the nesting stack
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-insertion-predefined-blocks-and-honest-drop-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. Insertion: predefined blocks and honest drop targets
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-reorder-is-not-an-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. Reorder is not an index
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-undo-goes-through-the-model-or-does-not-exist" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        9. Undo goes through the model or does not exist
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-the-source-pane" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        10. The source pane
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-running-and-the-trace-overlay" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        11. Running and the trace overlay
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-write-back-has-two-tiers-and-they-are-not-equal" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        12. Write-back has two tiers, and they are not equal
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-identity-does-not-survive-an-edit" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        13. Identity does not survive an edit
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        14. Testing
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-weight" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        15. Weight
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../awl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  API Reference
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Development
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-model-is-shared-a-canvas-supplies-a-canvas" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. The model is shared; a canvas supplies a canvas
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-a-level-is-a-scope-and-every-level-is-drawn-the-same-way" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. A level is a scope, and every level is drawn the same way
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-containment-must-be-visible-and-it-must-come-from-the-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. Containment must be visible, and it must come from the plan
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-every-block-is-editable-removable-and-addable" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Every block is editable, removable and addable
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-where-the-typed-parameter-form-lives" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Where the typed parameter form lives
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-navigation-levels-and-the-nesting-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Navigation: levels and the nesting stack
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-insertion-predefined-blocks-and-honest-drop-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        7. Insertion: predefined blocks and honest drop targets
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-reorder-is-not-an-index" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. Reorder is not an index
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-undo-goes-through-the-model-or-does-not-exist" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        9. Undo goes through the model or does not exist
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-the-source-pane" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        10. The source pane
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-running-and-the-trace-overlay" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        11. Running and the trace overlay
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-write-back-has-two-tiers-and-they-are-not-equal" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        12. Write-back has two tiers, and they are not equal
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-identity-does-not-survive-an-edit" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        13. Identity does not survive an edit
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        14. Testing
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15-weight" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        15. Weight
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+    <a href="https://github.com/OO-LD/awl-python/edit/main/docs/editor-spec.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="editor-specification">Editor specification<a class="headerlink" href="#editor-specification" title="Permanent link">&para;</a></h1>
+<p>What an AWL-LD editor must do, written from five implementations and four
+independent reviews rather than from taste. Every requirement below is followed
+by the failure that produced it: each one is a mistake something already made.</p>
+<p>The implementations are not in this repository. They were built against
+<code>awl.ui.EditorModel</code> to settle two design questions with evidence, and what they
+settled is written down here; the one that won lives in its own playground. So
+the failures below are attributed to "one implementation" rather than by name,
+because naming a thing a reader cannot open is a reference to nothing.</p>
+<p>The editor targets <strong>procedures</strong>. Value provenance is rendered and never
+edited, so nothing here describes editing a def-use graph.</p>
+<hr />
+<h2 id="1-the-model-is-shared-a-canvas-supplies-a-canvas">1. The model is shared; a canvas supplies a canvas<a class="headerlink" href="#1-the-model-is-shared-a-canvas-supplies-a-canvas" title="Permanent link">&para;</a></h2>
+<p><code>awl.ui.EditorModel</code> owns the document, the edits and the source patches. A
+canvas supplies a drawing and a form, and nothing else.</p>
+<table>
+<thead>
+<tr>
+<th>It offers</th>
+<th>For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>flow(scope)</code></td>
+<td>one level: <code>steps</code>, <code>edges</code>, <code>sublevels</code></td>
+</tr>
+<tr>
+<td><code>sublevels(scope)</code>, <code>opens(step)</code>, <code>refers(step)</code>, <code>descend(step)</code></td>
+<td>navigation</td>
+</tr>
+<tr>
+<td><code>apply(op, **kw)</code> over <code>OPERATIONS</code></td>
+<td>add, delete, reorder, set a literal</td>
+</tr>
+<tr>
+<td><code>set_value(path, value)</code></td>
+<td>a value, written back by span</td>
+</tr>
+<tr>
+<td><code>text_at(span)</code>, <code>replace_at(span, text)</code></td>
+<td>a block edited through its source</td>
+</tr>
+<tr>
+<td><code>set_source(text)</code></td>
+<td>the source pane</td>
+</tr>
+<tr>
+<td><code>run(entry, *args)</code></td>
+<td>a real run, traced</td>
+</tr>
+<tr>
+<td><code>to_source()</code>, <code>reformats()</code>, <code>regenerate()</code></td>
+<td>producing the file</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Why this is a requirement, not a convention.</strong> One implementation added 206
+lines to the shared model in its own worktree and competed against a model the
+others did not have. Three defects, a collapsed node with no span, two edits
+over one constructor raising, and <code>set_literal</code> destroying the span it replaced,
+were found <em>only</em> because several canvases used the same model. A canvas that
+reimplements edit semantics measures its own reimplementation.</p>
+<hr />
+<h2 id="2-a-level-is-a-scope-and-every-level-is-drawn-the-same-way">2. A level is a scope, and every level is drawn the same way<a class="headerlink" href="#2-a-level-is-a-scope-and-every-level-is-drawn-the-same-way" title="Permanent link">&para;</a></h2>
+<p>Two sequential calls read as <code>a</code> then <code>b</code>. A conditional or a loop is a step of
+its own between them, carrying <code>when_true</code>, <code>when_false</code>, <code>repeat</code>, <code>each_item</code>,
+<code>exhausted</code> or <code>on_error</code> out of it.</p>
+<p>Recursion is unlimited because nothing counts depth: a scope is a name, and
+descending produces another scope.</p>
+<hr />
+<h2 id="3-containment-must-be-visible-and-it-must-come-from-the-plan">3. Containment must be visible, and it must come from the plan<a class="headerlink" href="#3-containment-must-be-visible-and-it-must-come-from-the-plan" title="Permanent link">&para;</a></h2>
+<p>This is the finding the whole comparison produced, and the two halves are
+separable.</p>
+<p><strong>Containment.</strong> What is inside a loop must be distinguishable from what follows
+it, without inference. On a pure graph canvas, eleven steps sit at one indent and
+two edge labels are the only thing separating inside from after. Reviewers
+confirmed this reads as "what repeats" but not "what is in this loop".</p>
+<p><strong>Every edge must come from the plan.</strong> Read them from <code>flow(scope)["edges"]</code>,
+never from the shape of a container. One implementation keyed its arc on
+<code>classList.contains('sqd-step-container')</code> and was rejected: a shape-keyed arc
+cannot tell a loop from a container that happens to look like one, and at module
+scope it drew an arc where the plan reports none.</p>
+<p><strong>The loop's repetition is expressed by the container, not by an arc.</strong> The
+region already encloses the body, so a <code>repeat</code> drawn as well says the same
+thing twice, dashed, across the whole height of the loop and through a gutter
+kept empty for it. An earlier revision of this section required the arc; a
+person using the editor asked for it to go, and it went. What does not go is
+where the fact comes from: the canvas still reads the <code>repeat</code> out of
+<code>flow(scope)["edges"]</code>, records which block it leaves, and is tested on that.
+<strong>The plan edge is still what proves it, with a test rather than an arc</strong>: a
+canvas that stopped reading <code>repeat</code> and simply drew nothing would look
+identical and would fail that test.</p>
+<p><strong>An edge that leaves a container is drawn from the container.</strong> Two of them
+onto one target are one connector: the last statement of a <code>then</code> reaches the
+statement after the <code>if</code> by the same door the <code>if</code> does, and drawing both is one
+journey drawn twice. It is also the only way to get the arrowhead right where
+the layout inherits <code>Position.Left</code>/<code>Position.Right</code> handles, since the vertical
+leg of a step path lands half way between the two anchors and two anchors at
+different indents end the path in a sideways stub across the top of the block it
+arrives at.</p>
+<p><strong>A branch is two lanes, not two labels.</strong> <code>then</code> and <code>else</code> laid side by side
+and rejoining below. When the <code>if</code> has no <code>else</code>, the empty lane is still drawn,
+because it is where a statement is dropped to make one, and it is what
+<code>when_false</code> names: the plan sends <code>when_false</code> past an <code>if</code> that has no <code>else</code>,
+which is true of the source and reads as a mislabelled arrow beside an <code>else</code>
+column the canvas has drawn anyway.</p>
+<p><strong>Containment and the edges are separable, and each was shipped without the
+other.</strong> One canvas nested statements natively and could not draw the back edge
+at all; another drew every edge and enclosed nothing.</p>
+<p><strong>Do not reuse the descend gesture for a loop.</strong> One implementation built both
+and argued against it: reading a loop as a level turns a two-statement body into
+a navigation, and the gesture is already spent on functions.</p>
+<hr />
+<h2 id="4-every-block-is-editable-removable-and-addable">4. Every block is editable, removable and addable<a class="headerlink" href="#4-every-block-is-editable-removable-and-addable" title="Permanent link">&para;</a></h2>
+<p>Including <code>while</code>, <code>if</code>, <code>return</code> and bare assignments, not only calls with a
+typed parameter object.</p>
+<p><strong>All four of the first implementations failed this</strong>, in the same way: only
+value-carrying nodes got an editor. Measured, at one level: 0 of 16 canvas texts
+editable in one, 5 of 11 steps in another, 3 of 11 in a third.</p>
+<p><strong>A form over an arbitrary expression is a Python editor with extra steps.</strong>
+Edit those blocks through the source they cover, with <code>replace_at(span, text)</code>.
+It reparses like any other edit, so a typo costs nothing.</p>
+<p><strong>A control structure's editable range is its test</strong>, not its span: a <code>while</code>
+spans its whole body.</p>
+<hr />
+<h2 id="5-where-the-typed-parameter-form-lives">5. Where the typed parameter form lives<a class="headerlink" href="#5-where-the-typed-parameter-form-lives" title="Permanent link">&para;</a></h2>
+<p><strong>Solved: inside the node.</strong> The fifth implementation puts two <code>FloatInput</code>s in
+the node itself and has no side panel at all, verified geometrically, and
+editing one changes a single line while the sibling field survives.</p>
+<p>One nuance worth carrying: the fields hang off the <em>assignment's</em> node rather
+than a <code>ChargeParam</code> node of its own, which is the nested-block answer rather
+than the constructor-as-a-node answer.</p>
+<p><strong>Take the declared type, not the value's.</strong> That implementation infers the
+widget from the value, so <code>target_voltage=4</code> renders an integer input for a
+field declared <code>float</code>. The class already says what it is.</p>
+<p>The four earlier implementations put the form <strong>beside</strong> the node, because the
+schema-form libraries render full-width labelled inputs and a node sized for
+those stops being a node. Two partial answers came out of it, both worth
+keeping:</p>
+<ul>
+<li>plugging the constructor into the call block, so its values are readable
+  without opening anything;</li>
+<li>giving the constructor <strong>its own node carrying its values</strong>, which was the
+  best of the four: readable at rest, editable on click.</li>
+</ul>
+<p>The schema comes from the class's declared fields. Do not hand-author it, and do
+not infer types from values when the declaration is reachable. One
+implementation silently fell back to inference because it read only imported
+modules and the sample declares its classes locally.</p>
+<hr />
+<h2 id="6-navigation-levels-and-the-nesting-stack">6. Navigation: levels and the nesting stack<a class="headerlink" href="#6-navigation-levels-and-the-nesting-stack" title="Permanent link">&para;</a></h2>
+<p>The path bar carries the full stack, containers included, each crumb scoping the
+canvas:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>awl.ui.sample &gt; procedure &gt; while i &lt; cycles: &gt; if peak &gt; report.peak_voltage: &gt; then
+</code></pre></div>
+<p><strong>Module scope needs its own answer.</strong> A module is imports and declarations, and
+a <code>def</code> is not a step, so a canvas drawing what runs finds nothing to click.
+<code>flow(scope)["sublevels"]</code> gives a block per level below, with its step count.
+Two implementations independently dead-ended here before it existed.</p>
+<p><strong>A call that resolves is not the same as a call that opens.</strong> <code>opens()</code> returns
+<code>None</code> both for an unresolved name and for a resolved class, so use <code>refers()</code>
+to tell them apart. One implementation labelled <code>Report(...)</code> "source not read"
+when it had resolved perfectly well and simply is not a level. A call whose
+source was never indexed must be marked as such, not drawn as a leaf: an unread
+function and an empty one are different claims.</p>
+<hr />
+<h2 id="7-insertion-predefined-blocks-and-honest-drop-targets">7. Insertion: predefined blocks and honest drop targets<a class="headerlink" href="#7-insertion-predefined-blocks-and-honest-drop-targets" title="Permanent link">&para;</a></h2>
+<p>The toolbox offers at least <code>while</code>, <code>if</code>, an assignment and a return, as
+templates, not only calls.</p>
+<ul>
+<li><strong>A placed loop is <code>while False:</code>, not <code>while True:</code>.</strong> It reaches the canvas
+  before its condition does, and the run button is one click away. One palette
+  offered <code>while i &lt; 10:</code>; dropped into a body that never touches <code>i</code> and run,
+  it took the whole process down and needed a restart.</li>
+<li><strong>Bound the run.</strong> An editor runs code nobody has read, so <code>run()</code> takes a
+  <code>seconds</code> deadline and stops through the tracer, which is already on every
+  line. What ran before the deadline is still reported.</li>
+<li><strong>Never offer nonsense.</strong> One palette listed <code>dataclass()</code>, a name the module
+  only ever decorates with, and <code>procedure(0)</code>, unbounded recursion into the
+  level you are standing on.</li>
+<li><strong>A drop needs a target.</strong> A curve between two nodes is not a slot; dropping on
+  one means guessing which end was meant. Either draw snap zones before and after
+  each node, or hang the gesture off the node where "after this" has one reading.</li>
+<li><strong>An insert must give feedback</strong>: select what was placed and open its editor.
+  One canvas reported a successful insert while selecting nothing, because its
+  node sync discarded the selection flag for every id it already held and an
+  insert renumbers paths rather than minting one.</li>
+<li><strong>A refused drop must leave nothing behind.</strong> One implementation appended the
+  block and then deleted it on refusal: two cancelling structural patches that
+  <code>to_source()</code> cannot see cancel, so the file was intact but the next value edit
+  anywhere would have regenerated the whole module.</li>
+</ul>
+<hr />
+<h2 id="8-reorder-is-not-an-index">8. Reorder is not an index<a class="headerlink" href="#8-reorder-is-not-an-index" title="Permanent link">&para;</a></h2>
+<p>A statement list holds docstrings and declarations that are not steps, so
+position in the list is not position in the flow.</p>
+<p><strong>Offer the step it lands beside</strong>, "move after <code>i += 1</code>", and disable it at the
+ends. One implementation used a raw index: it moved an import below a class with
+<em>zero</em> canvas change, and the module then raised
+<code>NameError: name 'dataclass' is not defined</code> while the notice said "reorder
+applied".</p>
+<p>Refuse any move that crosses something undrawn, or that touches a declaration.
+Three implementations made this same mistake independently, which is the
+strongest evidence in this document that the rule is not obvious.</p>
+<hr />
+<h2 id="9-undo-goes-through-the-model-or-does-not-exist">9. Undo goes through the model or does not exist<a class="headerlink" href="#9-undo-goes-through-the-model-or-does-not-exist" title="Permanent link">&para;</a></h2>
+<p>A canvas library's own undo restores its own nodes and does not touch Python.
+After one such undo the canvas showed 11 blocks against a 10-statement file, and
+every later edit addressed the previous version: the form for one path reported
+a different statement.</p>
+<p>Snapshot per edit and undo through <code>set_source</code>, or remove the control.</p>
+<hr />
+<h2 id="10-the-source-pane">10. The source pane<a class="headerlink" href="#10-the-source-pane" title="Permanent link">&para;</a></h2>
+<p>Rendered, highlighted, editable, and bidirectional.</p>
+<ul>
+<li><strong>Whoever highlights must actually know Python.</strong> Two implementations shipped
+  a pane that coloured nothing, in the same way and for different libraries: one
+  loaded CodeMirror with a <code>?deps=</code> pin that omitted <code>@codemirror/language</code>, so
+  a second copy made the highlighter walk an empty tree, <strong>229 KB and 38
+  requests for no highlighting at all</strong>; the other was offered an editor bundle
+  carrying only the JSON and YAML contributions, where <code>language="python"</code> names
+  a language the editor was never told about. Grep the bundle for <code>elif</code> before
+  trusting it. Assert on <strong>computed colours</strong>, not on class names: a keyword and
+  a plain name must differ.</li>
+<li><strong>Two honest ways to highlight, and the choice is a trade, not a default.</strong>
+  Python-side <code>tokenize</code> is already in the interpreter and costs nothing on the
+  wire, but the coloured HTML then travels on every gesture, measured at 13,263
+  bytes per interaction. A real editor component costs 854 KB once and nothing
+  per gesture, and it is the only path to the next item.</li>
+<li><strong>A type checker in the pane is worth what it costs, and it costs a lot.</strong>
+  Diagnostics, hover and completion over the same file the blocks are drawn from
+  were delivered by compiling a checker to WebAssembly: a red underline carrying
+  the checker's own message, an inferred type on hover, and completion offering
+  a field only a checker could know. The price is <strong>17.8 MB</strong> of WebAssembly, six
+  times the whole editor. Price it separately and make it optional: with no
+  checker the pane must still edit, highlight, round-trip and report a parse
+  error.</li>
+<li><strong>The whole pane must be clickable.</strong> A <code>position:absolute; inset:0</code> textarea
+  covers only the visible portion of a scrolled document: the entire function on
+  screen was unclickable, and only the top third took a caret.</li>
+<li><strong>Scroll to the level being edited.</strong> Opening at the top of the file shows the
+  module docstring at every level, which reads as "the highlighting is broken"
+  when it is one long string token.</li>
+<li><strong>Typing must not strip the colours</strong>, and the caret must not desynchronise
+  from the coloured layer. Drag the coloured layer with a transform rather than a
+  second <code>scrollTop</code>: a textarea and a <code>pre</code> disagree about <code>scrollHeight</code> by the
+  vertical padding and drift apart at the bottom.</li>
+<li><strong>A repaint must not eat what is being typed.</strong> Any state arriving mid-edit
+  that rewrites the field's value from the model discards the keystrokes since
+  the last sync; guard on focus.</li>
+<li><strong>A parse failure changes nothing</strong>: a half-typed edit is the normal state of a
+  source pane.</li>
+</ul>
+<hr />
+<h2 id="11-running-and-the-trace-overlay">11. Running and the trace overlay<a class="headerlink" href="#11-running-and-the-trace-overlay" title="Permanent link">&para;</a></h2>
+<p>The run button performs a real run under instrumentation. Draw both of the
+things the overlay carries: <strong>iteration counts</strong> and <strong>branch outcomes</strong>.</p>
+<ul>
+<li>The host supplies the entry point and any stand-in modules. A stand-in for a
+  module that drives hardware is an object, and no JSON channel carries one.</li>
+<li><strong>A run that raises still returns the overlay</strong>: a step that raised is a fact
+  about the procedure. The same holds for a run stopped by its deadline.</li>
+<li><strong>A level the trace never reached is not a level that did not run.</strong> Grey
+  nothing when nothing was observed, and say so.</li>
+<li><strong>Clear the overlay on any structural or source edit.</strong> Marks keyed on
+  positional step ids survive a reparse and then name the wrong steps: after one
+  insert, <code>while i &lt; cycles</code> claimed 3 iterations and <code>return report</code> claimed it
+  never ran.</li>
+<li>Name the level as well as the entry: <code>ran procedure: 4/5 steps in charge</code>.</li>
+</ul>
+<hr />
+<h2 id="12-write-back-has-two-tiers-and-they-are-not-equal">12. Write-back has two tiers, and they are not equal<a class="headerlink" href="#12-write-back-has-two-tiers-and-they-are-not-equal" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Edit</th>
+<th>Mechanism</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a literal, a constructor field, a block's source line</td>
+<td>patch by span</td>
+<td>one line changes; comments and layout survive</td>
+</tr>
+<tr>
+<td>add, delete, reorder</td>
+<td>regenerate the module</td>
+<td><strong>comments and layout are lost</strong></td>
+</tr>
+</tbody>
+</table>
+<p><code>reformats()</code> says in advance which path the next <code>to_source()</code> takes, so a
+canvas can warn rather than a reader finding it in a diff. <strong>Compute it and draw
+it</strong>: one implementation computed it on every structural edit and rendered it
+nowhere, so an insert silently took nine blank lines out of the module while the
+notice said only "added". Closing the gap needs a concrete-syntax rewrite, which
+is not built.</p>
+<p><strong>A value edit must not destroy its own address.</strong> Preserve the span when
+replacing a literal, and coalesce patches over one range: editing one thing twice
+is the last one winning, not an overlap error. Insertions still stack, so two
+zero-width inserts at one offset are two steps.</p>
+<hr />
+<h2 id="13-identity-does-not-survive-an-edit">13. Identity does not survive an edit<a class="headerlink" href="#13-identity-does-not-survive-an-edit" title="Permanent link">&para;</a></h2>
+<p>Step identities are positional counters. Inserting a line anywhere earlier
+renumbers everything after it: an edit inside <code>settle</code> renamed <strong>10 of the 11</strong>
+steps in <code>procedure</code>, and <code>step#12</code> stopped being an <code>Assign</code> and became an
+<code>Expr</code>.</p>
+<p>Sound within one snapshot, which is all the plan mints them for. <strong>Not enough for
+an editor</strong>: a selection, an overlay mark or a stored annotation keyed on a step
+IRI is wrong after any edit, and two graphs of one file taken either side of an
+edit cannot be joined even where the statements are untouched.</p>
+<p>Until the identity contract changes, address by <strong>document path</strong> and by <strong>scope
+name</strong>, not by step id, for anything that must outlive an edit.</p>
+<hr />
+<h2 id="14-testing">14. Testing<a class="headerlink" href="#14-testing" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Click and type like a person.</strong> <code>locator.fill()</code> sets a value without ever
+  placing a caret. Three implementations passed their source-pane tests while the
+  pane was unusable by hand; the fill bypassed exactly the broken part.</li>
+<li><strong>Assert on computed style when appearance is the requirement.</strong> One
+  implementation's stylesheet never reached the component it was written for,
+  and every assertion on class names passed anyway: a refusal rendered in the
+  same grey as a success.</li>
+<li><strong>Take screenshots inside the test that asserts the state.</strong> A screenshot taken
+  separately can drift from what was verified. Check no two are byte-identical:
+  two implementations shipped duplicate shots, and one showed the module level
+  under the name <code>09-sublevel</code>.</li>
+<li><strong>Verify the rendered HTML, not the markup you generated.</strong> A tab can fail to
+  render while the assertion on the source passes.</li>
+<li><strong>Measure bytes after the page settles.</strong> Summing inside <code>page.on("response")</code>
+  undercounts randomly, 141k/165k/196k across runs of one page, because a
+  response's size is known only once its body lands. Report <strong>wire, decoded and
+  request count</strong> separately, and say whether the harness inlines its own assets:
+  one did, and its "5.7 times cheaper" was really 2.58.</li>
+<li><strong>A suite that passes under load is the only one that passes.</strong> One suite was
+  green in isolation and lost one to three Playwright waits whenever other
+  servers were running. Run it more than once before calling it green.</li>
+</ul>
+<hr />
+<h2 id="15-weight">15. Weight<a class="headerlink" href="#15-weight" title="Permanent link">&para;</a></h2>
+<p>Requests matter more than bytes under JupyterLite: no bundler means one request
+per module.</p>
+<p>Measured across the canvases, wire cost spanned <strong>87 KB to 766 KB</strong> and request
+count <strong>6 to 269</strong>, for the same procedure and the same model.</p>
+<p>The library names are kept below because the cost is a fact about the library
+rather than about the implementation that chose it.</p>
+<table>
+<thead>
+<tr>
+<th>Canvas and form</th>
+<th style="text-align: right;">wire</th>
+<th style="text-align: right;">decoded</th>
+<th style="text-align: right;">requests</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sequential Workflow Designer</td>
+<td style="text-align: right;">86,748</td>
+<td style="text-align: right;">275,754</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr>
+<td>React Flow with jedison</td>
+<td style="text-align: right;">263,493</td>
+<td style="text-align: right;">684,707</td>
+<td style="text-align: right;">19</td>
+</tr>
+<tr>
+<td>Blockly with jedison</td>
+<td style="text-align: right;">450,536</td>
+<td style="text-align: right;">1,745,727</td>
+<td style="text-align: right;">9</td>
+</tr>
+<tr>
+<td>React Flow with RJSF</td>
+<td style="text-align: right;">766,048</td>
+<td style="text-align: right;">1,620,990</td>
+<td style="text-align: right;">269</td>
+</tr>
+</tbody>
+</table>
+<p>The spread is mostly transitive dependencies rather than the canvases: RJSF's
+validator chain pulls <strong>lodash and lodash-es together, 431 KB of the same library
+twice</strong>, because <code>@rjsf/utils</code> imports from each. Pin every CDN import's
+dependencies, but never React's own, which redirects React to a second copy of
+itself and dies on a null hook dispatcher.</p>
+<p>Only the first row has been re-derived since its canvas's fixes; the rest are
+their builders' figures and the methods differ slightly.</p>
+<p><strong>The canvas that was kept is off this table by an order of magnitude, and the
+table would flatter it to include.</strong> Measured the same way:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th style="text-align: right;">wire</th>
+<th style="text-align: right;">requests</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>shell: Panel, Bokeh, the canvas and the app</td>
+<td style="text-align: right;">3,355,196</td>
+<td style="text-align: right;">34</td>
+</tr>
+<tr>
+<td>the editor component</td>
+<td style="text-align: right;">854,543</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td>the type checker, as WebAssembly</td>
+<td style="text-align: right;">17,813,412</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td>total</td>
+<td style="text-align: right;"><strong>22,023,151</strong></td>
+<td style="text-align: right;">38</td>
+</tr>
+</tbody>
+</table>
+<p>2.88 MB gzipped. Three things follow, and they are the reason this is reported
+in parts rather than as one number:</p>
+<ul>
+<li><strong>The comparison does not hold across these rows.</strong> The four above load
+  unbundled ES modules from a CDN that compresses everything; this one is a
+  pip-installed wheel with its JavaScript already built, served by a development
+  server that compresses only part of what it sends. Decoded equals wire
+  wherever nothing is compressed, which is why gzipped is the only figure worth
+  putting beside the others.</li>
+<li><strong>The IDE is most of the weight and none of the editor.</strong> Report the checker
+  separately, so dropping it is a decision someone can make.</li>
+<li><strong>A runtime is not a canvas.</strong> 87% of the shell is Bokeh and Panel, and it
+  buys a server requirement: this one needs a Bokeh server or Pyodide, where the
+  other four run in a notebook cell with a kernel of any kind. That is the price
+  of the form living inside the node, and it is worth stating next to the
+  finding rather than in a footnote.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../editor/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Editor">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Editor
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../awl/" class="md-footer__link md-footer__link--next" aria-label="Next: API Reference">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                API Reference
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Maintained by <a href="https://github.com/OO-LD">OO-LD</a>.
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/OO-LD/awl-python" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://pypi.org/project/awl" target="_blank" rel="noopener" title="pypi.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6M286.2 444.7a20.4 20.4 0 1 1 0-40.7 20.4 20.4 0 1 1 0 40.7M167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4m-6.6-183.4a20.4 20.4 0 1 1 0 40.8 20.4 20.4 0 1 1 0-40.8"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["content.action.edit","content.code.annotate","content.code.copy","navigation.footer","navigation.indexes","navigation.top","navigation.tracking","search.highlight"],"search":"../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.e886cdf1.min.js"></script>
+      
+        <script src="../assets/mermaid.js"></script>
+      
+    
+  </body>
+</html>

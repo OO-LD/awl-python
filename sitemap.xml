@@ -1,15 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-    <url>
-         <loc>https://oo-ld.github.io/awl-python/</loc>
-         <lastmod>2025-08-18</lastmod>
-    </url>
-    <url>
-         <loc>https://oo-ld.github.io/awl-python/awl/</loc>
-         <lastmod>2025-08-18</lastmod>
-    </url>
-    <url>
-         <loc>https://oo-ld.github.io/awl-python/dev/</loc>
-         <lastmod>2025-08-18</lastmod>
-    </url>
+      <url>
+        <loc>https://OO-LD.github.io/awl-python/</loc>
+      </url>
+      <url>
+        <loc>https://OO-LD.github.io/awl-python/flavours/</loc>
+      </url>
+      <url>
+        <loc>https://OO-LD.github.io/awl-python/examples/</loc>
+      </url>
+      <url>
+        <loc>https://OO-LD.github.io/awl-python/editor/</loc>
+      </url>
+      <url>
+        <loc>https://OO-LD.github.io/awl-python/editor-spec/</loc>
+      </url>
+      <url>
+        <loc>https://OO-LD.github.io/awl-python/awl/</loc>
+      </url>
+      <url>
+        <loc>https://OO-LD.github.io/awl-python/dev/</loc>
+      </url>
 </urlset>
