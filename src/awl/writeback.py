@@ -15,11 +15,15 @@ and those are exactly the files this path targets.
 from __future__ import annotations
 
 import ast
+import contextlib
+import io
+import token as token_module
+import tokenize
 from collections.abc import Callable
 from itertools import pairwise
 from typing import Any
 
-__all__ = ["apply_edits", "insert_statement", "offsets", "span_of"]
+__all__ = ["apply_edits", "comment_text", "comments", "insert_statement", "offsets", "span_of", "trivia"]
 
 
 def offsets(source: str, span: list[int]) -> dict[str, int]:
@@ -186,3 +190,151 @@ def insert_statement(
             )
 
     return cst.parse_module(source).visit(_Insert()).code
+
+
+def comments(source: str) -> dict[int, tuple[int, int, str]]:
+    """Return every comment in *source*, by the line it is on.
+
+    Parameters
+    ----------
+    source : str
+        The module's text.
+
+    Returns
+    -------
+    dict
+        Line number to ``(start_col, end_col, text)``, the text without its
+        ``#`` and the columns covering the comment token itself.
+
+    Notes
+    -----
+    The tokenizer rather than a regular expression, because a ``#`` inside a
+    string is not a comment and telling the two apart is what a tokenizer is
+    for. Half-written source tokenizes as far as it gets and the rest is
+    dropped, which is the same bargain an editor's source pane makes: a file
+    that does not parse changes nothing.
+    """
+    found: dict[int, tuple[int, int, str]] = {}
+    tokens: list[tokenize.TokenInfo] = []
+    with contextlib.suppress(tokenize.TokenError, IndentationError, SyntaxError, ValueError):
+        tokens.extend(tokenize.generate_tokens(io.StringIO(source).readline))
+    for entry in tokens:
+        if entry.type == token_module.COMMENT:
+            found[entry.start[0]] = (entry.start[1], entry.end[1], entry.string.lstrip("#").strip())
+    return found
+
+
+def trivia(source: str, span: list[int] | None) -> dict[str, Any]:
+    """Return the comment the statement at *span* carries, and the range an edit rewrites.
+
+    Parameters
+    ----------
+    source : str
+        The module's text.
+    span : list or None
+        ``[start_line, start_col, end_line, end_col]``.
+
+    Returns
+    -------
+    dict
+        ``text``, the comment without its ``#``; ``span``, the range to rewrite,
+        zero width where there is no comment yet and one would be written; and
+        ``where``, ``beside``, ``above`` or ``""``.
+
+    Notes
+    -----
+    Here rather than in an editor, because the syntax tree has no comment node
+    and every canvas that wants one would otherwise tokenize the source itself.
+    The write half needs nothing new: the range this returns goes to
+    :func:`apply_edits` like any other span patch, so a note survives being
+    edited and the rest of the file does not move.
+
+    Two places, and only two. A comment **beside** the statement, on the line it
+    starts on, is unambiguously about it. One **above** it, on the line before at
+    the statement's own indentation, usually is.
+
+    Only the line immediately above, never a run of them. Nothing here can tell
+    a banner from commented-out code, and claiming a four line block as one
+    statement's explanation would put dead code into an input that writes it
+    back as prose. A run keeps its lines as trivia and the nearest one is the
+    note, which is a rule rather than an answer: there is no answer without a
+    concrete-syntax tree.
+    """
+    if not span:
+        return {"text": "", "span": [], "where": ""}
+    line, column = span[0], span[1]
+    lines = source.splitlines()
+    marks = comments(source)
+
+    beside = marks.get(line)
+    if beside is not None and beside[0] > column:
+        # From the end of the code to the end of the comment, so removing a note
+        # takes the run of spaces before it rather than leaving a ragged tail.
+        code = len(lines[line - 1][: beside[0]].rstrip()) if line <= len(lines) else beside[0]
+        return {"text": beside[2], "span": [line, code, line, beside[1]], "where": "beside"}
+
+    above = marks.get(line - 1)
+    if above is not None and above[0] == column and _only_comment(lines, line - 1):
+        # The whole line, newline included, so an emptied note leaves no blank
+        # line where the comment was.
+        return {"text": above[2], "span": [line - 1, 0, line, 0], "where": "above"}
+
+    # At the end of the statement, which is not always the end of its first
+    # line. A statement whose first line ends inside a multi-line string put the
+    # note *inside the literal*: writing one on a docstring produced
+    # ``\"\"\"  # NOTE`` and silently changed what the string said, while
+    # reporting success and leaving `reformats()` false.
+    at = _closing_line(source, span)
+    tail = len(lines[at - 1].rstrip()) if at <= len(lines) else column
+    return {"text": "", "span": [at, tail, at, tail], "where": ""}
+
+
+def _closing_line(source: str, span: list[int]) -> int:
+    """Return the line a note may be appended to for the statement at *span*.
+
+    The statement's first line, unless a token starting on or before it runs
+    past it, in which case the line that token ends on. A compound statement is
+    unaffected: its header line ends at the colon and nothing spans it.
+    """
+    line = span[0]
+    tokens: list[tokenize.TokenInfo] = []
+    with contextlib.suppress(tokenize.TokenError, IndentationError, SyntaxError, ValueError):
+        tokens.extend(tokenize.generate_tokens(io.StringIO(source).readline))
+    for entry in tokens:
+        if entry.start[0] <= line < entry.end[0] and entry.end[0] <= span[2]:
+            line = entry.end[0]
+    return line
+
+
+def _only_comment(lines: list[str], line: int) -> bool:
+    """Return whether a line holds nothing but a comment."""
+    return 1 <= line <= len(lines) and lines[line - 1].lstrip().startswith("#")
+
+
+def comment_text(note: str, where: str, indent: int) -> str:
+    """Return what a note edit writes into the range :func:`trivia` reported.
+
+    Parameters
+    ----------
+    note : str
+        What the reader typed, with or without a ``#``.
+    where : str
+        ``above`` for a comment on a line of its own; anything else writes it
+        beside the statement, which is where a first note goes.
+    indent : int
+        The statement's own column, for a note written on a line of its own.
+
+    Returns
+    -------
+    str
+        The replacement text, empty when the note was cleared.
+    """
+    # One line, because a comment is one line. A note carrying a newline was
+    # written through verbatim, so "note\nimport os" added an import to the
+    # file and the reparse accepted it.
+    body = " ".join(note.strip().lstrip("#").split())
+    if not body:
+        return ""
+    if where == "above":
+        return f"{' ' * indent}# {body}\n"
+    return f"  # {body}"

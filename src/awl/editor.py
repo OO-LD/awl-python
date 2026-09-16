@@ -185,7 +185,8 @@ def add_step(
     doc : dict
         A compact document. Not mutated.
     into : list
-        Path to the statement list, e.g. ``["body"]``.
+        Path to the statement list, e.g. ``["body"]``. The slot is created when
+        it is absent.
     node : dict
         The compact node to append.
 
@@ -193,8 +194,20 @@ def add_step(
     -------
     tuple
         The new document with ``order`` renumbered, and a structural patch.
+
+    Notes
+    -----
+    A statement list that is empty is not in the document at all:
+    :func:`awl.compact.encode` drops an empty required list, so an ``if`` with
+    no ``else`` carries no ``orelse`` key. Appending is the edit that gives it
+    one, and this is where that belongs: an editor that created the key itself
+    would be writing the encoding by hand, and one that did not raised
+    ``KeyError: 'orelse'`` on the first statement dropped into an empty branch.
     """
     out = copy.deepcopy(doc)
+    holder = _descend(out, into[:-1]) if into[:-1] else out
+    if into and isinstance(holder, dict) and into[-1] not in holder:
+        holder[into[-1]] = []
     steps = _descend(out, into)
     steps.append(copy.deepcopy(node))
     _renumber(steps)

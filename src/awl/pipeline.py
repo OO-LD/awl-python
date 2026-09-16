@@ -245,6 +245,8 @@ def to_document(
     index: dict[str, str] | None = None,
     layers: tuple[str, ...] | None = None,
     spans: bool | None = None,
+    identities: bool | None = None,
+    trivia: bool | None = None,
 ) -> dict[str, Any]:
     """Build the JSON-LD document a profile calls for.
 
@@ -271,9 +273,19 @@ def to_document(
         derived from it, which is what a reader comparing notations needs.
     spans : bool, optional
         Overrides the profile's :data:`awl.vocab.MATERIALIZES_SPANS`. On for
-        every profile, because a span is what joins the tree to the lookups
-        beside it: the tree's nodes are anonymous and everything else is a
-        minted identity, so without one they share a graph and touch nowhere.
+        every profile, because a span locates a node in the file it came from,
+        which is what a patch and a trace overlay are written against.
+    identities : bool, optional
+        Overrides the profile's :data:`awl.vocab.MATERIALIZES_IDENTITIES`. On
+        for every profile: it names each statement with the identity the plan
+        mints for it, so the tree's statement and the plan's step are one node
+        rather than two that happen to sit at the same coordinates. Needs
+        ``spans``, which is what matches the two sides at build time.
+    trivia : bool, optional
+        Overrides the profile's :data:`awl.vocab.MATERIALIZES_TRIVIA`. On for
+        every profile: it carries the comment written about each statement,
+        which the syntax tree has no node for. Needs ``spans`` too, since a
+        comment is placed against the span of the statement it describes.
 
     Returns
     -------
@@ -289,6 +301,8 @@ def to_document(
     """
     selected = vocab.LOOKUPS[profile] if layers is None else layers
     located = vocab.MATERIALIZES_SPANS[profile] if spans is None else spans
+    named = vocab.MATERIALIZES_IDENTITIES[profile] if identities is None else identities
+    noted = vocab.MATERIALIZES_TRIVIA[profile] if trivia is None else trivia
     unknown = set(selected) - set(vocab.LAYERS)
     if unknown:
         raise ValueError(f"unknown layers {sorted(unknown)}; expected some of {list(vocab.LAYERS)}")
@@ -303,7 +317,20 @@ def to_document(
 
     graph: list[Any] = []
     for part in _layers(
-        source, observed, selected, module=module, profile=profile, file=file, index=index, spans=located
+        source,
+        observed,
+        selected,
+        module=module,
+        profile=profile,
+        file=file,
+        index=index,
+        spans=located,
+        # A statement is matched to its step by span, so without one there is
+        # nothing to name and asking for both is asking for neither.
+        identities=named and located,
+        # Same bargain: a comment is placed against the span of the statement
+        # it was written about.
+        trivia=noted and located,
     ):
         graph.extend(part.get("@graph", [part]))
     return {"@context": built["@context"], "@graph": graph}
@@ -318,6 +345,8 @@ def to_graph(
     index: dict[str, str] | None = None,
     layers: tuple[str, ...] | None = None,
     spans: bool | None = None,
+    identities: bool | None = None,
+    trivia: bool | None = None,
 ):
     """Serialize :func:`to_document` as RDF, taking the same parameters.
 
@@ -332,8 +361,63 @@ def to_graph(
     different things about one program.
     """
     return rdf.to_graph(
-        to_document(source, module=module, profile=profile, file=file, index=index, layers=layers, spans=spans)
+        to_document(
+            source,
+            module=module,
+            profile=profile,
+            file=file,
+            index=index,
+            layers=layers,
+            spans=spans,
+            identities=identities,
+            trivia=trivia,
+        )
     )
+
+
+def _document_layer(
+    source: str,
+    observed: dict[str, Any],
+    layers: tuple[str, ...],
+    *,
+    module: str,
+    profile: str,
+    file: str,
+    index: dict[str, str] | None,
+    spans: bool,
+    plan: dict[str, Any] | None,
+    trivia: bool = False,
+) -> Any:
+    """Return the tree layer: the editor model, plus what a projection needs.
+
+    A slot number where array position stops being recoverable, a span whose
+    four numbers are named, and the identity the plan minted for each statement.
+    All three are the profile's call, and all three leave the editor's own model
+    alone.
+    """
+    tree = compact.encode(
+        _tree(source, observed, module=module, profile=profile, index=index or {}, spans=spans),
+        keep_spans=spans,
+    )
+    if vocab.MATERIALIZES_ORDERINGS[profile]:
+        tree = compact.number_items(tree)
+    if plan is not None:
+        # Needs the span, which is what matches a statement to the step minted
+        # from it. Asking for identities without spans would name nothing rather
+        # than fail, so the caller resolves that before getting here.
+        tree = compact.link_steps(tree, plan["steps"])
+    if trivia:
+        # After the identities and before the names, so a comment lands on a
+        # node that is already named and a name reference added below cannot
+        # be mistaken for a statement.
+        tree = compact.link_trivia(tree, source)
+    if "names" in layers:
+        # The name stays as written, and gains a reference to what it was
+        # resolved to, so a query can ask by identity instead of by spelling.
+        # Only when the names lookup ran: the reference is that lookup's
+        # judgement, not something the tree knows on its own.
+        tree = compact.link_names(tree, resolve(observed)["bindings"])
+    return compact.name_spans(tree, file=file) if spans else tree
 
 
 def _layers(
@@ -346,36 +430,43 @@ def _layers(
     file: str,
     index: dict[str, str] | None,
     spans: bool,
+    identities: bool = False,
+    trivia: bool = False,
 ):
     """Yield the requested layers as documents, building only what is asked for."""
+    # Before the document, because the document is stamped with what it mints.
+    # Built here rather than in the plan branch below so a document can name its
+    # statements without the plan layer being asked for: the identity is a
+    # property of the statement, and the edges between statements are the thing
+    # the plan adds.
+    plan = None
+    if "plan" in layers or (identities and "document" in layers):
+        plan = controlflow.analyze(source, module=module, file=file)
+
     if "document" in layers:
-        # The editor model, then the two things a document that is going to be
-        # projected needs and an editor does not: a slot number where array
-        # position stops being recoverable, and a span whose four numbers are
-        # named. Both are the profile's call, and both leave the editor's own
-        # model alone.
-        tree = compact.encode(
-            _tree(source, observed, module=module, profile=profile, index=index or {}, spans=spans),
-            keep_spans=spans,
+        yield _document_layer(
+            source,
+            observed,
+            layers,
+            module=module,
+            profile=profile,
+            file=file,
+            index=index,
+            spans=spans,
+            plan=plan if identities else None,
+            trivia=trivia,
         )
-        if vocab.MATERIALIZES_ORDERINGS[profile]:
-            tree = compact.number_items(tree)
-        if "names" in layers:
-            # The name stays as written, and gains a reference to what it was
-            # resolved to, so a query can ask by identity instead of by
-            # spelling. Only when the names lookup ran: the reference is that
-            # lookup's judgement, not something the tree knows on its own.
-            tree = compact.link_names(tree, resolve(observed)["bindings"])
-        yield compact.name_spans(tree, file=file) if spans else tree
 
     flow = None
     if {"plan", "definitions"} & set(layers):
         flow = dataflow.analyze(source, module=module, file=file)
 
-    if "plan" in layers:
-        plan = controlflow.analyze(source, module=module, file=file)
+    if "plan" in layers and plan is not None:
         _attach_condition_reads(plan, flow or {})
-        yield controlflow.as_document(plan)
+        # The tree locates the statement when it is naming it, and the step is
+        # the same node by then. A condition keeps its own span either way: it
+        # is not a statement and has no identity of its own.
+        yield controlflow.as_document(plan, spans=not (identities and "document" in layers))
 
     if "names" in layers:
         yield {"@graph": _name_nodes(resolve(observed))}

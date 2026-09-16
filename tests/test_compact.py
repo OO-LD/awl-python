@@ -11,7 +11,7 @@ import pytest
 from ast2json import ast2json
 
 from awl import contracts
-from awl.compact import decode, encode
+from awl.compact import decode, encode, link_trivia
 
 # Composition with the elision stage is asserted in tests/test_pipeline.py,
 # which is the only suite allowed to import more than one module. Here the
@@ -184,3 +184,144 @@ def test_size_is_a_transport_concern_not_a_vocabulary_one():
     blob = json.dumps(encode(raw_doc)).encode()
     assert len(gzip.compress(blob)) < len(gzip.compress(raw)) / 1.5
     assert len(gzip.compress(blob)) < len(blob) / 2, "word keys compress away"
+
+
+TRIVIA_SOURCE = """# ---- setup ----
+import os  # for paths
+
+
+def run(cycles):
+    limit = cycles  # the loop bound
+    # why we start at zero
+    i = 0
+    while i < cycles:
+        step()
+        # nothing follows this
+    return limit
+# end of file
+"""
+
+#: The statements of TRIVIA_SOURCE, by hand, carrying only what the attachment
+#: reads: the span, and the nesting that says what a block is.
+TRIVIA_DOC = {
+    "@type": "Module",
+    "body": [
+        {"@type": "Import", "names": ["os"], "span": [2, 0, 2, 9]},
+        {
+            "@type": "FunctionDef",
+            "name": "run",
+            "span": [5, 0, 12, 16],
+            "body": [
+                {
+                    "@type": "Assign",
+                    "span": [6, 4, 6, 18],
+                    "targets": [{"var": "limit", "span": [6, 4, 6, 9]}],
+                    "value": {"var": "cycles", "span": [6, 12, 6, 18]},
+                },
+                {"@type": "Assign", "span": [8, 4, 8, 9], "value": {"literal": 0, "span": [8, 8, 8, 9]}},
+                {
+                    "@type": "While",
+                    "span": [9, 4, 10, 14],
+                    "body": [{"@type": "Call", "span": [10, 8, 10, 14]}],
+                },
+                {"@type": "Return", "span": [12, 4, 12, 16]},
+            ],
+        },
+    ],
+}
+
+
+def _noted():
+    return link_trivia(TRIVIA_DOC, TRIVIA_SOURCE)
+
+
+def test_a_comment_beside_a_statement_belongs_to_it():
+    assert _noted()["body"][0]["comment"] == {"text": "for paths", "span": [2, 11, 2, 22], "where": "beside"}
+
+
+def test_a_comment_above_a_statement_belongs_to_it():
+    note = _noted()["body"][1]["body"][1]["comment"]
+    assert note["text"] == "why we start at zero"
+    assert note["where"] == "above"
+
+
+def test_a_comment_belongs_to_the_statement_and_not_the_expression_inside_it():
+    """Every node carries a span and a trailing comment is to the right of all
+    of them, so a walk reaching ``cycles`` before the assignment holding it gave
+    the note to the name.
+    """
+    assign = _noted()["body"][1]["body"][0]
+    assert assign["comment"]["text"] == "the loop bound"
+    assert "comment" not in assign["value"], "the name it reads is not what the comment is about"
+    assert "comment" not in assign["targets"][0]
+
+
+def test_a_comment_stranded_at_the_end_of_a_block_belongs_to_the_block():
+    """A span ends at the last statement, so a comment on the line after it is
+    outside the ``while`` enclosing it and would attach to whatever follows.
+    """
+    loop = _noted()["body"][1]["body"][2]
+    assert [note["text"] for note in loop["body_footer"]] == ["nothing follows this"]
+    assert "comment" not in loop
+
+
+def test_the_file_keeps_what_belongs_to_no_statement():
+    assert [note["text"] for note in _noted()["footer"]] == ["end of file"]
+
+
+def test_a_comment_directly_above_the_first_statement_is_that_statements_note():
+    """Or a file shows a comment over its first block and a block with none,
+    which reads as a defect rather than as a rule.
+    """
+    source = "# what this import is for\nimport os\n"
+    doc = link_trivia({"@type": "Module", "body": [{"@type": "Import", "span": [2, 0, 2, 9]}]}, source)
+    assert doc.get("header", []) == []
+    assert doc["body"][0]["comment"] == {"text": "what this import is for", "span": [1, 0, 1, 25], "where": "above"}
+
+
+def test_the_first_statements_own_note_is_not_replaced_by_the_one_above_it():
+    """The file's leading line only becomes the first statement's note when the
+    statement has none; taking precedence over a comment written beside it
+    would silently swap one explanation for another.
+    """
+    doc = _noted()
+    assert doc["body"][0]["comment"]["text"] == "for paths"
+    assert [note["text"] for note in doc["header"]] == ["---- setup ----"]
+
+
+def test_a_run_above_a_statement_is_not_claimed_whole():
+    """Nothing here tells a banner from commented-out code, so only the nearest
+    line is the note and the rest stays with the file.
+    """
+    source = "# ---- charging ----\n# takes an hour\nimport os\n"
+    doc = link_trivia({"@type": "Module", "body": [{"@type": "Import", "span": [3, 0, 3, 9]}]}, source)
+    assert doc["body"][0]["comment"]["text"] == "takes an hour"
+    assert [note["text"] for note in doc["header"]] == ["---- charging ----"]
+
+
+def test_a_hash_inside_a_string_is_not_a_comment():
+    source = 'label = "# not a comment"\n'
+    doc = link_trivia({"@type": "Module", "body": [{"@type": "Assign", "span": [1, 0, 1, 25]}]}, source)
+    assert "comment" not in doc["body"][0]
+    assert "header" not in doc and "footer" not in doc
+
+
+def test_a_note_on_the_statement_after_a_block_is_not_the_blocks_footer():
+    """The first statement after a loop sits at the loop's own indentation, and
+    a comment written beside it is far to the right of the loop's column. Taken
+    on indentation alone, `report.capacity = measure()  # what it held` gave its
+    note to the loop above instead of to the assignment it was written on.
+    """
+    source = "while go:\n    step()\nresult = read()  # what it held\n"
+    doc = link_trivia(
+        {
+            "@type": "Module",
+            "body": [
+                {"@type": "While", "span": [1, 0, 2, 10], "body": [{"@type": "Call", "span": [2, 4, 2, 10]}]},
+                {"@type": "Assign", "span": [3, 0, 3, 16]},
+            ],
+        },
+        source,
+    )
+    assert "body_footer" not in doc["body"][0]
+    assert doc["body"][1]["comment"] == {"text": "what it held", "span": [3, 17, 3, 31], "where": "beside"}

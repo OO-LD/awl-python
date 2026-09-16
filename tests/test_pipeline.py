@@ -8,6 +8,7 @@ entity differently, or a stage emitting something the next one cannot read.
 import ast
 
 import pytest
+from rdflib import URIRef
 
 from awl import compact, contracts, pipeline, vocab
 
@@ -275,20 +276,27 @@ def test_the_gradient_shows_in_the_collapsed_node():
 def test_every_layer_is_contained_in_the_whole():
     """Asking for one lookup gives part of what asking for all of them gives.
 
-    Not a partition: `names` both adds its own nodes and resolves the tree's
-    name references, so the layers overlap by design and the sum of the parts
-    is smaller than the whole rather than equal to it.
+    Checked as containment and not as a count. Counting said the whole must be
+    at least the sum of the parts, which only held while the layers repeated
+    each other: a statement and the step minted from it were two nodes, both
+    located, so the whole carried that span twice. Once they became one node
+    the whole got *smaller* than the sum, with nothing lost, and a size
+    comparison called that a regression.
+
+    Stated over what a query can name: every subject a layer describes, and
+    every edge it draws between two named things, is in the whole.
     """
     source, index = _tier("tier3_oold")
-    whole = len(pipeline.to_graph(source, module="tier3_oold.procedure", index=index))
+    whole = pipeline.to_graph(source, module="tier3_oold.procedure", index=index)
+    named = {(subject, predicate, obj) for subject, predicate, obj in whole if isinstance(obj, URIRef)}
+    subjects = set(whole.subjects())
+
     for layer in vocab.LAYERS:
-        part = len(pipeline.to_graph(source, module="tier3_oold.procedure", index=index, layers=(layer,)))
-        assert 0 <= part <= whole, layer
-    parts = sum(
-        len(pipeline.to_graph(source, module="tier3_oold.procedure", index=index, layers=(layer,)))
-        for layer in vocab.LAYERS
-    )
-    assert parts <= whole, "no layer contributes anything the whole does not have"
+        part = pipeline.to_graph(source, module="tier3_oold.procedure", index=index, layers=(layer,))
+        missing_subjects = {s for s in part.subjects() if isinstance(s, URIRef)} - subjects
+        assert not missing_subjects, f"{layer} names subjects the whole does not: {sorted(missing_subjects)[:3]}"
+        edges = {(s, p, o) for s, p, o in part if isinstance(s, URIRef) and isinstance(o, URIRef)}
+        assert not edges - named, f"{layer} draws edges the whole does not: {sorted(edges - named)[:3]}"
 
 
 def test_which_statement_precedes_another_is_answerable_over_the_whole_chain():
@@ -536,3 +544,115 @@ def test_the_class_is_co_typed_with_the_iri_it_declared():
           FILTER(?declared != <https://w3id.org/awl/py/tier3_oold.params/ChargeParam>) }
     """)
     assert [str(row[0]) for row in rows] == ["https://example.org/battery#ChargeParam"]
+
+
+TRICKY = """# ---- banner ----
+import os  # for paths
+
+
+def run(cycles):
+    f = lambda: os.getcwd()  # what it returns
+    limit = cycles if cycles else 1  # the fallback
+    a = 1; b = 2  # the second one
+    if limit: print(a)  # the whole if
+    while b:
+        print(f)
+        # nothing follows this
+    return limit
+# end of file
+"""
+
+
+def _statement_spans(source):
+    """Return every statement's span, the way a document carries one."""
+    import ast
+
+    return [
+        [node.lineno, node.col_offset, node.end_lineno, node.end_col_offset]
+        for node in ast.walk(ast.parse(source))
+        if isinstance(node, ast.stmt)
+    ]
+
+
+def test_the_document_and_the_editor_agree_about_every_comment():
+    """Two readings of one thing, and the reason the model grew a trivia method.
+
+    `compact.link_trivia` places comments by walking the document; `writeback.trivia`
+    answers for one span out of the source. They implement the same rules by
+    different routes, and every case where they disagreed was a bug in one of
+    them: a lambda body taken for a statement list, an indented comment promoted
+    over a column-zero statement, and a line holding two statements.
+    """
+    from awl import writeback
+
+    document = compact.link_trivia(pipeline.to_compact(TRICKY, module="m", file="m.py", spans=True), TRICKY)
+    placed = {}
+
+    def walk(node):
+        if isinstance(node, list):
+            for item in node:
+                walk(item)
+        elif isinstance(node, dict):
+            if "comment" in node and isinstance(node.get("span"), list):
+                placed[tuple(node["span"])] = node["comment"]["text"]
+            for value in node.values():
+                walk(value)
+
+    walk(document)
+
+    disagreements = []
+    for span in _statement_spans(TRICKY):
+        theirs = writeback.trivia(TRICKY, span)["text"]
+        ours = placed.get(tuple(span), "")
+        if theirs and ours and theirs != ours:
+            disagreements.append((span, ours, theirs))
+    assert not disagreements, disagreements
+    assert placed, "the fixture carries comments, so something must have been placed"
+
+
+def test_a_comment_never_lands_on_an_expression():
+    """`Lambda.body`, `IfExp.body` and `IfExp.orelse` wear the names of
+    statement lists without being one, and taking them for statement lists gave
+    a lambda's call the comment written about the assignment holding it.
+    """
+    document = compact.link_trivia(pipeline.to_compact(TRICKY, module="m", file="m.py", spans=True), TRICKY)
+    statements = {tuple(span) for span in _statement_spans(TRICKY)}
+    stray = []
+
+    def walk(node):
+        if isinstance(node, list):
+            for item in node:
+                walk(item)
+        elif isinstance(node, dict):
+            if "comment" in node and tuple(node.get("span") or ()) not in statements:
+                stray.append((node.get("@type"), node["comment"]["text"]))
+            for value in node.values():
+                walk(value)
+
+    walk(document)
+    assert not stray, stray
+
+
+def test_the_flavour_settings_are_read_and_not_merely_written():
+    """A parameter a flavour sets and the builder never passes is a section
+    demonstrating nothing. `spans` had this bug once; `trivia` had it too.
+    """
+    from awl import examples
+
+    base = {"layers": ("document",), "spans": True}
+    assert examples._flavour_document({**base, "trivia": False}) != examples._flavour_document({
+        **base,
+        "trivia": True,
+    })
+    assert '"comment"' not in examples._flavour_document({**base, "trivia": False})
+    assert '"comment"' in examples._flavour_document({**base, "trivia": True})
+
+
+def test_the_same_graph_draws_the_same_diagram_every_time():
+    """A blank node's identity is a fresh UUID per process, so a diagram
+    numbered by it rendered differently on every docs build.
+    """
+    from awl import examples
+
+    settings = {"layers": ("document", "plan", "names"), "spans": True}
+    assert examples._flavour_mermaid(settings) == examples._flavour_mermaid(settings)

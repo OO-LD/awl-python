@@ -15,8 +15,10 @@ __all__ = [
     "FOLDS_KEYWORDS",
     "LAYERS",
     "LOOKUPS",
+    "MATERIALIZES_IDENTITIES",
     "MATERIALIZES_ORDERINGS",
     "MATERIALIZES_SPANS",
+    "MATERIALIZES_TRIVIA",
     "NODE_TYPES",
     "OPAQUE",
     "ORDERED_FIELDS",
@@ -238,6 +240,34 @@ MATERIALIZES_ORDERINGS = MappingProxyType(dict.fromkeys(TRANSPARENT, True))
 #: The editor model is the exception and asks for it explicitly, because
 #: regenerating code does not need it and carrying it doubles the tree.
 MATERIALIZES_SPANS = MappingProxyType(dict.fromkeys(TRANSPARENT, True))
+
+#: Whether a profile's document names every statement of the tree.
+#:
+#: On. The plan mints an identity for each statement, from the same node the
+#: tree is encoded from, and without this the tree's side is dropped: one
+#: statement then arrives as two anonymous-and-minted nodes carrying equal span
+#: coordinates, and a query wanting the plan's successor beside the tree's
+#: callee has to match four numbers to say "the same statement". With the
+#: identity on both there is nothing to match, because there is one node.
+#:
+#: The editor model never sees them: it is built through
+#: :func:`awl.pipeline.to_compact`, which runs no lookups, and it addresses a
+#: statement by its path in the tree because a minted identity carries a
+#: position that an edit above it invalidates.
+MATERIALIZES_IDENTITIES = MappingProxyType(dict.fromkeys(TRANSPARENT, True))
+
+#: Whether a profile's document carries the comments written about the code.
+#:
+#: On. ``ast`` has no comment node, so without this a comment exists only in the
+#: source and nothing derived from the document can see one: an editor that
+#: renders a block's explanation has to re-read the file, and a graph of a
+#: procedure cannot answer what a step is *for* even though someone wrote it
+#: down on the line above.
+#:
+#: The editor model never sees it either. An editor reads a comment through
+#: :meth:`awl.ui.EditorModel.trivia`, which answers from the source it is
+#: already holding rather than from the document.
+MATERIALIZES_TRIVIA = MappingProxyType(dict.fromkeys(TRANSPARENT, True))
 
 #: Whether a collapsed node carries its own ``@context``.
 #:

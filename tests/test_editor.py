@@ -159,6 +159,33 @@ def test_adding_a_step_returns_a_structural_patch():
     assert edits[0]["code"] == "rest(600)", "the patch carries what to insert"
 
 
+def test_adding_a_step_to_a_list_the_encoder_dropped_makes_the_slot():
+    """An empty statement list is not in the document at all.
+
+    ``encode`` drops an empty required list, which is deliberate and tested, so
+    an ``if`` with no ``else`` carries no ``orelse`` key. Appending is the edit
+    that gives it one: that is a fact about the encoding and belongs here, and
+    an editor left to create the key itself would be writing the encoding by
+    hand. The canvas that dropped a statement into an empty ``else`` raised
+    ``KeyError: 'orelse'`` instead.
+    """
+    doc = _compact("if x:\n    charge(4.2)\n")
+    assert "orelse" not in doc["body"][0], doc["body"][0]
+
+    node = _compact("rest(600)\n")["body"][0]
+    new_doc, edits = add_step(doc, into=["body", 0, "orelse"], node=node)
+
+    assert [step["order"] for step in new_doc["body"][0]["orelse"]] == [0]
+    assert edits[0]["kind"] == "structural"
+    assert "orelse" not in doc["body"][0], "and the document handed in was not touched"
+
+    import ast
+
+    from awl.compact import decode
+
+    assert ast.unparse(ast.fix_missing_locations(decode(new_doc))).splitlines()[-2:] == ["else:", "    rest(600)"]
+
+
 def test_deleting_a_step_renumbers_the_rest():
     doc = _compact("charge(4.2)\nrest(600)\n")
     new_doc, edits = delete_step(doc, path=["body", 0])

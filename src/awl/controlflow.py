@@ -336,13 +336,18 @@ def analyze(source: str, *, module: str = "", file: str = "<source>") -> dict[st
 EDGE_KINDS = ("next", "when_true", "when_false", "each_item", "exhausted", "repeat", "on_error")
 
 
-def as_document(graph: dict[str, Any]) -> dict[str, Any]:
+def as_document(graph: dict[str, Any], *, spans: bool = True) -> dict[str, Any]:
     """Turn an analysed graph into JSON-LD nodes with typed edge predicates.
 
     Parameters
     ----------
     graph : dict
         The output of :func:`analyze`.
+    spans : bool, optional
+        Locate each step. Turned off when the tree is in the same document and
+        already names its statements with these identities: the step and the
+        statement are then one node, and it would carry the same four numbers
+        twice, once from each side.
 
     Returns
     -------
@@ -372,8 +377,9 @@ def as_document(graph: dict[str, Any]) -> dict[str, Any]:
             # A label, deliberately not a type: a second language frontend
             # should add a name here, never a new type.
             "parser_type_name": step["parser_type_name"],
-            "span": step["span"],
         }
+        if spans:
+            node["span"] = step["span"]
         for key in ("callee", "condition", "scope"):
             if step.get(key):
                 node[key] = step[key]
