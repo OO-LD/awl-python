@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import ast
 import sys
+import time
 from collections.abc import Callable
 from functools import lru_cache
 from types import CodeType, FrameType
@@ -271,7 +272,12 @@ class _Recorder:
         return ordinal
 
 
-def trace(fn: Callable[[], Any], *, capture_c_calls: bool = True) -> list[dict[str, Any]]:
+def trace(
+    fn: Callable[[], Any],
+    *,
+    capture_c_calls: bool = True,
+    seconds: float | None = None,
+) -> list[dict[str, Any]]:
     """Run *fn* under instrumentation and return the events it produced.
 
     Parameters
@@ -282,6 +288,14 @@ def trace(fn: Callable[[], Any], *, capture_c_calls: bool = True) -> list[dict[s
         Also install a profile hook, so C callees are named. ``settrace`` alone
         cannot see them, and ``arg.__module__ + arg.__qualname__`` is exactly
         the identity awl.ids mints.
+    seconds : float, optional
+        Give up after this long, raising :class:`TimeoutError` from inside the
+        run. ``None`` waits forever.
+
+        An editor places loops, so it runs code nobody has read: a palette
+        template of ``while i < 10:`` dropped into a body that never increments
+        ``i`` hangs the interpreter and takes the editor with it. The tracer is
+        already on every line, so it is the one place that can stop it.
 
     Returns
     -------
@@ -300,7 +314,11 @@ def trace(fn: Callable[[], Any], *, capture_c_calls: bool = True) -> list[dict[s
     """
     recorder = _Recorder()
 
+    deadline = None if seconds is None else time.monotonic() + seconds
+
     def tracer(frame: FrameType, event: str, arg: Any = None):
+        if deadline is not None and time.monotonic() > deadline:
+            raise TimeoutError(f"the run passed {seconds:g}s and was stopped")
         frame.f_trace_opcodes = True
         if event == "call":
             recorder.enter_frame(frame)

@@ -1,18 +1,20 @@
-"""What every editor variant shares: the model, the operations, the overlay.
+"""What an editor is built on: the model, the operations, the overlay.
 
-Three canvases are built against this, and the point of building three is to
-settle a design question with evidence rather than taste: whether a procedure
-reads better as nested control flow or as a dataflow graph, and whether a
-typed parameter form belongs inside a node or beside it. A comparison is only
-worth anything if the thing being compared is the paradigm, so everything
-below the canvas is here and is identical for all three.
+An editor supplies a canvas and a form. It supplies no model, no edit
+semantics and no validation: those are :mod:`awl.editor`, and an editor that
+reimplemented them would be measuring its own reimplementation rather than the
+model. That rule is the reason several defects were found at all, because
+several canvases were built against this one model and each surfaced faults the
+others did not.
 
-A variant supplies a canvas and a form. It supplies no model, no edit
-semantics and no validation: those are :mod:`awl.editor`, and a variant that
-reimplemented them would be measuring its own reimplementation.
-
-The widget speaks anywidget, so one component serves the notebook, Panel
-through ``AnyWidgetComponent``, and JupyterLite.
+Five canvases were built and compared to settle two design questions with
+evidence rather than taste: whether a procedure reads better as nested control
+flow or as a dataflow graph, and whether a typed parameter form belongs inside
+a node or beside it. Both are answered, and what the comparison produced is
+written down in ``docs/editor-spec.md``, requirement by requirement, each with
+the failure that produced it. The canvas that won is :mod:`awl.ui.panel_reactflow`
+and is the only one kept; deploying it to a browser is a separate concern and
+lives in the playgrounds repository, which imports it from here.
 """
 
 from __future__ import annotations
@@ -22,25 +24,12 @@ from typing import Any
 from awl import compact, controlflow, editor, facts, pipeline
 from awl.resolve import resolve
 
-__all__ = ["OPERATIONS", "VARIANTS", "EditorModel", "load", "open_sample"]
+__all__ = ["OPERATIONS", "EditorModel", "load", "open_sample"]
 
 #: The edits a canvas may make. Each returns a new document and the source
 #: patch that would make the same change, so a variant needs no edit semantics
 #: of its own.
 OPERATIONS = ("set_literal", "add_step", "delete_step", "reorder")
-
-#: The canvas and form pairing each variant is testing.
-#:
-#: The third is not a hedge between the other two. React Flow with RJSF is the
-#: path of least resistance in React and pays for it with a permanent uiSchema
-#: mapping; pairing React Flow with jedison asks whether the schema form can be
-#: kept schema-driven while the canvas stays React, which is the question the
-#: first two together cannot answer.
-VARIANTS = {
-    "blockly": ("Blockly", "jedison", "control flow as nested blocks"),
-    "reactflow": ("React Flow", "RJSF", "dataflow as a node graph"),
-    "reactflow_jedison": ("React Flow", "jedison", "dataflow as a node graph, schema-driven form"),
-}
 
 
 class EditorModel:
@@ -276,6 +265,7 @@ class EditorModel:
         *arguments: Any,
         environment: dict[str, Any] | None = None,
         modules: dict[str, Any] | None = None,
+        seconds: float | None = 5.0,
     ) -> dict[str, Any]:
         """Execute a function in this module under instrumentation.
 
@@ -294,6 +284,12 @@ class EditorModel:
             never gets the chance to help. The caller says what
             ``battery.device`` is for this run; nothing here guesses, and
             nothing is left installed afterwards.
+        seconds : float, optional
+            Give up after this long. An editor runs code nobody has read: a
+            palette template of ``while i < 10:`` dropped into a body that
+            never increments ``i`` took the whole process down and needed a
+            restart. Bounded by default, because an editor that can hang is
+            not an editor.
 
         Returns
         -------
@@ -336,7 +332,7 @@ class EditorModel:
         from awl.execution import join
         from awl.trace import trace
 
-        events = trace(call)
+        events = trace(call, seconds=seconds)
         overlay = join(self.plan, events)
         return {"ok": not failure, "overlay": overlay, "error": failure[0] if failure else None}
 
@@ -443,6 +439,79 @@ class EditorModel:
 
         offsets = writeback.offsets(self.source, span)
         return self.source[offsets["start"] : offsets["end"]]
+
+    def trivia(self, span: list[int] | None) -> dict[str, Any]:
+        """Return the comment the statement at *span* carries.
+
+        Parameters
+        ----------
+        span : list of int or None
+            ``[start_line, start_col, end_line, end_col]``.
+
+        Returns
+        -------
+        dict
+            ``text`` without its ``#``, ``span`` for the range a note edit
+            rewrites, zero width where there is no comment yet, and ``where``,
+            one of ``beside``, ``above`` or ``""``.
+
+        Notes
+        -----
+        Here because the syntax tree has no comment node, so the document has
+        none either, and a canvas that wanted one would tokenize the source
+        itself. One did, and the other four would each have repeated it.
+
+        The write half needs nothing: hand the range to :meth:`set_trivia`, or
+        to :meth:`replace_at` directly, and the note is patched by span like a
+        literal, so the rest of the file does not move and ``reformats()``
+        stays false.
+        """
+        from awl import writeback
+
+        return writeback.trivia(self.source, span)
+
+    def set_trivia(self, span: list[int], text: str) -> dict[str, Any]:
+        """Write *text* as the comment on the statement at *span*.
+
+        Parameters
+        ----------
+        span : list of int
+            The statement's span, not the note's.
+        text : str
+            What to write, with or without a ``#``. Empty clears the note.
+
+        Returns
+        -------
+        dict
+            ``ok`` and the new ``document``, or ``ok: False`` and the parse
+            error, exactly as :meth:`replace_at`.
+
+        Notes
+        -----
+        A first note is written beside the statement, into the zero-width range
+        at the end of its line, which is the same call as editing one that is
+        already there.
+        """
+        import ast
+
+        from awl import writeback
+
+        # A span that is not a statement's would edit the note of whichever
+        # statement encloses it: handed the span of `compute(1)` inside
+        # `x = compute(1)  # note`, this rewrote the assignment's comment and
+        # reported success.
+        starts = {
+            (node.lineno, node.col_offset) for node in ast.walk(ast.parse(self.source)) if isinstance(node, ast.stmt)
+        }
+        if not span or (span[0], span[1]) not in starts:
+            return {"ok": False, "error": "a note belongs to a statement, and no statement starts there"}
+
+        found = self.trivia(span)
+        if not found["span"]:
+            return {"ok": False, "error": "that statement covers no source"}
+
+        replacement = writeback.comment_text(text, found["where"], span[1] if span else 0)
+        return self.replace_at(found["span"], replacement)
 
     def replace_at(self, span: list[int], text: str) -> dict[str, Any]:
         """Replace what a span covers with *text*, and rebuild.

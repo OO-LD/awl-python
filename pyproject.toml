@@ -44,6 +44,11 @@ edit = ["libcst"]
 # module built against them needs it to check its own output.
 # referencing is declared explicitly rather than relied on transitively.
 validate = ["jsonschema>=4.18.0", "referencing"]
+# The editor: awl.ui.panel_reactflow, a Panel application. Running it is
+# starting a server, which is the cost of the one canvas of five that could put
+# the typed parameter form inside the node. Monaco and the type checker are
+# fetched at render time, so nothing here builds or vendors JavaScript.
+editor = ["panel-reactflow>=0.4.1", "panel>=1.5", "param>=2.0"]
 
 [project.urls]
 Homepage = "https://OO-LD.github.io/awl-python/"
@@ -53,6 +58,10 @@ Download = "https://pypi.org/project/awl/#files"
 
 [dependency-groups]
 dev = [
+    # The editor extra, so tests/ui/ runs under a plain `uv sync`, which does
+    # not install extras. Without it that suite skips itself and the editor
+    # is silently untested.
+    "panel-reactflow>=0.4.1",
     "deptry>=0.25.0",
     "mike @ git+https://github.com/squidfunk/mike.git@2.2.0+zensical-0.1.0",
     "pre-commit>=4.0.0",

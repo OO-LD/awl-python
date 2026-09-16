@@ -89,6 +89,11 @@ dependencies = [
 edit = [
     { name = "libcst" },
 ]
+editor = [
+    { name = "panel" },
+    { name = "panel-reactflow" },
+    { name = "param" },
+]
 hitl = [
     { name = "oold", extra = ["ui-panel"] },
 ]
@@ -107,6 +112,7 @@ dev = [
     { name = "libcst" },
     { name = "mike" },
     { name = "mkdocstrings-python" },
+    { name = "panel-reactflow" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-benchmark" },
@@ -125,6 +131,9 @@ requires-dist = [
     { name = "libcst", marker = "extra == 'edit'" },
     { name = "oold", specifier = ">=0.8.0" },
     { name = "oold", extras = ["ui-panel"], marker = "extra == 'hitl'" },
+    { name = "panel", marker = "extra == 'editor'", specifier = ">=1.5" },
+    { name = "panel-reactflow", marker = "extra == 'editor'", specifier = ">=0.4.1" },
+    { name = "param", marker = "extra == 'editor'", specifier = ">=2.0" },
     { name = "pyld" },
     { name = "rdflib" },
     { name = "referencing", marker = "extra == 'validate'" },
@@ -140,6 +149,7 @@ dev = [
     { name = "libcst" },
     { name = "mike", git = "https://github.com/squidfunk/mike.git?rev=2.2.0%2Bzensical-0.1.0" },
     { name = "mkdocstrings-python", specifier = ">=1.0.3" },
+    { name = "panel-reactflow", specifier = ">=0.4.1" },
     { name = "pre-commit", specifier = ">=4.0.0" },
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "pytest-benchmark", specifier = ">=5.0.0" },
@@ -1879,6 +1889,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/9f/7d/7dbbda0e64527f87fae61561f87ef0d91cff7fd2f105ba5dc1d412ccddb4/panel_material_ui-0.14.2.tar.gz", hash = "sha256:4b4e9d6f771294d778b6c13ea77348a633d55e48264dfa803f4d8bbd9d5ebf6a", size = 3991585 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/e3/524f051e605702b53d34560f6f5d79a7262589f750fdba14484e99b27548/panel_material_ui-0.14.2-py3-none-any.whl", hash = "sha256:726b9aecc675c03e2c0f823c03f9a20910052a9a0d2e10b0c4430bcacf824911", size = 1734158 },
+]
+
+[[package]]
+name = "panel-reactflow"
+version = "0.4.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "packaging" },
+    { name = "panel" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5e/7b/39942e0d7b5250d042bf98e24b883a034ffc4373749689e6880d4227a78c/panel_reactflow-0.4.1.tar.gz", hash = "sha256:b36988c42f2b5833cd13ce9ac142608701ffb1ea2e877a07431be3f1a1b137c1", size = 1984945 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3a/92/aecdf2b94cc165e1f35497b818fd2e6c13cfa96f86ea93b2c6cc9a1e28a7/panel_reactflow-0.4.1-py3-none-any.whl", hash = "sha256:07145a4f653de0a9c6e4b3566467b8055cadcb86ba7ed00d70e47a95b17a3664", size = 165502 },
 ]
 
 [[package]]

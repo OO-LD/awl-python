@@ -403,14 +403,24 @@ def test_a_step_identity_does_not_survive_an_edit_elsewhere():
     assert len(kept) < len(before), "positional identity does not survive an insertion earlier in the file"
 
 
-def test_every_variant_pairs_a_canvas_with_a_form():
-    """Three variants, and the comparison is only worth anything if what
-    differs between them is the paradigm rather than the plumbing.
+def test_a_run_that_never_finishes_is_stopped():
+    """An editor runs code nobody has read.
+
+    A palette offering `while i < 10:` places a loop before its body exists,
+    so the very next click runs something that never returns. That took the
+    whole process down and needed a restart, which is not a defect of the
+    canvas that placed it: an editor that can hang is not an editor.
     """
-    assert set(ui.VARIANTS) == {"blockly", "reactflow", "reactflow_jedison"}
-    canvases = {canvas for canvas, _form, _note in ui.VARIANTS.values()}
-    forms = {form for _canvas, form, _note in ui.VARIANTS.values()}
-    assert len(canvases) == 2 and len(forms) == 2, "each axis is varied, not both at once"
+    model = ui.open_sample()
+    stuck = "    i = 0\n    while i < 10:\n        settle(0)\n"
+    model.set_source(model.source.replace("    i = 0\n", stuck))
+
+    result = model.run("procedure", 3, seconds=2.0)
+    assert not result["ok"]
+    assert "TimeoutError" in result["error"]
+    assert any(record["executed"] for record in result["overlay"]["executions"]), (
+        "what ran before it hung is still a fact about the procedure"
+    )
 
 
 def test_the_operations_are_the_editors_and_not_reimplemented():
@@ -418,3 +428,79 @@ def test_the_operations_are_the_editors_and_not_reimplemented():
     from awl import editor
 
     assert set(ui.OPERATIONS) <= set(editor.__all__)
+
+
+NOTED = """def procedure(cycles):
+    # what the loop counts up to
+    limit = cycles
+    total = 0  # running sum
+    return total
+"""
+
+
+def _noted():
+    return ui.load(NOTED, module="noted", file="noted.py")
+
+
+def _spans_of(model, kind):
+    return [
+        [s["span"]["start_line"], s["span"]["start_col"], s["span"]["end_line"], s["span"]["end_col"]]
+        for s in model.flow("procedure")["steps"]
+        if s["parser_type_name"] == kind
+    ]
+
+
+def _span_of(model, kind):
+    return _spans_of(model, kind)[0]
+
+
+def test_a_statement_reports_the_comment_it_carries():
+    """The syntax tree has no comment node, so a canvas that wanted one
+    tokenized the source itself. One did; the other four would each repeat it.
+    """
+    model = _noted()
+    beside = model.trivia(_span_of(model, "Assign"))
+    assert beside["text"] == "what the loop counts up to"
+    assert beside["where"] == "above"
+
+
+def test_a_statement_with_no_comment_reports_where_one_would_go():
+    """Zero width, so writing a first note is the same call as editing one."""
+    model = _noted()
+    found = model.trivia(_span_of(model, "Return"))
+    assert found["text"] == ""
+    assert found["span"][0] == found["span"][2] and found["span"][1] == found["span"][3]
+
+
+def test_writing_a_note_patches_by_span_and_keeps_the_comments():
+    """A note is a value edit, not a structural one.
+
+    Going through the regenerating path would drop every other comment in the
+    file to write this one, which is the trade `reformats()` exists to warn
+    about and the wrong one to make for a comment.
+    """
+    model = _noted()
+    span = _span_of(model, "Return")
+    assert model.set_trivia(span, "the answer")["ok"]
+
+    assert model.trivia(span)["text"] == "the answer"
+    assert "# what the loop counts up to" in model.source, "the other comments survive"
+    assert "# running sum" in model.source
+    assert not model.reformats()
+
+
+def test_clearing_a_note_above_takes_its_whole_line():
+    """Or an emptied comment leaves a blank line where it used to be."""
+    model = _noted()
+    assert model.set_trivia(_span_of(model, "Assign"), "")["ok"]
+    assert "what the loop counts up to" not in model.source
+    assert "    limit = cycles\n" in model.source, "the statement is untouched"
+    assert "\n\n" not in model.source, "and no gap is left behind"
+
+
+def test_clearing_a_note_beside_takes_the_spaces_before_it():
+    """Or the line keeps a ragged tail of whitespace no one can see."""
+    model = _noted()
+    beside = [span for span in _spans_of(model, "Assign") if model.trivia(span)["where"] == "beside"]
+    assert model.set_trivia(beside[0], "")["ok"]
+    assert "    total = 0\n" in model.source
