@@ -1,10 +1,10 @@
 {
   "requests": 43,
-  "wire": 22067004,
+  "wire": 22066962,
   "decoded": 11084429,
-  "gzipped": 2923960,
+  "gzipped": 2923943,
   "bodies_not_readable": [
-    "http://127.0.0.1:57157/ty-wasm/ty_wasm_bg.wasm"
+    "http://127.0.0.1:53118/ty-wasm/ty_wasm_bg.wasm"
   ],
   "shell": {
     "requests": 38,
@@ -13,7 +13,7 @@
   },
   "monaco": {
     "requests": 3,
-    "wire": 898684,
+    "wire": 898642,
     "decoded": 3577238
   },
   "ty_wasm": {
@@ -25,14 +25,14 @@
   "why_not_comparable": "a pip-installed wheel with bundled JavaScript, served by the application's own development server, which compresses only part of what it sends; the other four load unbundled ES modules from a CDN, which compresses all of it. This one also carries an IDE none of the others has: Monaco from a CDN and ty as WebAssembly, reported separately above so the editor and the type checker can be priced apart",
   "responses": [
     {
-      "url": "http://127.0.0.1:57157/ty-wasm/ty_wasm_bg.wasm",
+      "url": "http://127.0.0.1:53118/ty-wasm/ty_wasm_bg.wasm",
       "wire": 17717752,
       "decoded": 0,
       "gzipped": 0,
       "body_read": false
     },
     {
-      "url": "http://127.0.0.1:57157/static/js/bokeh.min.js?v=6acf7fa15d17d1f4f73b696c45463ebcb45d3d5d8067e86826a48d7d9fd7c67183278ae3b40225167b8c8f4073fdd7ea100fcc28ed9a8653a3d295322ea9d1e8",
+      "url": "http://127.0.0.1:53118/static/js/bokeh.min.js?v=6acf7fa15d17d1f4f73b696c45463ebcb45d3d5d8067e86826a48d7d9fd7c67183278ae3b40225167b8c8f4073fdd7ea100fcc28ed9a8653a3d295322ea9d1e8",
       "wire": 1268134,
       "decoded": 1268134,
       "gzipped": 351691,
@@ -40,48 +40,48 @@
     },
     {
       "url": "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/+esm",
-      "wire": 851249,
+      "wire": 851645,
       "decoded": 3489144,
       "gzipped": 883625,
       "body_read": true
     },
     {
-      "url": "http://127.0.0.1:57157/static/extensions/panel/panel.min.js?v=32f96484ee4a5140e4647ab281f6b53e01a47dd745c3b4d902ed6a4edfdcabe8",
+      "url": "http://127.0.0.1:53118/static/extensions/panel/panel.min.js?v=32f96484ee4a5140e4647ab281f6b53e01a47dd745c3b4d902ed6a4edfdcabe8",
       "wire": 766551,
       "decoded": 766551,
       "gzipped": 192945,
       "body_read": true
     },
     {
-      "url": "http://127.0.0.1:57157/static/js/bokeh-widgets.min.js?v=7cce1f95cc36d3d6f72c346862eee80401d3cb2e6d277f1309fefbe4f4a68db7f52dd73bea0218521880ed3000162dac0e0d07a9abe2e6dd9caad2f07446018f",
+      "url": "http://127.0.0.1:53118/static/js/bokeh-widgets.min.js?v=7cce1f95cc36d3d6f72c346862eee80401d3cb2e6d277f1309fefbe4f4a68db7f52dd73bea0218521880ed3000162dac0e0d07a9abe2e6dd9caad2f07446018f",
       "wire": 381992,
       "decoded": 381992,
       "gzipped": 101496,
       "body_read": true
     },
     {
-      "url": "http://127.0.0.1:57157/static/extensions/panel-reactflow/panel-reactflow.bundle.js?eeda0534e9d6c130490f965dbeedadd9",
+      "url": "http://127.0.0.1:53118/static/extensions/panel-reactflow/panel-reactflow.bundle.js?eeda0534e9d6c130490f965dbeedadd9",
       "wire": 372815,
       "decoded": 372815,
       "gzipped": 121073,
       "body_read": true
     },
     {
-      "url": "http://127.0.0.1:57157/static/js/bokeh-tables.min.js?v=e4f64205532d8472bea184da120e7a1759c98a442601e122fd2b3fd7070f4d643f72ac75849ae290067e5260a9b74e5a801d424c05f944cd96250270902b45f6",
+      "url": "http://127.0.0.1:53118/static/js/bokeh-tables.min.js?v=e4f64205532d8472bea184da120e7a1759c98a442601e122fd2b3fd7070f4d643f72ac75849ae290067e5260a9b74e5a801d424c05f944cd96250270902b45f6",
       "wire": 301627,
       "decoded": 301627,
       "gzipped": 87756,
       "body_read": true
     },
     {
-      "url": "http://127.0.0.1:57157/static/js/bokeh-gl.min.js?v=491e3b65808ff55704d4383425fa1c479560e54143b176dc4d219aee688613c4ee4413f0e74e0f64344117e0bfc0b54040ae4d11a5cf239b912d00e7e2ddf92b",
+      "url": "http://127.0.0.1:53118/static/js/bokeh-gl.min.js?v=491e3b65808ff55704d4383425fa1c479560e54143b176dc4d219aee688613c4ee4413f0e74e0f64344117e0bfc0b54040ae4d11a5cf239b912d00e7e2ddf92b",
       "wire": 193727,
       "decoded": 193727,
       "gzipped": 56045,
       "body_read": true
     },
     {
-      "url": "http://127.0.0.1:57157/ty-wasm/ty_wasm.js",
+      "url": "http://127.0.0.1:53118/ty-wasm/ty_wasm.js",
       "wire": 95660,
       "decoded": 95660,
       "gzipped": 11364,
@@ -89,237 +89,237 @@
     },
     {
       "url": "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/esm/vs/base/browser/ui/codicons/codicon/codicon.ttf",
-      "wire": 44136,
+      "wire": 44121,
       "decoded": 80340,
       "gzipped": 44031,
       "body_read": true
     },
     {
-      "url": "http://127.0.0.1:57157/static/extensions/panel/bundled/reactiveesm/es-module-shims@%5E1.10.0/dist/es-module-shims.min.js",
+      "url": "http://127.0.0.1:53118/static/extensions/panel/bundled/reactiveesm/es-module-shims@%5E1.10.0/dist/es-module-shims.min.js",
       "wire": 37764,
       "decoded": 37764,
       "gzipped": 13468,
       "body_read": true
     },
     {
-      "url": "http://127.0.0.1:57157/static/extensions/panel-reactflow/panel-reactflow.bundle.css",
+      "url": "http://127.0.0.1:53118/static/extensions/panel-reactflow/panel-reactflow.bundle.css",
       "wire": 15869,
       "decoded": 15869,
       "gzipped": 2667,
       "body_read": true
     },
     {
-      "url": "http://127.0.0.1:57157/",
+      "url": "http://127.0.0.1:53118/",
       "wire": 4573,
       "decoded": 4573,
-      "gzipped": 2323,
+      "gzipped": 2313,
       "body_read": true
     },
     {
-      "url": "http://127.0.0.1:57157/static/extensions/panel/css/button.css?v=1.9.4",
+      "url": "http://127.0.0.1:53118/static/extensions/panel/css/button.css?v=1.9.4",
       "wire": 3656,
       "decoded": 3656,
       "gzipped": 653,
       "body_read": true
     },
     {
-      "url": "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/esm/vs/basic-languages/python/python.js",
-      "wire": 3299,
-      "decoded": 7754,
-      "gzipped": 2508,
-      "body_read": true
-    },
-    {
-      "url": "http://127.0.0.1:57157/static/extensions/panel-reactflow/css/reactflow.css",
+      "url": "http://127.0.0.1:53118/static/extensions/panel-reactflow/css/reactflow.css",
       "wire": 2921,
       "decoded": 2921,
       "gzipped": 878,
       "body_read": true
     },
     {
-      "url": "http://127.0.0.1:57157/static/extensions/panel/bundled/theme/native.css?v=1.9.4",
+      "url": "https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/esm/vs/basic-languages/python/python.js",
+      "wire": 2876,
+      "decoded": 7754,
+      "gzipped": 2508,
+      "body_read": true
+    },
+    {
+      "url": "http://127.0.0.1:53118/static/extensions/panel/bundled/theme/native.css?v=1.9.4",
       "wire": 2091,
       "decoded": 2091,
       "gzipped": 576,
       "body_read": true
     },
     {
-      "url": "http://127.0.0.1:57157/static/extensions/panel/css/listpanel.css?v=1.9.4",
+      "url": "http://127.0.0.1:53118/static/extensions/panel/css/listpanel.css?v=1.9.4",
       "wire": 1943,
       "decoded": 1943,
       "gzipped": 1023,
       "body_read": true
     },
     {
-      "url": "http://127.0.0.1:57157/static/extensions/panel/bundled/theme/default.css?v=1.9.4",
+      "url": "http://127.0.0.1:53118/static/extensions/panel/bundled/theme/default.css?v=1.9.4",
       "wire": 1518,
       "decoded": 1518,
       "gzipped": 475,
       "body_read": true
     },
     {
-      "url": "http://127.0.0.1:57157/static/extensions/panel/css/loading.css?v=1.9.4",
+      "url": "http://127.0.0.1:53118/static/extensions/panel/css/loading.css?v=1.9.4",
       "wire": 1387,
       "decoded": 1387,
       "gzipped": 426,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/30e1bebf-7cf4-4c6a-9405-143e2532ae2d",
+      "url": "blob:http://127.0.0.1:53118/d60e71d0-7289-4965-8f9a-d91d45dc877e",
       "wire": -70,
       "decoded": 20,
       "gzipped": 40,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/457bb8b1-bad5-4017-90f7-060a05313c44",
+      "url": "blob:http://127.0.0.1:53118/be2fdf17-23fc-4eb4-b6b0-b7be843e71f8",
       "wire": -71,
       "decoded": 648,
       "gzipped": 299,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/7c49ec3a-959f-4f0e-99fd-fc8aee4f99ef",
+      "url": "blob:http://127.0.0.1:53118/7b3a061d-f387-4b2e-84f3-32ca4cdc6816",
       "wire": -71,
       "decoded": 760,
       "gzipped": 401,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/582893e0-fcc8-4258-aa01-623821ff601c",
+      "url": "blob:http://127.0.0.1:53118/47009770-7e32-4ff3-8de2-b49b174b0ce9",
       "wire": -71,
       "decoded": 727,
-      "gzipped": 370,
+      "gzipped": 369,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/79f90042-1fb1-43b8-9b0f-f7e6411e3298",
+      "url": "blob:http://127.0.0.1:53118/8e1aca17-eede-4792-a0a9-cb4e0594685a",
       "wire": -71,
       "decoded": 839,
-      "gzipped": 476,
+      "gzipped": 478,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/fa27327b-056d-48e4-8742-7e6aa9963586",
+      "url": "blob:http://127.0.0.1:53118/4e2a319b-2268-4733-bf49-991df9532cd0",
       "wire": -71,
       "decoded": 416,
       "gzipped": 256,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/0ee5c9e5-14d3-43f0-addc-9e790a3ebbd9",
+      "url": "blob:http://127.0.0.1:53118/fcb65785-52a8-4d8e-b430-25eb8fd322f6",
       "wire": -71,
       "decoded": 495,
       "gzipped": 329,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/431f9f80-8c2d-4ac4-a873-2342884c13d5",
+      "url": "blob:http://127.0.0.1:53118/d302ab2b-648e-48be-bac0-adc3b4d27251",
       "wire": -72,
       "decoded": 2894,
       "gzipped": 1041,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/556fa3d5-d299-4492-aa6d-18e5aba32833",
+      "url": "blob:http://127.0.0.1:53118/47dd1353-a0b5-4547-8a18-59bdac89becc",
       "wire": -72,
       "decoded": 1435,
       "gzipped": 635,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/38c664e7-edfe-4109-b7bc-27808a9f86d3",
+      "url": "blob:http://127.0.0.1:53118/cde03cf7-1a0c-4cd3-9cf4-dabb78c589c6",
       "wire": -72,
       "decoded": 1315,
       "gzipped": 585,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/7f12d32b-0665-465b-9a10-665471543458",
+      "url": "blob:http://127.0.0.1:53118/c01f9c80-ceb0-42f6-a1dc-adf1021c133d",
       "wire": -72,
       "decoded": 2973,
-      "gzipped": 1109,
+      "gzipped": 1108,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/7b5fa7e1-ffb8-4136-897c-1ac2a36f4d08",
+      "url": "blob:http://127.0.0.1:53118/74ae9332-37fe-495f-a2cd-351b3679062c",
       "wire": -72,
       "decoded": 1514,
       "gzipped": 705,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/d10d31c8-5a0c-42c7-b9ff-3d4403c6c187",
+      "url": "blob:http://127.0.0.1:53118/d9048494-a9eb-42d3-b682-495d93d33d19",
       "wire": -72,
       "decoded": 1394,
-      "gzipped": 657,
+      "gzipped": 656,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/e8d1480a-6964-4e43-9f95-43ac27870baa",
+      "url": "blob:http://127.0.0.1:53118/5a2424a9-1f50-4c93-94d9-f666474dc508",
       "wire": -72,
       "decoded": 7928,
-      "gzipped": 2618,
+      "gzipped": 2616,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/ce161fa2-2a96-4663-92b5-7244a5faf539",
+      "url": "blob:http://127.0.0.1:53118/f0ed4cbb-c4db-4f0a-9789-a540903e28a9",
       "wire": -73,
       "decoded": 11646,
       "gzipped": 3926,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/35534846-2d17-406d-aa6e-7cb8fdfb50fb",
+      "url": "blob:http://127.0.0.1:53118/aed48f3c-72eb-4b40-a03c-ef2c5e000705",
       "wire": -73,
       "decoded": 11751,
       "gzipped": 4589,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/150a5069-4a52-4013-9d53-669d89e57c6d",
+      "url": "blob:http://127.0.0.1:53118/413b2b5a-e04c-4f8e-83eb-45218e820a45",
       "wire": -73,
       "decoded": 11725,
-      "gzipped": 3999,
+      "gzipped": 3998,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/aaa45d65-1a3f-41df-bf0a-f99efca807b2",
+      "url": "blob:http://127.0.0.1:53118/36314da9-2fcb-413d-b4c9-f266ccaed9a2",
       "wire": -73,
       "decoded": 10122,
       "gzipped": 2750,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/3bd4de71-6581-4269-b9b2-b6c7f5b21ad9",
+      "url": "blob:http://127.0.0.1:53118/0290f75a-d3dc-4053-b0bd-12151205b103",
       "wire": -73,
       "decoded": 10201,
       "gzipped": 2823,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/4c25ceff-ff70-4370-b5c0-c993a7357170",
+      "url": "blob:http://127.0.0.1:53118/99dab72c-aace-47af-9163-7169393d0b01",
       "wire": -73,
       "decoded": 12016,
-      "gzipped": 4740,
+      "gzipped": 4737,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/707e70a2-015a-4690-bc34-3131ec30576e",
+      "url": "blob:http://127.0.0.1:53118/460671af-3af7-4dc2-8279-9b2161596499",
       "wire": -73,
       "decoded": 95765,
       "gzipped": 11418,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/6d36360f-70a8-42ea-9227-bb6658e5aac7",
+      "url": "blob:http://127.0.0.1:53118/e2573e01-77d7-4651-886d-cf628fb1720e",
       "wire": -74,
       "decoded": 373314,
       "gzipped": 121268,
       "body_read": true
     },
     {
-      "url": "blob:http://127.0.0.1:57157/4c75b23a-033e-4a8d-9142-ab7b80027117",
+      "url": "blob:http://127.0.0.1:53118/67efa013-c817-40aa-8f89-719af5ad98c4",
       "wire": -75,
       "decoded": 3495065,
       "gzipped": 883903,
