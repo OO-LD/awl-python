@@ -2036,8 +2036,12 @@ def test_the_connector_between_two_blocks_is_a_line_that_joins_them(page, live, 
         # top edge of the block below, rather than floating between the two.
         bottom = source["y"] + source["height"]
         assert -4 <= line["y"] - bottom <= 2, f"{edge['id']} starts {line['y'] - bottom:.1f} px off the block it leaves"
-        assert line["y"] + line["height"] >= target["y"] - 1, (
-            f"{edge['id']} stops {target['y'] - line['y'] - line['height']:.1f} px short of the block it points at"
+        # Short of the block by the head's clearance, deliberately: the
+        # arrowhead's point sits on the path's last vertex, so a line that
+        # reached the block put its tip underneath it.
+        reach = target["y"] - line["y"] - line["height"]
+        assert reach <= layout.GEOMETRY["head_clearance"] + 2, (
+            f"{edge['id']} stops {reach:.1f} px short of the block it points at"
         )
 
         # And it runs down the middle of both, which is the other half of what
@@ -2105,7 +2109,9 @@ def test_every_arrow_on_the_canvas_arrives_pointing_down_the_line_it_came_along(
         target = editor.boxes[edge["target"]]
         assert points[0][0] == pytest.approx(source[0] + source[2] / 2, abs=1), "it leaves the middle of its block"
         assert points[-1][0] == pytest.approx(target[0] + target[2] / 2, abs=1), "and arrives at the middle of the next"
-        assert points[-1][1] == pytest.approx(target[1], abs=1), "on its top edge"
+        assert points[-1][1] == pytest.approx(target[1] - layout.GEOMETRY["head_clearance"], abs=1), (
+            "clear of its top edge, so the arrowhead is not painted over by the block"
+        )
 
     # The one that used to be worst: out of the branch, over two borders.
     leaves = page.locator(f'.react-flow__edge[data-id="{BRANCH}->body.7.body.3.body.2"] .react-flow__edge-path')
@@ -2146,9 +2152,9 @@ def test_a_branch_rejoins_below_the_container_and_says_which_lane_is_the_false_o
     assert points[0] == pytest.approx((leaving[0] + leaving[2] / 2, leaving[1] + leaving[3]), abs=1), (
         "it leaves the bottom of the container"
     )
-    assert points[-1] == pytest.approx((after[0] + after[2] / 2, after[1]), abs=1), (
-        "and arrives on the top of the statement after it"
-    )
+    assert points[-1] == pytest.approx(
+        (after[0] + after[2] / 2, after[1] - layout.GEOMETRY["head_clearance"]), abs=1
+    ), "and arrives just clear of the statement after it, so its arrowhead is visible"
 
     zoom_onto(page, BRANCH, turns=3)
     page.screenshot(path=str(shots / "25-when-false.png"))
@@ -2892,3 +2898,112 @@ def test_no_two_screenshots_are_the_same(shots):
         )
         digests[name] = digest
     assert len(digests) == len(NAMED) + len(EXTRA)
+
+
+def test_the_type_checker_is_addressed_beside_the_page_and_not_at_the_root():
+    """Or it is only found where the app is served from the root.
+
+    The static build deploys under a path. Rooted at `/`, the loader asked the
+    site's root for the checker, got a 404 from a server that had it one
+    directory along, and the editor lost every diagnostic the moment it was
+    deployed anywhere other than a bare host.
+    """
+    from awl.ui import panel_reactflow
+
+    if not panel_reactflow.ty_assets():
+        pytest.skip("no ty build to address")
+    editor = panel_reactflow.open_sample()
+    url = editor.source_pane.ty_url
+    assert url and not url.startswith("/"), f"{url!r} is resolved against the host, not the page"
+    assert url.endswith("ty_wasm.js")
+
+
+def test_the_arrowhead_points_down_the_line_it_ends(page, live):
+    """Three rounds were reported as a folded arrow, and three tests passed over it.
+
+    Every assertion was about the line: the path joins the blocks, it is
+    centred, the head is wide enough. None was about *direction*. A
+    ``smoothstep`` path over two anchors sharing an x emits every waypoint
+    twice, so its last segment has zero length; the marker is
+    ``orient="auto-start-reverse"``, takes its angle from that segment's
+    tangent, finds none, falls back to zero degrees and points right. Its
+    polyline is ``-5,-4 0,0 -5,4``, so the head hung off the left of a vertical
+    line.
+
+    Measured in pixels, because a marker has no node where it is painted: it is
+    a definition in ``defs`` and its rectangle is the definition's. Reading the
+    DOM is what let every earlier test agree with a picture nobody could use.
+    """
+    import io
+    import itertools
+    import re
+
+    from PIL import Image
+
+    open_editor(page, live)
+
+    paths = page.locator("path.react-flow__edge-path")
+    assert paths.count(), "the level draws no connectors"
+    for index in range(paths.count()):
+        d = paths.nth(index).get_attribute("d")
+        numbers = [float(n) for n in re.findall(r"-?[0-9.]+", d)]
+        points = list(zip(numbers[::2], numbers[1::2], strict=True))
+        assert len(points) >= 2, d
+        repeated = [pair for pair in itertools.pairwise(points) if pair[0] == pair[1]]
+        assert not repeated, f"a zero-length segment leaves the head no tangent: {d} repeats {repeated}"
+
+    blocks = page.locator(".awl-block")
+    boxes = sorted(
+        (box for box in (blocks.nth(i).bounding_box() for i in range(blocks.count())) if box and box["height"] > 20),
+        key=lambda box: box["y"],
+    )
+    first, second = boxes[0], boxes[1]
+    clip = {
+        "x": first["x"] + first["width"] / 2 - 15,
+        "y": first["y"] + first["height"],
+        "width": 30,
+        "height": second["y"] - (first["y"] + first["height"]),
+    }
+    shot = Image.open(io.BytesIO(page.screenshot(clip=clip))).convert("L")
+    width, height = shot.size
+    # Taken from the image rather than assumed: the viewport's device scale is
+    # the fixture's business, and a threshold in device pixels would pass or
+    # fail on a setting that has nothing to do with the arrow.
+    scale = width / clip["width"]
+    # Rows the block's own border draws are dropped by shape rather than by
+    # colour: an antialiased 1.8px stroke and a 1px border land in the same
+    # range of greys, but a border runs the width of the clip and a connector
+    # never does. Counting it made the arrow look as if it reached the block
+    # whatever it did.
+    rows = [[x for x in range(width) if shot.getpixel((x, y)) < 200] for y in range(height)]
+    ink = [row if len(row) < 0.8 * width else [] for row in rows]
+    drawn = [(y, row) for y, row in enumerate(ink) if row]
+    assert drawn, "nothing is drawn between the two blocks"
+
+    # The head is the widest run of ink, and it must be at the bottom of the
+    # join and centred on the line. Pointing right puts it off centre; pointing
+    # up puts it at the top.
+    widest = max(drawn, key=lambda item: len(item[1]))
+    first_row, last_row = drawn[0][0], drawn[-1][0]
+    assert widest[0] > first_row, "the widest part of the connector is at its start, so the head points back"
+    # In the lower half of what is drawn. Not *at* the last row: a head pointing
+    # down is widest at its base and tapers to its point, so the base sits a few
+    # rows above the tip.
+    assert widest[0] >= first_row + (last_row - first_row) / 2, "the head is in the upper half, so it points up"
+    centre = (width - 1) / 2
+    middle = (widest[1][0] + widest[1][-1]) / 2
+    assert abs(middle - centre) <= scale, f"the head sits at {middle:.1f}, the line at {centre:.1f}"
+    # Against the line it ends rather than an absolute width, so this says
+    # "wider than the line" at any zoom: a head the width of its own stroke is
+    # the speck an unscaled marker degenerates to.
+    shaft = min(len(row) for _y, row in drawn[: max(1, len(drawn) // 3)])
+    assert len(widest[1]) >= 2 * shaft, f"the head is {len(widest[1])} across and the line is {shaft}"
+
+    # And the point is visible. The marker puts its tip on the path's last
+    # vertex, so an anchor on the block's own edge lands the tip under the block
+    # and the arrow arrives looking blunt. The ink must stop clear of the
+    # bottom of the join, and must taper: a clipped head ends at its widest.
+    assert drawn[-1][0] <= height - 1 - scale, "the tip runs under the block it points at"
+    assert len(drawn[-1][1]) < len(widest[1]), "the head ends at its widest, so its point is cut off"
+
+    page.screenshot(path=str(SHOTS / "36-arrowhead.png"), clip=clip)

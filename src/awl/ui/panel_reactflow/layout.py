@@ -82,6 +82,10 @@ GEOMETRY = {
     "lane_gap": 14,
     # How hard a step path turns its corners.
     "corner": 9,
+    # How far above a block its incoming edge stops. The arrowhead's marker puts
+    # its point on the path's last vertex, so an anchor on the block's own edge
+    # lands the tip under the block and the arrow arrives looking blunt.
+    "head_clearance": 5,
 }
 
 
@@ -569,11 +573,36 @@ def route(
     """
     legs: dict[str, float] = {}
     for edge in edges:
-        if edge.get("data", {}).get("drawn") != "back":
-            continue
         source = boxes.get(edge["source"])
         target = boxes.get(edge["target"])
+        if edge.get("data", {}).get("drawn") != "back":
+            if source and target and _aligned(source, target):
+                _make_straight(edge)
+            continue
         if not source or not target:
             continue
         legs[edge["id"]] = ((source[0] + source[2]) + (target[0] + target[2])) / 2
     return edges, legs
+
+
+def _aligned(source: tuple[float, float, float, float], target: tuple[float, float, float, float]) -> bool:
+    """Whether two boxes share a centre line, so the join between them is straight."""
+    return abs((source[0] + source[2] / 2) - (target[0] + target[2] / 2)) < 0.5
+
+
+def _make_straight(edge: dict[str, Any]) -> None:
+    """Draw a join between two blocks on one centre line as a straight line.
+
+    A step path over two anchors that share an x emits every waypoint twice, so
+    the last segment of the path has zero length. The arrowhead is
+    ``orient="auto-start-reverse"``, which takes its angle from that segment's
+    tangent, and a segment of no length has no tangent: the marker falls back to
+    zero degrees and points *right*. Its polyline is ``-5,-4 0,0 -5,4``, so a
+    right-pointing head hangs off the left of a vertical line, which is what
+    three rounds of this were reported as a folded or crumbled arrow.
+
+    Straight is also what it is. There are no corners between two blocks on one
+    centre line, so there is nothing for a step path to compute.
+    """
+    edge["type"] = "straight"
+    edge.pop("pathOptions", None)

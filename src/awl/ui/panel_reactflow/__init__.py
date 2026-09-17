@@ -170,8 +170,13 @@ _CANVAS_CSS = """
   width: 0 !important; height: 0 !important; min-width: 0 !important; min-height: 0 !important;
   border: 0 !important; background: transparent !important; opacity: 0;
 }
+/* Clear of the block, not on its edge. The arrowhead's marker puts its point
+ * on the path's last vertex, so an anchor at `top: 0` lands the tip exactly on
+ * the block's own boundary and the block paints over it: the arrow arrived
+ * looking blunt, with its point cut off. */
 .react-flow__handle[data-handleid="in"] {
-  left: 50% !important; right: auto !important; top: 0 !important; bottom: auto !important; transform: none !important;
+  left: 50% !important; right: auto !important; top: -HEAD_CLEARANCEpx !important;
+  bottom: auto !important; transform: none !important;
 }
 .react-flow__handle[data-handleid="out"] {
   left: 50% !important; right: auto !important; top: auto !important; bottom: 0 !important; transform: none !important;
@@ -230,7 +235,7 @@ _CANVAS_CSS = """
 .react-flow__node[data-awl-selected] {
   outline: 2.5px solid #4338ca; outline-offset: 1px; border-radius: 8px;
 }
-"""
+""".replace("HEAD_CLEARANCE", str(layout.GEOMETRY["head_clearance"]))
 
 #: The bar above the canvas, the columns beside it, and the console under it.
 _SHELL_CSS = """
@@ -1553,7 +1558,12 @@ def _shift(target: list[Any], removed: list[Any]) -> list[Any]:
 
 def open_sample(scope: str = "procedure", **options: Any) -> PanelReactFlowEditor:
     """Return the editor over the procedure every variant opens on."""
-    options.setdefault("ty_url", f"/{TY_ROUTE}/ty_wasm.js" if ty_assets() else "")
+    # Relative, and resolved against the page by the loader. Rooted at "/" it is
+    # right only where the app is served from the root: the static build deploys
+    # under a path, and the checker was fetched from the site's root instead of
+    # from beside the page, so the editor lost its diagnostics the moment it was
+    # deployed anywhere real.
+    options.setdefault("ty_url", f"{TY_ROUTE}/ty_wasm.js" if ty_assets() else "")
     return PanelReactFlowEditor(ui.open_sample(), scope=scope, entry="procedure", arguments=(3,), **options)
 
 
