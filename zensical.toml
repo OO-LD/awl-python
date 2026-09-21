@@ -14,6 +14,7 @@ nav = [
     { "Worked examples" = "examples.md" },
     { "Editor" = "editor.md" },
     { "Editor specification" = "editor-spec.md" },
+    { "Explainer" = "explainer.md" },
     { "API Reference" = "awl.md" },
     { "Development" = "dev.md" },
 ]
@@ -21,7 +22,7 @@ nav = [
 extra_css = ["assets/wide.css"]
 # The theme ships mermaid's colour variables and not mermaid itself, so
 # without this every diagram on the flavours page stays a block of text.
-extra_javascript = ["assets/mermaid.js"]
+extra_javascript = ["assets/mermaid.js", "javascripts/explainer-player.js"]
 
 [project.plugins.macros]
 # The worked-examples page is built from the corpus at render time.
