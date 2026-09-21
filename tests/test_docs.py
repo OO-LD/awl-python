@@ -125,20 +125,23 @@ def test_the_combinations_end_with_what_a_query_runs_against(flavours):
     assert vocab.LOOKUPS["ast"] == vocab.LAYERS, "and Everything is the ast profile"
 
 
-def test_the_landing_page_example_runs():
-    """The first thing a reader copies, executed rather than proofread.
+@pytest.mark.parametrize("page", ["docs/index.md", "README.md"])
+def test_the_first_example_a_reader_copies_runs(page):
+    """Executed rather than proofread.
 
-    It went stale unnoticed once already: the page documented a query against
-    a vocabulary the pipeline had stopped emitting, and it still passed review
-    because the code was never run.
+    Both went stale unnoticed. The landing page documented a query against a
+    vocabulary the pipeline had stopped emitting; the README was still showing
+    `AstSerialization`, a class that had been deleted, so the first thing anyone
+    ran after `pip install awl` was an ImportError. Both passed review, because
+    the code was never run.
     """
     import re
 
-    page = (Path(__file__).resolve().parents[1] / "docs" / "index.md").read_text(encoding="utf-8")
-    blocks = re.findall(r"```py\n(.*?)```", page, re.S)
-    assert blocks, "the page shows no example"
+    text = (Path(__file__).resolve().parents[1] / page).read_text(encoding="utf-8")
+    blocks = re.findall(r"```py\n(.*?)```", text, re.S)
+    assert blocks, f"{page} shows no example"
     for index, block in enumerate(blocks):
-        exec(compile(block, f"docs/index.md[{index}]", "exec"), {})  # noqa: S102
+        exec(compile(block, f"{page}[{index}]", "exec"), {})  # noqa: S102
 
 
 def test_no_page_calls_a_macro_it_only_meant_to_mention():
