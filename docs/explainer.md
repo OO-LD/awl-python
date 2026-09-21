@@ -4,8 +4,11 @@ The explainer video, a frame per beat. It is silent and carries its script on
 screen, so these stills are the whole of it: nobody reviews a video in a pull
 request, they look at frames.
 
-Everything shown as AWL-LD output is real output from this repository, produced
-by the pipeline rather than mocked up.
+Everything shown as AWL-LD output is real output from this repository. The
+source is the procedure the [flavours](flavours.md) page is built from, the
+documents and query results come from the pipeline, and the trace is a real run.
+`npm run check` reruns the extraction and refuses a build where the video and
+the pipeline have drifted.
 
 <div class="awl-shot" tabindex="0">
 <div class="awl-shot__stage">
@@ -31,13 +34,15 @@ by the pipeline rather than mocked up.
 <img src="assets/explainer/11-answers-comments.png" alt="answers comments" loading="lazy">
 <img src="assets/explainer/12-answers-writes.png" alt="answers writes" loading="lazy">
 <img src="assets/explainer/13-answers-computed.png" alt="answers computed" loading="lazy">
-<img src="assets/explainer/14-editor-blocks.png" alt="editor blocks" loading="lazy">
-<img src="assets/explainer/15-editor-trace.png" alt="editor trace" loading="lazy">
-<img src="assets/explainer/16-editor-browser.png" alt="editor browser" loading="lazy">
-<img src="assets/explainer/17-end-card.png" alt="end card" loading="lazy">
+<img src="assets/explainer/14-landscape-grid.png" alt="landscape grid" loading="lazy">
+<img src="assets/explainer/15-landscape-quadrant.png" alt="landscape quadrant" loading="lazy">
+<img src="assets/explainer/16-editor-blocks.png" alt="editor blocks" loading="lazy">
+<img src="assets/explainer/17-editor-trace.png" alt="editor trace" loading="lazy">
+<img src="assets/explainer/18-editor-browser.png" alt="editor browser" loading="lazy">
+<img src="assets/explainer/19-end-card.png" alt="end card" loading="lazy">
 </div>
 </div>
 
 Left and right step through the beats. The frame numbers come from
 `media/explainer/scripts/stills.mjs`, so retiming a scene moves these with it;
-rebuild them with `npm run stills` in that directory.
+rebuild with `npm run stills` in that directory.
