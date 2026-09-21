@@ -73,3 +73,74 @@
 .awl-diagram--filling .awl-diagram__full {
   opacity: 1;
 }
+
+/* The explainer, stepped through one beat at a time. Class names and control
+   layout follow tutorial-player's in OO-LD/oold-schema, so the two read the
+   same; the video half is absent because this cut has stills and no render. */
+.awl-shot {
+  margin: 2rem 0 3rem;
+}
+
+.awl-shot__slide {
+  display: block;
+  width: 100%;
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
+}
+
+/* Until the manifest arrives there is no slide to show, so the fallback column
+   carries the page and the controls stay out of the way. A control that does
+   nothing is worse than no control. */
+.awl-shot__stage,
+.awl-shot__controls {
+  display: none;
+}
+
+.awl-shot--ready .awl-shot__stage,
+.awl-shot--ready .awl-shot__controls {
+  display: block;
+}
+
+.awl-shot--ready .awl-shot__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.6rem;
+}
+
+.awl-shot--ready .awl-shot__fallback {
+  display: none;
+}
+
+.awl-shot__controls button {
+  padding: 0.2rem 0.7rem;
+  font-size: 0.95rem;
+  background: transparent;
+  border: 1px solid var(--md-default-fg-color--lighter);
+  border-radius: 6px;
+  cursor: pointer;
+  color: inherit;
+}
+
+.awl-shot__controls button:hover {
+  border-color: var(--md-primary-fg-color);
+}
+
+.awl-shot__scene {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--md-primary-fg-color);
+}
+
+.awl-shot__caption {
+  font-size: 0.8rem;
+  color: var(--md-default-fg-color--light);
+  font-variant-numeric: tabular-nums;
+}
+
+.awl-shot__fallback img {
+  width: 100%;
+  margin: 0 0 1.2rem;
+  border-radius: 10px;
+}

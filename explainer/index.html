@@ -12,11 +12,13 @@
         <meta name="author" content="OO-LD Contributors">
       
       
-        <link rel="canonical" href="https://OO-LD.github.io/awl-python/">
+        <link rel="canonical" href="https://OO-LD.github.io/awl-python/explainer/">
       
       
+        <link rel="prev" href="../editor-spec/">
       
-        <link rel="next" href="./flavours/">
+      
+        <link rel="next" href="../awl/">
       
       
         
@@ -27,19 +29,19 @@
     
     
       
-        <title>awl-python - awl-python</title>
+        <title>Explainer - awl-python</title>
       
     
     
       
         
       
-      <link rel="stylesheet" href="./assets/stylesheets/modern/main.20815dad.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.20815dad.min.css">
       
         
           
         
-        <link rel="stylesheet" href="./assets/stylesheets/modern/palette.dfe2e883.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/modern/palette.dfe2e883.min.css">
       
       
 
@@ -58,9 +60,9 @@
       
     
     
-      <link rel="stylesheet" href="./assets/wide.css">
+      <link rel="stylesheet" href="../assets/wide.css">
     
-    <script>__md_scope=new URL(".",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
     
       
 
@@ -85,7 +87,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#awl-python" class="md-skip">
+        <a href="#explainer" class="md-skip">
           Skip to content
         </a>
       
@@ -101,7 +103,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="" title="awl-python" class="md-header__button md-logo" aria-label="awl-python" data-md-component="logo">
+    <a href="./.." title="awl-python" class="md-header__button md-logo" aria-label="awl-python" data-md-component="logo">
       
   <img src="https://raw.githubusercontent.com/OO-LD/schema/main/OO-LD_logo.jpg" alt="awl-python">
 
@@ -120,7 +122,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              awl-python
+              Explainer
             
           </span>
         </div>
@@ -209,7 +211,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="" title="awl-python" class="md-nav__button md-logo" aria-label="awl-python" data-md-component="logo">
+    <a href="./.." title="awl-python" class="md-nav__button md-logo" aria-label="awl-python" data-md-component="logo">
       
   <img src="https://raw.githubusercontent.com/OO-LD/schema/main/OO-LD_logo.jpg" alt="awl-python">
 
@@ -235,36 +237,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Home
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="./.." class="md-nav__link">
         
   
   
@@ -279,49 +255,6 @@
   
 
       </a>
-      
-        
-
-
-<nav class="md-nav md-nav--secondary" aria-label="On this page">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      On this page
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#install" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Install
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Usage
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -333,7 +266,7 @@
   
   
     <li class="md-nav__item">
-      <a href="./flavours/" class="md-nav__link">
+      <a href="../flavours/" class="md-nav__link">
         
   
   
@@ -359,7 +292,7 @@
   
   
     <li class="md-nav__item">
-      <a href="./examples/" class="md-nav__link">
+      <a href="../examples/" class="md-nav__link">
         
   
   
@@ -385,7 +318,7 @@
   
   
     <li class="md-nav__item">
-      <a href="./editor/" class="md-nav__link">
+      <a href="../editor/" class="md-nav__link">
         
   
   
@@ -411,7 +344,7 @@
   
   
     <li class="md-nav__item">
-      <a href="./editor-spec/" class="md-nav__link">
+      <a href="../editor-spec/" class="md-nav__link">
         
   
   
@@ -434,10 +367,19 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="./explainer/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
         
   
   
@@ -452,6 +394,7 @@
   
 
       </a>
+      
     </li>
   
 
@@ -463,7 +406,7 @@
   
   
     <li class="md-nav__item">
-      <a href="./awl/" class="md-nav__link">
+      <a href="../awl/" class="md-nav__link">
         
   
   
@@ -489,7 +432,7 @@
   
   
     <li class="md-nav__item">
-      <a href="./dev/" class="md-nav__link">
+      <a href="../dev/" class="md-nav__link">
         
   
   
@@ -525,11 +468,6 @@
                       
                     
                     
-                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-                      <div class="md-sidebar-button__wrapper">
-                        <label class="md-sidebar-button" for="__toc"></label>
-                      </div>
-                    
                   
                   <div class="md-sidebar__inner">
                     
@@ -541,36 +479,6 @@
   
     
   
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      On this page
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#install" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Install
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Usage
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
   
 </nav>
                   </div>
@@ -585,7 +493,7 @@
                 
                   
   
-    <a href="https://github.com/OO-LD/awl-python/edit/main/docs/index.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/OO-LD/awl-python/edit/main/docs/explainer.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
     </a>
@@ -593,59 +501,46 @@
   
 
 
-<h1 id="awl-python">awl-python<a class="headerlink" href="#awl-python" title="Permanent link">&para;</a></h1>
-<p>Python implementation of the <a href="https://github.com/OO-LD/awl-schema">Abstract Workflow Language (AWL / AWL-LD)</a></p>
-<h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
-<p><code>pip install awl</code></p>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">ast</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">awl</span><span class="w"> </span><span class="kn">import</span> <span class="n">compact</span><span class="p">,</span> <span class="n">pipeline</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">source</span> <span class="o">=</span> <span class="s2">"""if a == 1:</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="s2">    b = 1</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s2">else:</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s2">    b = 'test'</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s2">"""</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># The editor model: one node per statement, literals inline.</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">doc</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">to_compact</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="s2">"example"</span><span class="p">)</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="nb">print</span><span class="p">(</span><span class="n">compact</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="c1"># It regenerates the source it came from.</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="n">regenerated</span> <span class="o">=</span> <span class="n">ast</span><span class="o">.</span><span class="n">unparse</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">fix_missing_locations</span><span class="p">(</span><span class="n">compact</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">doc</span><span class="p">)))</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="k">assert</span> <span class="n">regenerated</span> <span class="o">==</span> <span class="n">ast</span><span class="o">.</span><span class="n">unparse</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1"># Edit it: b = 2 in the true branch.</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="n">doc</span><span class="p">[</span><span class="s2">"body"</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">"body"</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s2">"value"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"literal"</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="k">assert</span> <span class="s2">"b = 2"</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">unparse</span><span class="p">(</span><span class="n">ast</span><span class="o">.</span><span class="n">fix_missing_locations</span><span class="p">(</span><span class="n">compact</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">doc</span><span class="p">)))</span>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="c1"># The graph: the same document, plus the control-flow plan, the def-use edges</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="c1"># and any typed member writes, in one store.</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="n">graph</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">to_graph</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="s2">"example"</span><span class="p">)</span>
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="nb">print</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">serialize</span><span class="p">(</span><span class="nb">format</span><span class="o">=</span><span class="s2">"turtle"</span><span class="p">))</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="c1"># Which values can b take?</span>
-<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="n">values</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"""</span>
-<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="s2">    PREFIX awl: &lt;https://w3id.org/awl/schema/&gt;</span>
-<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="s2">    SELECT ?value WHERE {</span>
-<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="s2">      ?assign a awl:Assign ;</span>
-<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="s2">              awl:targets [ awl:var "b" ] ;</span>
-<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="s2">              awl:value [ awl:literal ?value ] .</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="s2">    }</span>
-<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="s2">"""</span><span class="p">)</span>
-<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">values</span><span class="p">)</span> <span class="o">==</span> <span class="p">[</span><span class="s2">"1"</span><span class="p">,</span> <span class="s2">"test"</span><span class="p">]</span>
-<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>
-<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a><span class="c1"># Which definitions of b reach the end of the module? Asked of the def-use</span>
-<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="c1"># graph rather than of the syntax, so it survives a rename or a reorder.</span>
-<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="n">definitions</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"""</span>
-<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a><span class="s2">    PREFIX awl: &lt;https://w3id.org/awl/schema/&gt;</span>
-<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a><span class="s2">    SELECT ?definition WHERE { ?definition a awl:Definition ; awl:name "b" }</span>
-<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a><span class="s2">"""</span><span class="p">)</span>
-<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a><span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">definitions</span><span class="p">))</span> <span class="o">==</span> <span class="mi">2</span>
-</code></pre></div>
-<p>See <a href="examples/">Examples</a> for the same treatment applied to every file in the
-validation corpus, source beside document beside RDF.</p>
+<h1 id="explainer">Explainer<a class="headerlink" href="#explainer" title="Permanent link">&para;</a></h1>
+<p>The explainer video, a frame per beat. It is silent and carries its script on
+screen, so these stills are the whole of it: nobody reviews a video in a pull
+request, they look at frames.</p>
+<p>Everything shown as AWL-LD output is real output from this repository, produced
+by the pipeline rather than mocked up.</p>
+<div class="awl-shot" tabindex="0">
+<div class="awl-shot__stage">
+<img class="awl-shot__slide" src="" alt="">
+</div>
+<div class="awl-shot__controls">
+<button class="awl-shot__prev" type="button" aria-label="Previous beat">Previous</button>
+<span class="awl-shot__scene"></span>
+<span class="awl-shot__caption"></span>
+<button class="awl-shot__next" type="button" aria-label="Next beat">Next</button>
+</div>
+<div class="awl-shot__fallback">
+<img src="../assets/explainer/01-question-file.png" alt="question file" loading="lazy">
+<img src="../assets/explainer/02-question-three.png" alt="question three" loading="lazy">
+<img src="../assets/explainer/03-question-punch.png" alt="question punch" loading="lazy">
+<img src="../assets/explainer/04-claim.png" alt="claim" loading="lazy">
+<img src="../assets/explainer/05-notation-document.png" alt="notation document" loading="lazy">
+<img src="../assets/explainer/06-notation-collapse.png" alt="notation collapse" loading="lazy">
+<img src="../assets/explainer/07-notation-rdf.png" alt="notation rdf" loading="lazy">
+<img src="../assets/explainer/08-layers-tree-alone.png" alt="layers tree alone" loading="lazy">
+<img src="../assets/explainer/09-layers-five.png" alt="layers five" loading="lazy">
+<img src="../assets/explainer/10-layers-one-node.png" alt="layers one node" loading="lazy">
+<img src="../assets/explainer/11-answers-comments.png" alt="answers comments" loading="lazy">
+<img src="../assets/explainer/12-answers-writes.png" alt="answers writes" loading="lazy">
+<img src="../assets/explainer/13-answers-computed.png" alt="answers computed" loading="lazy">
+<img src="../assets/explainer/14-editor-blocks.png" alt="editor blocks" loading="lazy">
+<img src="../assets/explainer/15-editor-trace.png" alt="editor trace" loading="lazy">
+<img src="../assets/explainer/16-editor-browser.png" alt="editor browser" loading="lazy">
+<img src="../assets/explainer/17-end-card.png" alt="end card" loading="lazy">
+</div>
+</div>
+
+<p>Left and right step through the beats. The frame numbers come from
+<code>media/explainer/scripts/stills.mjs</code>, so retiming a scene moves these with it;
+rebuild them with <code>npm run stills</code> in that directory.</p>
 
 
 
@@ -682,15 +577,31 @@ validation corpus, source beside document beside RDF.</p>
       
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
+          
+          <a href="../editor-spec/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Editor specification">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Editor specification
+              </div>
+            </div>
+          </a>
+        
         
           
-          <a href="./flavours/" class="md-footer__link md-footer__link--next" aria-label="Next: Flavours">
+          <a href="../awl/" class="md-footer__link md-footer__link--next" aria-label="Next: API Reference">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Flavours
+                API Reference
               </div>
             </div>
             <div class="md-footer__button md-icon">
@@ -758,14 +669,14 @@ validation corpus, source beside document beside RDF.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate":null,"base":".","features":["content.action.edit","content.code.annotate","content.code.copy","navigation.footer","navigation.indexes","navigation.top","navigation.tracking","search.highlight"],"search":"./assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["content.action.edit","content.code.annotate","content.code.copy","navigation.footer","navigation.indexes","navigation.top","navigation.tracking","search.highlight"],"search":"../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
     
     
-      <script src="./assets/javascripts/bundle.e886cdf1.min.js"></script>
+      <script src="../assets/javascripts/bundle.e886cdf1.min.js"></script>
       
-        <script src="./assets/mermaid.js"></script>
+        <script src="../assets/mermaid.js"></script>
       
-        <script src="./javascripts/explainer-player.js"></script>
+        <script src="../javascripts/explainer-player.js"></script>
       
     
   </body>
